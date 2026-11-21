@@ -5,7 +5,7 @@ import { MonthNavigator } from '../components/MonthNavigator';
 import { RecurringRow } from '../components/RecurringRow';
 import { Bar } from '../components/ui';
 import { budgetSummary, goalSaved, monthTotals, recurringSlots } from '../lib/calc';
-import { allBuckets, allExpenseCategories, bucketLabel, isCategoryHidden } from '../lib/categories';
+import { allBuckets, allExpenseCategories, bucketLabel, expenseCategory, isCategoryHidden } from '../lib/categories';
 import { currentMonth, daysInMonth, elapsedDays } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
 import { useApp } from '../lib/store';
@@ -65,7 +65,7 @@ export function BudgetsView() {
 
   const isCurrent = selectedMonth === currentMonth();
   const daysLeft = daysInMonth(selectedMonth) - elapsedDays(selectedMonth) + (isCurrent ? 1 : 0);
-  const unbudgeted = summary.unplanned;
+  const unbudgeted = summary.unbudgeted;
   const safePerDay = summary.budget > 0 && daysLeft > 0 ? Math.max(0, summary.left) / daysLeft : null;
 
   const bucketCard = (bucket: Bucket) => {
@@ -132,7 +132,50 @@ export function BudgetsView() {
     <div className="um-stack space-y-3.5">
       <MonthNavigator />
 
-      <HeroPair inIcon={Target} inLabel={t('Budget')} outLabel={t('Spent')} inAmount={summary.budget} outAmount={summary.spent} pillTitle={summary.generic ? t('Monthly budget minus everything spent') : t('Budget minus spending in budgeted categories')} />
+      <HeroPair inIcon={Target} inLabel={t('Budget')} outLabel={t('Spent')} inAmount={summary.budget} outAmount={summary.spent} pillTitle={summary.generic ? t('Overall monthly budget minus everything spent') : t('Budgeted categories: budget minus spending in those categories (unbudgeted spending is not included)')} />
+
+      {/* What the Budget figure above covers, and the spending it leaves out */}
+      <div className="um-hide rounded-2xl bg-[var(--surface)] border border-[var(--border)] px-3.5 py-3 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('The figures above cover')}</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-[var(--inset)] border border-[var(--border)] text-[11px] font-extrabold text-[var(--text)]">
+            {summary.scope === 'overall' ? t('Overall monthly budget') : t('Budgeted categories')}
+          </span>
+        </div>
+        <p className="text-[11px] font-medium text-[var(--muted)] leading-snug">
+          {summary.scope === 'overall'
+            ? t('Everything you spent this month counts against your overall monthly budget of {v}.', { v: money(summary.budget) })
+            : t('Only spending in categories that have a budget counts here. Spending in other categories is not part of the percentage.')}
+        </p>
+        {(summary.scope === 'categories' || (summary.categoryBudget > 0 && unbudgeted > 0)) && (
+          <div className="space-y-1.5">
+            <p className="flex items-center justify-between gap-2 text-xs font-extrabold text-[var(--text)] tabular-nums">
+              <span>{t('Unbudgeted spending')}: {money(unbudgeted)}</span>
+              {summary.scope === 'overall' && <span className="text-[10px] font-bold text-[var(--muted)]">{t('already counted in Spent')}</span>}
+            </p>
+            {unbudgeted > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {summary.unbudgetedCategories.slice(0, 4).map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => openSheet({ type: 'budget', categoryId: item.id })}
+                    aria-label={t('Set a budget for {name} (spent {v})', { name: expenseCategory(item.id)?.name ?? t('Other'), v: money(item.total) })}
+                    className="pressable pressable-soft inline-flex items-center gap-1.5 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] pl-2.5 pr-2 py-1 text-[11px] font-extrabold text-[var(--text)]"
+                  >
+                    <span className="truncate max-w-[9rem]">{expenseCategory(item.id)?.name ?? t('Other')}</span>
+                    <span className="tabular-nums text-[var(--muted)]">{money(item.total)}</span>
+                    <span className="rounded-full bg-[var(--text)] text-[var(--on-text)] px-1.5 py-px text-[10px]">{t('Set budget')}</span>
+                  </button>
+                ))}
+                {summary.unbudgetedCategories.length > 4 && (
+                  <span className="self-center text-[10px] font-bold text-[var(--muted)]">{t('+{n} more below', { n: summary.unbudgetedCategories.length - 4 })}</span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <button
         type="button"
@@ -151,7 +194,7 @@ export function BudgetsView() {
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
         <NoteCard tone="needs" icon={Hourglass} label={t('Days left')} value={String(Math.max(0, daysLeft))} title={t('Days left in this month, today included')} />
         <NoteCard tone="wants" icon={ShieldCheck} label={t('Safe / day')} value={safePerDay === null ? '–' : money(safePerDay)} title={t('Budget left divided by the days left')} />
-        <NoteCard tone="savings" icon={CircleHelp} label={t('Unplanned')} value={moneyFit(unbudgeted, 7)} title={t('Spending in categories without a budget')} />
+        <NoteCard tone="savings" icon={CircleHelp} label={t('Unbudgeted')} value={moneyFit(unbudgeted, 7)} title={t('Unbudgeted spending: spending in categories without a budget')} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-start">

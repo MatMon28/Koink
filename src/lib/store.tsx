@@ -1,14 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { sortTxs } from './calc';
 import { syncCategories } from './categories';
 import { syncTabs } from './tabs';
 import { currentMonth, daysInMonth, formatDay, pad, todayStr } from './dates';
 import { buildSampleTxs, SAMPLE_ACCOUNTS, SAMPLE_GOALS, SAMPLE_PROFILE, SAMPLE_RECURRING } from './demo';
 import { whenIdle } from './idle';
+import { currencyLocked, summarizeJournal, type BackupPreview } from './journal';
 import { currencySymbol, exchangeRate, formatMoney, formatMoneyFit, isCurrency, round2, type MoneyOptions } from './format';
 import { normalizeNotificationSettings } from './reminders';
 import { syncLaunchBackground, syncSystemBars } from './platform';
-import { STORAGE_KEY } from './storage';
+import { getSaveState, STORAGE_KEY, subscribeSaveState, writeJournal, type SaveState } from './storage';
 import { applyThemeAttributes, applyUltraMinimal, DEFAULT_MONO_HUE, normalizeMonoHue, normalizeTheme, normalizeThemeStyle } from './themes';
 import { detectLanguage, normalizeLanguage, setLanguage } from './i18n';
 import { normalizeWidgets } from './widgets';
@@ -264,12 +265,20 @@ interface AppContextValue {
   eraseAll: () => void;
   loadSample: () => void;
   exportData: () => string;
+  /** Validates the text of a backup file WITHOUT touching the journal; null when it is not a Koink journal. */
+  previewBackup: (raw: string) => BackupPreview | null;
+  /** Replaces the whole journal with a previewed backup. Only call it after the user confirmed. */
+  restoreBackup: (preview: BackupPreview) => void;
+  /** Validate and replace in one go (no preview). The app's own screens use `previewBackup` + `restoreBackup`. */
   importData: (raw: string) => boolean;
   showToast: (message: string, action?: { label: string; run: () => void }) => void;
   dismissToast: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
+
+/** Only carries the retry action; the save state itself is an external store (storage.ts). */
+const RetryContext = createContext<() => boolean>(() => true);
 
 /**
  * The open sheet and the toast live in their own context. They change on every open, close and
@@ -294,13 +303,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toastTimer = useRef<number | null>(null);
   const toastId = useRef(0);
 
+  // Writing to localStorage can fail (storage full, private mode, blocked): the journal then only lives in
+  // memory. That must never be silent: writeJournal records the outcome, StorageBanner shows it.
+  const latest = useRef(data);
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      /* storage full or blocked: the journal lives in memory for this visit */
-    }
+    latest.current = data;
+    writeJournal(JSON.stringify(data));
   }, [data]);
+  const retrySave = useCallback(() => writeJournal(JSON.stringify(latest.current)), []);
 
   // Everything below reads the category list through categories.ts: bring it up to date first.
   // The page order (tabs.ts) also follows Settings: a hidden page leaves the pill and the swipe rail.
@@ -561,7 +571,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {
-    setData((prev) => ({ ...prev, settings: { ...prev.settings, ...patch } }));
+    setData((prev) => {
+      // Safety net behind the locked currency picker: amounts are bare numbers, so a new currency would
+      // silently relabel every one of them (see currencyLocked in journal.ts).
+      let safe = patch;
+      if (patch.currency !== undefined && patch.currency !== prev.settings.currency && currencyLocked(prev)) {
+        safe = { ...patch };
+        delete safe.currency;
+        if (Object.keys(safe).length === 0) return prev;
+      }
+      return { ...prev, settings: { ...prev.settings, ...safe } };
+    });
   }, []);
 
   const eraseAll = useCallback(() => {
@@ -579,35 +599,49 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const exportData = useCallback(() => JSON.stringify({ app: 'koink', version: 1, ...data }, null, 2), [data]);
 
-  const importData = useCallback((raw: string) => {
+  const previewBackup = useCallback((raw: string): BackupPreview | null => {
     try {
-      const parsed = sanitize(JSON.parse(raw));
-      if (!parsed) return false;
-      setData({ ...parsed, settings: { ...parsed.settings, sampleData: false } });
-      setSelectedMonth(currentMonth());
-      return true;
+      const json: unknown = JSON.parse(raw);
+      const parsed = sanitize(json);
+      if (!parsed) return null;
+      const inFile = Array.isArray((json as { txs?: unknown }).txs) ? (json as { txs: unknown[] }).txs.length : 0;
+      return { data: parsed, summary: summarizeJournal(parsed), skipped: Math.max(0, inFile - parsed.txs.length) };
     } catch {
-      return false;
+      return null;
     }
   }, []);
+
+  const restoreBackup = useCallback((preview: BackupPreview) => {
+    setData({ ...preview.data, settings: { ...preview.data.settings, sampleData: false } });
+    setSelectedMonth(currentMonth());
+  }, []);
+
+  const importData = useCallback((raw: string) => {
+    const preview = previewBackup(raw);
+    if (!preview) return false;
+    restoreBackup(preview);
+    return true;
+  }, [previewBackup, restoreBackup]);
 
   const value = useMemo<AppContextValue>(() => ({
     data, activeTab, setActiveTab, selectedMonth, setSelectedMonth, openSheet, closeSheet,
     money, moneyFit, symbol: currencySymbol(currency), currency, rateFor, addTx, updateTx, removeTx, saveGoal, removeGoal, saveRecurring,
     removeRecurring, logRecurring, saveAccount, removeAccount, saveGiftCard, removeGiftCard, saveCategory, saveCategoryType, removeCategoryType, removeCategory, setCategoryHidden, refreshRates, setBudget, updateProfile, updateSettings, eraseAll, loadSample, exportData,
-    importData, showToast, dismissToast,
+    previewBackup, restoreBackup, importData, showToast, dismissToast,
   }), [
     data, activeTab, setActiveTab, selectedMonth, openSheet, closeSheet, money, moneyFit, currency, addTx,
     updateTx, removeTx, saveGoal, removeGoal, saveRecurring, removeRecurring, logRecurring, saveAccount, removeAccount, saveGiftCard, removeGiftCard, saveCategory,
     saveCategoryType, removeCategoryType, removeCategory, setCategoryHidden, refreshRates, rateFor, setBudget, updateProfile,
-    updateSettings, eraseAll, loadSample, exportData, importData, showToast, dismissToast,
+    updateSettings, eraseAll, loadSample, exportData, previewBackup, restoreBackup, importData, showToast, dismissToast,
   ]);
 
   const ui = useMemo<UiState>(() => ({ sheet, sheetSeq, toast }), [sheet, sheetSeq, toast]);
 
   return (
     <AppContext.Provider value={value}>
-      <UiContext.Provider value={ui}>{children}</UiContext.Provider>
+      <RetryContext.Provider value={retrySave}>
+        <UiContext.Provider value={ui}>{children}</UiContext.Provider>
+      </RetryContext.Provider>
     </AppContext.Provider>
   );
 }
@@ -637,4 +671,12 @@ export function useSheet<T extends Sheet['type']>(type: T): { isOpen: boolean; s
 // eslint-disable-next-line react-refresh/only-export-components
 export function useToast(): Toast | null {
   return useContext(UiContext).toast;
+}
+
+/** Whether the journal is being saved on this device, and a way to try again. Kept apart from `useApp()`. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useStorageStatus(): SaveState & { retry: () => boolean } {
+  const state = useSyncExternalStore(subscribeSaveState, getSaveState, getSaveState);
+  const retry = useContext(RetryContext);
+  return { ...state, retry };
 }

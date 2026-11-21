@@ -89,10 +89,21 @@ export function ruleShares(t: Pick<MonthTotals, 'income' | 'needs' | 'wants' | '
   return { needs: share(t.needs), wants: share(t.wants), other: share(other), savings: share(t.saved), ofIncome: t.income > 0 };
 }
 
+/** An expense category with spending in the month but no budget (see `budgetSummary().unbudgetedCategories`). */
+export interface UnbudgetedCategory {
+  id: string;
+  total: number;
+}
+
 /**
- * The Budget figure of a month. With a generic monthly budget (Profile) it is that one amount, measured
- * against everything spent; otherwise it is the sum of the category budgets, measured against the spending
- * in those categories. `unplanned` is always the spending in categories that have no budget.
+ * What the "Budget" figure of the Budgets and Month pages measures.
+ *
+ * - `scope: 'overall'`: the generic monthly budget (Profile) against EVERYTHING spent.
+ * - `scope: 'categories'`: the sum of the category budgets against the spending in budgeted categories ONLY.
+ *   Spending in categories without a budget is left out of `spent` on purpose; it is reported apart as
+ *   `unbudgeted` / `unbudgetedCategories`, so the screens can say what the percentage does not cover.
+ *
+ * `unplanned` is the old name of `unbudgeted` (same number).
  */
 export function budgetSummary(profile: Profile, totals: MonthTotals) {
   let categoryBudget = 0;
@@ -105,13 +116,21 @@ export function budgetSummary(profile: Profile, totals: MonthTotals) {
   const generic = profile.monthlyBudget > 0;
   const budget = generic ? profile.monthlyBudget : categoryBudget;
   const spent = generic ? totals.spent : categorySpent;
+  const unbudgetedCategories: UnbudgetedCategory[] = Object.entries(totals.byCategory)
+    .filter(([id, entry]) => !(profile.budgets[id] > 0) && entry.total > 0)
+    .map(([id, entry]) => ({ id, total: round2(entry.total) }))
+    .sort((a, b) => b.total - a.total);
+  const unbudgeted = round2(totals.spent - categorySpent);
   return {
     budget: round2(budget),
     spent: round2(spent),
     left: round2(budget - spent),
     generic,
+    scope: (generic ? 'overall' : 'categories') as 'overall' | 'categories',
     categoryBudget: round2(categoryBudget),
-    unplanned: round2(totals.spent - categorySpent),
+    unbudgeted,
+    unbudgetedCategories,
+    unplanned: unbudgeted,
   };
 }
 

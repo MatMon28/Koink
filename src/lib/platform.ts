@@ -81,3 +81,34 @@ export async function saveTextFile(fileName: string, text: string, mime = 'appli
   URL.revokeObjectURL(url);
   return 'downloaded';
 }
+
+/** Hands a binary file (for example an .xlsx) to the user: a download in a browser, the share sheet in the Android app. */
+export async function saveBlobFile(fileName: string, blob: Blob): Promise<SaveResult> {
+  if (isNativeApp()) {
+    const [{ Filesystem, Directory }, { Share }] = await Promise.all([
+      import('@capacitor/filesystem'),
+      import('@capacitor/share'),
+    ]);
+    // Without an `encoding`, Filesystem.writeFile expects base64.
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    const { uri } = await Filesystem.writeFile({ path: fileName, data: btoa(binary), directory: Directory.Cache });
+    try {
+      await Share.share({ title: fileName, files: [uri] });
+      return 'shared';
+    } catch {
+      return 'cancelled'; // the share sheet was dismissed
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  return 'downloaded';
+}

@@ -1,19 +1,23 @@
 import { useRef, useState } from 'react';
-import { Banknote, Download, EyeOff, Gift, Minimize2, Receipt, RefreshCw, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
+import { Banknote, Download, EyeOff, FileSpreadsheet, Gift, Lock, Minimize2, Receipt, RefreshCw, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { AppIcon } from '../components/Brand';
+import { DataStatus } from '../components/DataStatus';
 import { InstallApp } from '../components/InstallApp';
 import { Modal } from '../components/Modal';
 import { ProjectDownload } from '../components/ProjectDownload';
 import { Collapsible, ConfirmDialog, SectionLabel, seg, Switch } from '../components/ui';
-import { todayStr } from '../lib/dates';
 import { LANGUAGES, t } from '../lib/i18n';
-import { saveTextFile } from '../lib/platform';
+import { currencyLocked, type BackupPreview } from '../lib/journal';
+import { currencySymbol } from '../lib/format';
+import { saveBlobFile } from '../lib/platform';
 import { useApp, useSheet } from '../lib/store';
+import { useBackup } from '../lib/useBackup';
 import { MONO_HUES, STYLE_PRESETS } from '../lib/themes';
 import type { QuickAddKey, Theme } from '../lib/types';
 import { CategoriesBody } from './CategoriesSheet';
 import { NotificationSettings } from './NotificationSettings';
+import { RestoreDialog } from './RestoreDialog';
 import { WidgetsSettings } from './WidgetsSettings';
 import { CurrencyGrid } from './shared';
 
@@ -37,7 +41,8 @@ const dataButton =
 
 export function SettingsSheet() {
   const { isOpen } = useSheet('settings');
-  const { data, updateSettings, closeSheet, exportData, importData, loadSample, eraseAll, showToast, refreshRates } = useApp();
+  const { data, selectedMonth, updateSettings, closeSheet, previewBackup, restoreBackup, loadSample, eraseAll, showToast, refreshRates } = useApp();
+  const { saveBackup, lastBackup } = useBackup();
   const [updatingRates, setUpdatingRates] = useState(false);
   const { settings } = data;
   const fileInput = useRef<HTMLInputElement>(null);
@@ -45,21 +50,42 @@ export function SettingsSheet() {
   const [confirmSample, setConfirmSample] = useState(false);
   const hasEntries = data.txs.length > 0;
 
-  const download = async () => {
-    try {
-      const result = await saveTextFile(`koink_backup_${todayStr()}.json`, exportData());
-      if (result === 'downloaded') showToast(t('Backup saved to your downloads'));
-      else if (result === 'shared') showToast(t('Backup handed to the app you chose'));
-    } catch {
-      showToast(t('The backup could not be saved'));
-    }
-  };
+  const [restore, setRestore] = useState<{ preview: BackupPreview; name: string } | null>(null);
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const locked = currencyLocked(data);
 
+  // Picking a file only validates it and opens the preview. The journal is replaced by "Replace journal" there.
   const onFile = async (file: File | undefined) => {
     if (!file) return;
-    const ok = importData(await file.text());
-    showToast(ok ? t('Backup restored') : t('That file is not a Koink backup'));
+    let preview: BackupPreview | null = null;
+    try {
+      preview = previewBackup(await file.text());
+    } catch {
+      preview = null;
+    }
     if (fileInput.current) fileInput.current.value = '';
+    if (!preview) {
+      showToast(t('That file is not a Koink backup'));
+      return;
+    }
+    setRestore({ preview, name: file.name });
+    setRestoreOpen(true);
+  };
+
+  // A readable spreadsheet of the journal. Not a backup: nothing can be restored from it.
+  const exportExcel = async () => {
+    setExporting(true);
+    try {
+      const { buildJournalWorkbook, excelFileName } = await import('../lib/excel');
+      const result = await saveBlobFile(excelFileName(), await buildJournalWorkbook(data, selectedMonth));
+      if (result === 'downloaded') showToast(t('Excel file saved to your downloads'));
+      else if (result === 'shared') showToast(t('Excel file handed to the app you chose'));
+    } catch {
+      showToast(t('The Excel file could not be created'));
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -227,9 +253,29 @@ export function SettingsSheet() {
         {/* Currency */}
         <Collapsible title={t('Currency')}>
         <div>
-          <CurrencyGrid value={settings.currency} onChange={(code) => updateSettings({ currency: code })} label={t('Currency of the journal')} />
+          {locked ? (
+            <div className="rounded-2xl bg-[var(--inset)] border border-[var(--border)] p-3 space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <span className="size-9 rounded-full bg-[var(--text)] text-[var(--on-text)] flex items-center justify-center shrink-0" aria-hidden="true">
+                  <Lock size={15} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[10px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Currency of the journal')}</span>
+                  <span className="block text-sm font-extrabold text-[var(--text)]">{settings.currency} <span className="opacity-60">{currencySymbol(settings.currency)}</span></span>
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-[var(--text)] leading-snug">
+                {t('Locked while the journal has amounts. Amounts are stored as plain numbers, so changing the currency would only change the symbol (100 {from} would show as 100 {to}), not convert them.', { from: settings.currency, to: settings.currency === 'USD' ? 'EUR' : 'USD' })}
+              </p>
+              <p className="text-[11px] font-medium text-[var(--muted)] leading-snug">
+                {t('To start in another currency: save a backup, use Delete all data (the currency unlocks when the journal is empty), then pick it here.')}
+              </p>
+            </div>
+          ) : (
+            <CurrencyGrid value={settings.currency} onChange={(code) => updateSettings({ currency: code })} label={t('Currency of the journal')} />
+          )}
           <p className="mt-2 text-[11px] font-medium text-[var(--muted)]">
-            {t('The journal\'s currency. Any single entry can be paid in another one: its amount is converted with the rates below.')}
+            {t('The journal\'s currency is what every total, budget and balance is counted in. A single entry can be paid in another currency: it is converted to the journal\'s currency when saved (pick it in the entry, rates below) and keeps what was actually paid.')}
           </p>
           <div className="mt-2 flex items-center gap-2">
             <button
@@ -299,8 +345,9 @@ export function SettingsSheet() {
           <p className="text-xs font-medium text-[var(--muted)]">
             {t('Everything stays in this browser. There is no account and nothing is uploaded, so keep a backup if the journal matters to you.')}
           </p>
+          <DataStatus lastBackup={lastBackup} />
           <div className="flex flex-wrap gap-1.5">
-            <button type="button" onClick={() => void download()} className={dataButton}>
+            <button type="button" onClick={() => void saveBackup()} className={dataButton}>
               <Download size={14} />
               {t('Save backup')}
             </button>
@@ -310,6 +357,13 @@ export function SettingsSheet() {
             </button>
             <input ref={fileInput} type="file" accept="application/json,.json" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(event) => void onFile(event.target.files?.[0])} />
           </div>
+          <button type="button" disabled={exporting} onClick={() => void exportExcel()} className={`${dataButton} w-full disabled:opacity-60`}>
+            <FileSpreadsheet size={14} />
+            {t('Export to Excel')}
+          </button>
+          <p className="text-[11px] font-medium text-[var(--muted)] -mt-1">
+            {t('A readable spreadsheet of your entries, budgets, goals and accounts. It is for reading and sharing: it cannot be restored. Use Save backup for that.')}
+          </p>
           <button type="button" onClick={() => (hasEntries ? setConfirmSample(true) : loadSample())} className={`${dataButton} w-full`}>
             <Sparkles size={14} />
             {t('Load the sample journal')}
@@ -340,6 +394,18 @@ export function SettingsSheet() {
         </button>
       </div>
 
+      <RestoreDialog
+        open={restoreOpen}
+        preview={restore?.preview ?? null}
+        fileName={restore?.name ?? ''}
+        onCancel={() => setRestoreOpen(false)}
+        onConfirm={() => {
+          if (!restore) return;
+          setRestoreOpen(false);
+          restoreBackup(restore.preview);
+          showToast(t('Backup restored'));
+        }}
+      />
       <ConfirmDialog
         open={confirmSample}
         title={t('Replace your journal?')}

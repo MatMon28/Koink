@@ -31,7 +31,7 @@
 9. **No iOS app.** Only `android/` exists. iPhone users install the PWA.
 10. **`android:prepare` overwrites `dist/`** with the Android build (no offline worker). Run `npm run build` again before deploying the website.
 11. **Mouse users cannot swipe pages.** The page swipe is touch and pen only; the header pill does the same job.
-12. **One currency, no conversion.** Changing the currency changes the symbol, not the amounts.
+12. **One currency, no conversion.** The journal's currency is locked once it holds amounts, because a change would relabel (not convert) them ([features/currencies.md](features/currencies.md)). There is no migration flow yet (pick a new currency, preview every converted amount, confirm); until then the way out is backup, Delete all data, pick the currency.
 13. **Categories are fixed in code** (`src/lib/categories.ts`); there is no screen to add one.
 14. **English only.** The reference app also ships Italian; no translation layer was carried over.
 15. **Storage is `localStorage`.** It is per browser and per origin: the website, the installed PWA on another browser, and the Android app each have their own journal. Move data with Save backup / Restore backup. Clearing site data deletes the journal.
@@ -75,3 +75,12 @@
 - The Transactions filter panel (categories, accounts, dates, amounts) is not remembered between visits, only whether it is open.
 - The *Day cards* layout was removed; the new screens were built and type-checked but **not tested on a phone**.
 - The expense chart's comparison, line and full view (and the month sections of the Transactions page) were type-checked, linted and the date maths (`comparisonPeriod`) was run, but they were **not looked at in a browser or on a phone**. When comparing periods the slots are lined up by position, so a week-resolution comparison of two periods that start on different weekdays pairs weeks that are not exactly the same days.
+
+## Added with data safety and Excel export
+
+- **The not-saved banner and the restore preview were exercised with a stubbed failing `setItem` and by unit-style runs of the helpers, not on a real full or blocked browser store.** Safari private mode, quota on Android WebView and `beforeunload` behaviour on mobile browsers (which often ignore the prompt) are untested.
+- A write is considered successful when `localStorage.setItem` does not throw; there is no read-back check, so a browser that silently discards writes would not be noticed.
+- The restore dialog's *Save a copy* uses the normal backup download; on the Android app the share sheet may be dismissed, which counts as not saved.
+- The currency lock looks at the journal only. Restoring a backup in another currency is allowed (the preview warns about it).
+- **The Excel file is a snapshot, not a backup**, and has only been opened by reading its XML and sheet list, not in Excel, LibreOffice or Numbers. Dates are real Excel dates (UTC midnight); money uses `#,##0.00` with the currency code in the header rather than a currency format. It covers every entry; budgets are for the month open in the app. See [features/excel-export.md](features/excel-export.md).
+- The Excel library (`write-excel-file`, about 80 kB) is a separate chunk loaded on demand, but the offline worker precaches it with the rest of the build.

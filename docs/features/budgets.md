@@ -2,7 +2,7 @@
 
 > **Scope:** monthly budgets per category, plus the management lists for savings goals and recurring items. The page can be hidden.
 >
-> **Read when:** you change `src/pages/BudgetsView.tsx` or `BudgetSheet` in `src/sheets/EditSheets.tsx`.
+> **Read when:** you change `src/pages/BudgetsView.tsx`, `budgetSummary` in `src/lib/calc.ts` or `BudgetSheet` in `src/sheets/EditSheets.tsx`.
 >
 > **Related:** [savings-goals.md](savings-goals.md), [recurring.md](recurring.md), [month.md](month.md)
 
@@ -13,10 +13,21 @@ The page follows the month chosen in the month row (shared with the Month page).
 | Budget / Spent | `HeroPair`. **With a monthly budget set in the Profile** (below) it is that one amount against **everything spent**; otherwise the sum of all category budgets against the spending **in budgeted categories**. The pill is what is left (or over). A line under it shows the monthly budget (tap: opens the Profile) or invites you to set one |
 | Days left | days remaining in the month, today included |
 | Safe / day | budget left divided by days left (a dash without budgets or for a past month) |
-| Unplanned | spending in categories that have no budget (`budgetSummary().unplanned`; independent of the generic budget) |
+| Unbudgeted | spending in categories that have no budget (`budgetSummary().unbudgeted`, formerly `unplanned`; independent of the generic budget) |
 | Needs, Wants, your own types | one card per type (your own only once it has a category); a row per category: name, a green "left" or pink "over" pill, amount, percent of budget, bar. "Set a budget" when there is none. Tap a row to open the budget sheet |
 | Savings goals | every goal with its progress; tap to edit, `+` on the right to move money to it, `+` in the title to create one |
 | Recurring | every recurring item (the management list), with its frequency (a weekly item has one row per due date in the month); in a month an item is not due its row says *Next Mar* instead of *Log*; `+` in the title to create one ([recurring.md](recurring.md)) |
+
+## What the headline figure covers
+
+The Budget / Spent pair, the *used* percentage and *Safe / day* measure one of two things, and the page says which (the block under the pair, `BudgetsView`):
+
+| `summary.scope` | Label | Budget | Spent |
+| --- | --- | --- | --- |
+| `overall` | **Overall monthly budget** | the generic monthly budget (Profile) | everything spent in the month |
+| `categories` | **Budgeted categories** | the sum of the category budgets | spending in categories that **have** a budget only |
+
+Spending in categories without a budget is **not** in the percentage in `categories` mode, so the block shows **Unbudgeted spending: X** (always in that mode; in `overall` mode only when there are category budgets, marked *already counted in Spent*) and, below it, up to four chips *Category, amount, Set budget* (`summary.unbudgetedCategories`, biggest first) that open the budget sheet of that category. More than four: *+N more below* (the cards below show *Set a budget* on every such row). The Month page's Budget card has the same label as a small line under the percentage (*Overall monthly budget* / *Budgeted categories*); when unbudgeted spending exists it is a button to the Budgets page (unless that page is hidden). `NoteCard` takes the `hint` and `onClick` props for this.
 
 ## Generic monthly budget
 

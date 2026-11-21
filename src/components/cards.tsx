@@ -171,22 +171,35 @@ export function ShareCard({ tone, label, amount, share, target, status, shareTit
   );
 }
 
-/** One of the pastel cards under the two big ones. `icon` replaces the label in Ultra minimal. */
-export function NoteCard({ label, value, unit, title, icon: Icon, tone }: { label: string; value: string; unit?: string; title?: string; icon: LucideIcon; tone: keyof typeof SHARE }) {
+/**
+ * One of the pastel cards under the two big ones. `icon` replaces the label in Ultra minimal. `hint` is a
+ * small line under the figure (what it covers); `onClick` makes the whole card a button.
+ */
+export function NoteCard({ label, value, unit, title, icon: Icon, tone, hint, onClick }: { label: string; value: string; unit?: string; title?: string; icon: LucideIcon; tone: keyof typeof SHARE; hint?: string; onClick?: () => void }) {
   const c = SHARE[tone];
-  return (
-    <div
-      role="group"
-      title={title ?? label}
-      aria-label={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
-      className={`${c.card} rounded-3xl p-3 sm:p-4 relative text-center min-w-0`}
-    >
+  const inner = (
+    <>
       <Icon size={16} className={`um-only mx-auto ${c.label}`} aria-hidden="true" />
       <span className={`um-sr text-[11px] font-bold uppercase tracking-wider ${c.label} block truncate`}>{t(label)}</span>
       <div className="mt-1">
         <span className={`text-lg min-[400px]:text-xl sm:text-2xl font-extrabold tabular-nums ${c.number} tracking-tight whitespace-nowrap`}>{value}</span>
         {unit && <small className={`ml-0.5 text-xs font-semibold ${c.label}`}>{unit}</small>}
       </div>
+      {hint && <span className={`um-hide mt-0.5 line-clamp-2 text-[10px] font-bold leading-tight ${c.label}`}>{hint}</span>}
+    </>
+  );
+  const className = `${c.card} rounded-3xl p-3 sm:p-4 relative text-center min-w-0`;
+  const aria = `${label}: ${value}${unit ? ` ${unit}` : ''}${hint ? `, ${hint}` : ''}`;
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} title={title ?? label} aria-label={aria} className={`${className} pressable block w-full`}>
+        {inner}
+      </button>
+    );
+  }
+  return (
+    <div role="group" title={title ?? label} aria-label={aria} className={className}>
+      {inner}
     </div>
   );
 }

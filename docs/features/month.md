@@ -72,4 +72,4 @@ Remembered in `localStorage`: `koink_month_layout`, `koink_month_open`, `koink_m
 
 ## Card styles swapped
 
-`NoteCard` (Left, Per day, Budget; also Days left / Safe per day / Unplanned on Budgets and Saved / Kept / Per day on Statistics) now wears the pastel, tall card the shares used to have (`kc-macro-*` colours, `tone` prop: `needs` blue, `wants` amber, `savings` purple). `ShareCard` (Needs, Wants, Savings) now wears the small yellow note card (`bg-nutrient`) with its share line under the amount. Both live in `src/components/cards.tsx`; the status icons (target reached / over) stay on the share cards.
+`NoteCard` (Left, Per day, Budget; also Days left / Safe per day / Unbudgeted on Budgets and Saved / Kept / Per day on Statistics) now wears the pastel, tall card the shares used to have (`kc-macro-*` colours, `tone` prop: `needs` blue, `wants` amber, `savings` purple). `ShareCard` (Needs, Wants, Savings) now wears the small yellow note card (`bg-nutrient`) with its share line under the amount. Both live in `src/components/cards.tsx`; the status icons (target reached / over) stay on the share cards.

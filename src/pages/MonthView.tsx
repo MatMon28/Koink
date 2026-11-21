@@ -34,7 +34,7 @@ interface CategoryCard {
 const prefersReducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export function MonthView() {
-  const { data, selectedMonth, money, moneyFit, openSheet, eraseAll, updateSettings } = useApp();
+  const { data, selectedMonth, money, moneyFit, openSheet, eraseAll, updateSettings, setActiveTab } = useApp();
   const totals = useMemo(() => monthTotals(data.txs, selectedMonth), [data.txs, selectedMonth]);
   const shares = ruleShares(totals);
   const budget = budgetSummary(data.profile, totals);
@@ -399,7 +399,15 @@ export function MonthView() {
               label={t('Budget')}
               value={budget.budget > 0 ? `${percent(budget.spent, budget.budget)}%` : '–'}
               unit={budget.budget > 0 ? t('used') : undefined}
-              title={budget.budget > 0 ? t('{v} of {v2} budgeted', { v: money(budget.spent), v2: money(budget.budget) }) : t('No budgets set')}
+              hint={budget.budget > 0 ? (budget.scope === 'overall' ? t('Overall monthly budget') : t('Budgeted categories')) : undefined}
+              title={
+                budget.budget === 0
+                  ? t('No budgets set')
+                  : budget.scope === 'overall'
+                    ? t('{v} of the {v2} overall monthly budget (everything you spent)', { v: money(budget.spent), v2: money(budget.budget) })
+                    : t('{v} of {v2} in budgeted categories. Unbudgeted spending of {v3} is not counted. Tap to see it.', { v: money(budget.spent), v2: money(budget.budget), v3: money(budget.unbudgeted) })
+              }
+              onClick={budget.budget > 0 && budget.scope === 'categories' && budget.unbudgeted > 0 && !data.settings.hideBudgets ? () => setActiveTab('budgets') : undefined}
             />
           </div>
           {!hideSplit && (

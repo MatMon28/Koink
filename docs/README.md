@@ -42,7 +42,8 @@
 | Reminder notifications | [notifications.md](notifications.md) |
 | Launch animation | [launch-intro.md](launch-intro.md) |
 | Accounts, expense categories, currencies and exchange rates | [features/accounts.md](features/accounts.md), [features/categories.md](features/categories.md), [features/currencies.md](features/currencies.md) |
-| Backup, restore, sample journal, delete all data | [features/backup.md](features/backup.md) |
+| Backup, restore with preview, "not saved" banner, sample journal, delete all data | [features/backup.md](features/backup.md) |
+| Excel export (readable spreadsheet, not a backup) | [features/excel-export.md](features/excel-export.md) |
 | Installing the app, offline use, home-screen shortcuts | [pwa.md](pwa.md) |
 | Swipes and Back | [gestures.md](gestures.md) |
 

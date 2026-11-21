@@ -40,6 +40,7 @@ Everything is `localStorage`, on the device, never sent anywhere.
 | --- | --- |
 | `koink_journal_v1` | The whole `AppData` as JSON. Written after every change (`store.tsx`). The constant is `STORAGE_KEY` in `storage.ts`. |
 | `koink_month_layout`, `koink_month_open`, `koink_month_trackers_open` | Month page: layout, open category cards, open tracker cards. |
+| `koink_last_backup` | Epoch ms of the last backup file saved from this device (outside the journal; shown in Settings > Your data). `recordBackup()` in `storage.ts`. |
 | `koink_tx_filter` | Transactions page filter. |
 | `koink_stats_range`, `koink_stats_from`, `koink_stats_to`, `koink_stats_trend_open`, `koink_stats_months_open`, `koink_stats_where_open`, `koink_stats_chart_open`, `koink_stats_chart_res`, `koink_stats_chart_type`, `koink_stats_chart_cmp`, `koink_stats_chart_base`, `koink_stats_chart_cfrom`, `koink_stats_chart_cto` | Statistics page: period (1 / 3 / 6 / 12 / custom, with its two dates), open sections, expense-chart resolution, type (bars / line), comparison (off / periods / categories), the second period's kind and its two dates. |
 | `koink_tx_filter_open` | Transactions page: whether the filter panel is open. |
@@ -90,6 +91,6 @@ Changing the currency changes the symbol only: amounts are not converted.
 
 ## Changes of this round (types)
 
-- `Profile.monthlyBudget: number` (0 = off): the generic monthly budget. Missing in older backups = 0. `budgetSummary` returns `{ budget, spent, left, generic, categoryBudget, unplanned }`.
+- `Profile.monthlyBudget: number` (0 = off): the generic monthly budget. Missing in older backups = 0. `budgetSummary` returns `{ budget, spent, left, generic, scope ('overall' | 'categories'), categoryBudget, unbudgeted, unbudgetedCategories: { id, total }[], unplanned (= unbudgeted, old name) }`: `scope` says what `spent` covers ([features/budgets.md](features/budgets.md#what-the-headline-figure-covers)).
 - `Recurring.unit?: 'month' | 'week'` and `Recurring.anchor?: string` (`YYYY-MM-DD`, weekly items only). `every` counts months or weeks depending on `unit`. Missing = monthly, so older backups load unchanged.
 - `logRecurring(item, month, date?)`: `date` is the due date of one weekly occurrence.
