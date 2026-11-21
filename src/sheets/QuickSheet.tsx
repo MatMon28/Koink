@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Plus, Repeat } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { RecurringRow } from '../components/RecurringRow';
-import { frequentEntries, monthTotals, recurringEntry, recurringForMonth } from '../lib/calc';
+import { frequentEntries, monthTotals, recurringSlots, slotEntry } from '../lib/calc';
 import { categoryMeta } from '../lib/categories';
 import { formatMonth, todayStr } from '../lib/dates';
 import { useApp, useSheet } from '../lib/store';
@@ -61,9 +61,9 @@ export function RecurringSheet() {
   const { data, selectedMonth, money, openSheet, closeSheet } = useApp();
   const items = useMemo(() => (isOpen ? monthTotals(data.txs, selectedMonth).items : []), [isOpen, data.txs, selectedMonth]);
   // Only what belongs to this month: monthly items and the ones whose turn it is (every 3 months...).
-  const list = recurringForMonth(data.recurring, selectedMonth, items);
-  const due = list.filter((r) => !recurringEntry(items, r));
-  const dueOut = due.filter((r) => r.kind === 'expense').reduce((sum, r) => sum + r.amount, 0);
+  const list = recurringSlots(data.recurring, selectedMonth, items);
+  const due = list.filter((slot) => !slotEntry(items, slot));
+  const dueOut = due.filter((slot) => slot.item.kind === 'expense').reduce((sum, slot) => sum + slot.item.amount, 0);
 
   return (
     <Modal isOpen={isOpen} onClose={closeSheet} title={t('Recurring')} subtitle={formatMonth(selectedMonth)} dockId="recurring" maxWidth="max-w-md">
@@ -81,8 +81,8 @@ export function RecurringSheet() {
           <p className="text-sm font-medium text-[var(--muted)]">{t('Rent, salary, subscriptions: set them up once, then log each month with one tap.')}</p>
         ) : (
           <div className="divide-y divide-[var(--border)] border border-[var(--border)] rounded-2xl px-3">
-            {list.map((item) => (
-              <RecurringRow key={item.id} item={item} month={selectedMonth} monthItems={items} />
+            {list.map((slot) => (
+              <RecurringRow key={`${slot.item.id}${slot.date ?? ''}`} item={slot.item} date={slot.date} month={selectedMonth} monthItems={items} />
             ))}
           </div>
         )}

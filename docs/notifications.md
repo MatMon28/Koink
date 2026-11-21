@@ -11,7 +11,7 @@ Everything is opt-in (all off by default), scheduled on the device, and never le
 | Reminder | You choose | When | A tap opens |
 | --- | --- | --- | --- |
 | **Daily reminder** | a time (21:00) | every day | Add expense |
-| **Recurring items** | a time (09:00) | on the day of the month each recurring item is due; items due the same day share one notification. **Monthly items only**: an item that repeats every N months (N > 1) has no reminder, because the alarm repeats every month and cannot skip | the Recurring checklist, on the current month |
+| **Recurring items** | a time (09:00) | on the day of the month each recurring item is due; items due the same day share one notification. **Monthly items only** (weekly items have no reminder either): an item that repeats every N months (N > 1) has no reminder, because the alarm repeats every month and cannot skip | the Recurring checklist, on the current month |
 | **Weekly review** | a weekday (Sunday) and a time (18:00) | once a week | Statistics |
 | **New month** | a time (09:00) | on the 1st | Budgets |
 

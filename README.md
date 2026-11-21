@@ -25,9 +25,9 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | Task | Source files | Document |
 | --- | --- | --- |
 | **Month page** (hero cards, needs / wants / savings, category cards, layouts) | `src/pages/MonthView.tsx`, `src/components/cards.tsx` | [features/month.md](docs/features/month.md) |
-| **Transactions page** (search, filter, list / 2 days / scrolling days, category first and title below, quick delete) | `src/pages/TransactionsView.tsx` | [features/transactions.md](docs/features/transactions.md) |
-| **Budgets page** (category budgets per type, goals, recurring list; hiding the page) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx`, `src/lib/tabs.ts` | [features/budgets.md](docs/features/budgets.md) |
-| **Statistics page** (averages, balance trend, breakdown) | `src/pages/StatsView.tsx` | [features/statistics.md](docs/features/statistics.md) |
+| **Transactions page** (kind chips above the search, filter panel, list / 2 days / day cards, category first and title below, quick delete) | `src/pages/TransactionsView.tsx` | [features/transactions.md](docs/features/transactions.md) |
+| **Budgets page** (collapsible cards, category budgets per type, goals, recurring list; hiding the page) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx`, `src/lib/tabs.ts`, `budgetSummary` in `src/lib/calc.ts` | [features/budgets.md](docs/features/budgets.md) |
+| **Statistics page** (1 month / 3 / 6 / 12 / custom period, averages, expense chart, balance trend, breakdown) | `src/pages/StatsView.tsx`, `src/lib/expenseSeries.ts` | [features/statistics.md](docs/features/statistics.md) |
 | **Add / edit an entry** (number pad, title + long note, account, currency), "Log again" | `src/sheets/TxSheet.tsx`, `src/sheets/QuickSheet.tsx`, `src/sheets/shared.tsx`, `NumPad` / `AmountStepper` in `src/components/ui.tsx` | [features/entries.md](docs/features/entries.md) |
 | **Widgets** (single button, multiple buttons, expense-type buttons; Android home screen + Month-page strip) | `src/lib/widgets.ts`, `src/lib/widgetBridge.ts`, `src/lib/useWidgets.ts`, `src/sheets/WidgetsSettings.tsx`, `src/components/WidgetButtons.tsx`, `src/components/WidgetStrip.tsx`, `android/app/src/main/java/com/koink/app/KoinkWidgetProvider.java` | [features/widgets.md](docs/features/widgets.md) |
 | **Gift cards** (add a card, pay an expense with it, tracker on the Month page, optional bottom-bar button) | `src/lib/giftcards.ts`, `src/sheets/GiftCardPickerSheet.tsx` (what the gift card button opens), `src/sheets/GiftCardSheet.tsx`, `src/sheets/TxSheet.tsx` (*Pay with a gift card*), `src/pages/MonthView.tsx` (tracker) | [features/gift-cards.md](docs/features/gift-cards.md) |
@@ -35,9 +35,9 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **Language** (English / Italian, `t()`, the Italian dictionary) | `src/lib/i18n.ts`, `src/lib/i18n.it.ts`, `src/sheets/SettingsSheet.tsx` | [features/language.md](docs/features/language.md) |
 | **Expense categories** (own, hide, delete, own types besides needs / wants, the expandable field in Settings) | `src/lib/categories.ts`, `src/lib/icons.ts`, `src/sheets/CategoriesSheet.tsx`, `BucketPicker` in `src/sheets/shared.tsx` | [features/categories.md](docs/features/categories.md) |
 | **Currencies and exchange rates** (per-entry currency, rates from Frankfurter) | `src/lib/format.ts`, `refreshRates` in `src/lib/store.tsx`, `src/sheets/TxSheet.tsx`, `src/sheets/SettingsSheet.tsx` | [features/currencies.md](docs/features/currencies.md) |
-| **Recurring items** (monthly or every N months) | `src/sheets/EditSheets.tsx`, `src/sheets/QuickSheet.tsx`, `src/components/RecurringRow.tsx`, `recurringDue` in `src/lib/calc.ts` | [features/recurring.md](docs/features/recurring.md) |
+| **Recurring items** (every N months or every N weeks) | `src/sheets/EditSheets.tsx`, `src/sheets/QuickSheet.tsx`, `src/components/RecurringRow.tsx`, `recurringDue`, `recurringSlots` in `src/lib/calc.ts` | [features/recurring.md](docs/features/recurring.md) |
 | **Savings goals** | `src/sheets/EditSheets.tsx` (`GoalSheet`), `src/lib/calc.ts` (`goalSaved`) | [features/savings-goals.md](docs/features/savings-goals.md) |
-| **Profile and the budget rule** (50 / 30 / 20), accounts with their balances | `src/sheets/ProfileSheet.tsx`, `src/sheets/ProfileAccounts.tsx` | [features/profile.md](docs/features/profile.md) |
+| **Profile, the generic monthly budget and the budget rule** (50 / 30 / 20), accounts with their balances | `src/sheets/ProfileSheet.tsx`, `src/sheets/ProfileAccounts.tsx` | [features/profile.md](docs/features/profile.md) |
 | **Settings** (language, appearance, currency, bottom bar, widgets, install card) | `src/sheets/SettingsSheet.tsx`, `src/components/InstallApp.tsx` | [features/settings.md](docs/features/settings.md) |
 | **Backup, restore, sample data, delete all** | `src/lib/store.tsx`, `src/lib/platform.ts` (`saveTextFile`), `src/lib/demo.ts` | [features/backup.md](docs/features/backup.md) |
 | **Themes and style presets** | `src/lib/themes.ts`, `src/index.css`, `src/styles/presets.css` | [features/themes.md](docs/features/themes.md), [design-system.md](docs/design-system.md) |
@@ -71,7 +71,7 @@ src/App.tsx           shell: header, page swiper, pages, dock, sheets
 src/pages/            the four pages
 src/sheets/           every bottom sheet (entry, accounts, categories, goals, budgets, settings...)
 src/components/       shared UI (cards, modal, header, dock, inputs)
-src/lib/              state, maths, dates, themes, platform bridges, widgets, gift cards (no JSX except store.tsx)
+src/lib/              state, maths, dates, expense chart series, themes, platform bridges, widgets, gift cards (no JSX except store.tsx)
 src/brand/art.js      all Koink artwork: logo, wordmark, launch animations (plain JS, shared with scripts/)
 src/styles/           presets.css (the six style presets), intro.css (launch animation)
 public/               favicon, manifest, PWA icons, brand/ (brand sheet, light and dark assets), downloads/ (the project archive)
@@ -87,7 +87,17 @@ docs/                 documentation (index: docs/README.md)
 3. Every sheet is a `<Modal>`; every sheet is opened with `openSheet({ type: ... })`. The list of types is the `Sheet` union in `src/lib/types.ts`.
 4. After adding, renaming or deleting a file, update its row in `docs/file-map/` and, if it is a feature, the matching `docs/features/*.md` (rule and table in [docs/README.md](docs/README.md#keeping-the-docs-current)).
 
-## Latest round: Frankfurter rates, text-free widgets, expense types, recurring every N months, always-visible dock
+## Newest round: filters, collapsible cards, stats periods and chart, weekly recurring, monthly budget
+
+- **Unsaved-input question:** *Don't save* is now on the right (Keep editing on the left). [docs/features/entries.md](docs/features/entries.md)
+- **Transactions:** the All / Expenses / Income / Savings chips sit **above the search bar**; next to the search bar a **filter icon** opens a panel (category, account, dates, amounts). The sideways *Days* layout is now called **Day cards** and the page scrolls vertically over it again. [docs/features/transactions.md](docs/features/transactions.md)
+- **Budgets:** every card (needs, wants, own types, goals, recurring) **collapses**, remembered per card. [docs/features/budgets.md](docs/features/budgets.md)
+- **Monthly budget:** one **generic monthly budget** in the Profile, used as the Budget figure on the Budgets and Month pages. [docs/features/budgets.md](docs/features/budgets.md#generic-monthly-budget), [docs/features/profile.md](docs/features/profile.md)
+- **Statistics:** new **1 month** and **Custom** (from / to dates) periods; a new **Expenses over time** chart (all expenses or picked categories, per day / week / month); **Where it went** collapses. [docs/features/statistics.md](docs/features/statistics.md)
+- **Month page:** the "Needs · Wants · Savings" caption above the three cards is gone. [docs/features/month.md](docs/features/month.md)
+- **Recurring items** can repeat every N **weeks** (each due date is its own checklist line); the *Every 2 months* quick button is removed. [docs/features/recurring.md](docs/features/recurring.md)
+
+## Previous round: Frankfurter rates, text-free widgets, expense types, recurring every N months, always-visible dock
 
 - **Exchange rates** now come from [Frankfurter](https://frankfurter.dev) (ECB rates, free, no key) instead of open.er-api.com; currencies it does not list keep the built-in approximate rate. [docs/features/currencies.md](docs/features/currencies.md)
 - **Widgets:** the buttons have no text any more, only the round icon (the name stays as tooltip / accessibility label), in the app and on Android. [docs/features/widgets.md](docs/features/widgets.md)

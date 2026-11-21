@@ -92,3 +92,7 @@ Run in headless Chromium (390 x 800, touch): add expense through the number pad,
 ## Frankfurter / types / frequency round
 
 Checked: `tsc -b` and ESLint clean, `vite build` succeeds; the Frankfurter endpoint (`/v1/latest?base=USD`) was called once and its answer shape matches `refreshRates`. **Not** exercised in a browser: the 2 days layout, the expandable categories field, hiding Budgets, the frequency picker and the always-visible dock should be tried by hand (steps in the feature docs). The Android widget layout change (no text) is not compiled, as before.
+
+## Checked this round
+
+- `tsc`, `eslint` and `vite build` pass. `recurringDates`, `recurringSlots`, `nextDueDate`, `expenseSeries` and `budgetSummary` were exercised with a small script (weekly every 2 weeks from 3 Jan 2025, day / week / month buckets, category predicate, generic budget). The new screens (filter panel, chart, custom period, weekly form) were not driven in a browser.

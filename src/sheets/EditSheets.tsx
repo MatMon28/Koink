@@ -5,7 +5,7 @@ import { Modal } from '../components/Modal';
 import { AmountStepper, ConfirmDialog, SectionLabel, seg, textInput } from '../components/ui';
 import { goalSaved, monthsBack, monthTotals, totalsByMonth } from '../lib/calc';
 import { allExpenseCategories, expenseCategory, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
-import { addMonths, currentMonth, formatMonth, ordinal } from '../lib/dates';
+import { addMonths, currentMonth, defaultDateFor, formatDay, formatMonth, ordinal } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
 import { useApp, useSheet } from '../lib/store';
 import type { Sheet } from '../lib/types';
@@ -24,8 +24,9 @@ export function RecurringEditSheet() {
   );
 }
 
-/** Frequencies offered as buttons: months between two due dates. Any other number is one stepper away. */
-const EVERY_CHOICES: [number, string][] = [[1, 'Monthly'], [2, 'Every 2 months'], [3, 'Quarterly'], [6, 'Every 6 months'], [12, 'Yearly']];
+/** Frequencies offered as buttons. Any other number is one stepper away. */
+const MONTH_CHOICES: [number, string][] = [[1, 'Monthly'], [3, 'Quarterly'], [6, 'Every 6 months'], [12, 'Yearly']];
+const WEEK_CHOICES: [number, string][] = [[1, 'Weekly'], [2, 'Every 2 weeks'], [4, 'Every 4 weeks']];
 
 function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit' }> }) {
   const { data, symbol, money, selectedMonth, saveRecurring, removeRecurring, closeSheet, showToast } = useApp();
@@ -37,17 +38,35 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
   const [day, setDay] = useState(original?.day ?? 1);
   const [every, setEvery] = useState(original?.every ?? 1);
   const [start, setStart] = useState(original?.start ?? selectedMonth);
+  // Months or weeks. A weekly item counts from a first date, which also sets its weekday.
+  const [unit, setUnit] = useState<'month' | 'week'>(original?.unit === 'week' && original.anchor ? 'week' : 'month');
+  const [anchor, setAnchor] = useState(original?.anchor ?? defaultDateFor(selectedMonth));
   const [confirm, setConfirm] = useState(false);
 
   // Hidden categories are not offered, except the one this item already has.
   const choices = kind === 'expense' ? visibleExpenseCategories().concat(original && isCategoryHidden(original.categoryId) ? allExpenseCategories().filter((c) => c.id === original.categoryId) : []) : INCOME_SOURCES;
   const category = choices.some((c) => c.id === categoryId) ? categoryId : choices[0].id;
   const safeDay = Math.min(28, Math.max(1, Math.round(day) || 1));
-  const safeEvery = Math.min(60, Math.max(1, Math.round(every) || 1));
-  const valid = name.trim().length > 0 && amount > 0;
+  const weekly = unit === 'week';
+  const safeEvery = Math.min(weekly ? 52 : 60, Math.max(1, Math.round(every) || 1));
+  const valid = name.trim().length > 0 && amount > 0 && (!weekly || /^\d{4}-\d{2}-\d{2}$/.test(anchor));
+  const choices2 = weekly ? WEEK_CHOICES : MONTH_CHOICES;
+
+  const switchUnit = (next: 'month' | 'week') => {
+    if (next === unit) return;
+    setUnit(next);
+    setEvery(1);
+  };
 
   const save = () => {
     if (!valid) return;
+    if (weekly) {
+      // `day` (day of the month) only orders the list for a weekly item: the anchor's day is as good as any.
+      saveRecurring({ id: original?.id, kind, name, amount, categoryId: category, day: Math.min(28, Number(anchor.slice(8, 10))), every: safeEvery, start: anchor.slice(0, 7), unit: 'week', anchor });
+      closeSheet();
+      showToast(safeEvery === 1 ? t('{v} · every week', { v: name.trim() }) : t('{v} · every {n} weeks', { v: name.trim(), n: safeEvery }));
+      return;
+    }
     saveRecurring({ id: original?.id, kind, name, amount, categoryId: category, day: safeDay, every: safeEvery, start });
     closeSheet();
     showToast(
@@ -79,8 +98,8 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
       </div>
 
       <div>
-        <SectionLabel>{safeEvery === 1 ? t('Amount each month') : t('Amount each time')}</SectionLabel>
-        <AmountStepper value={amount} onChange={setAmount} unit={symbol} ariaLabel={safeEvery === 1 ? t('Amount each month') : t('Amount each time')} startOpen={!original} chips={kind === 'expense' ? [5, 10, 50, 100] : [100, 500, 1000]} />
+        <SectionLabel>{safeEvery === 1 && !weekly ? t('Amount each month') : t('Amount each time')}</SectionLabel>
+        <AmountStepper value={amount} onChange={setAmount} unit={symbol} ariaLabel={safeEvery === 1 && !weekly ? t('Amount each month') : t('Amount each time')} startOpen={!original} chips={kind === 'expense' ? [5, 10, 50, 100] : [100, 500, 1000]} />
       </div>
 
       <div>
@@ -89,41 +108,69 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
       </div>
 
       <div>
-        <SectionLabel>{t('Day of the month')}</SectionLabel>
-        <AmountStepper value={day} onChange={setDay} unit={t('day')} min={1} max={28} decimals={0} ariaLabel={t('Day of the month')} />
-        <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">{t('Days stop at the 28th so every month has one.')}</p>
-      </div>
-
-      <div>
         <SectionLabel>{t('Repeats')}</SectionLabel>
+        <div className="flex gap-1.5 mb-2" role="group" aria-label={t('Repeat in')}>
+          <button type="button" aria-pressed={!weekly} onClick={() => switchUnit('month')} className={seg(!weekly)}>{t('Months')}</button>
+          <button type="button" aria-pressed={weekly} onClick={() => switchUnit('week')} className={seg(weekly)}>{t('Weeks')}</button>
+        </div>
         <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('Repeats')}>
-          {EVERY_CHOICES.map(([months, label]) => (
-            <button key={months} type="button" aria-pressed={safeEvery === months} onClick={() => setEvery(months)} className={`${seg(safeEvery === months)} flex-none px-3`}>
+          {choices2.map(([count, label]) => (
+            <button key={count} type="button" aria-pressed={safeEvery === count} onClick={() => setEvery(count)} className={`${seg(safeEvery === count)} flex-none px-3`}>
               {t(label)}
             </button>
           ))}
         </div>
         <div className="mt-2">
-          <AmountStepper value={every} onChange={setEvery} unit={safeEvery === 1 ? t('month') : t('months')} min={1} max={60} decimals={0} ariaLabel={t('Every how many months')} />
+          <AmountStepper
+            value={every}
+            onChange={setEvery}
+            unit={weekly ? (safeEvery === 1 ? t('week') : t('weeks')) : safeEvery === 1 ? t('month') : t('months')}
+            min={1}
+            max={weekly ? 52 : 60}
+            decimals={0}
+            ariaLabel={weekly ? t('Every how many weeks') : t('Every how many months')}
+          />
         </div>
-        {safeEvery > 1 && (
-          <div className="mt-2 flex items-center justify-between gap-2 rounded-2xl bg-[var(--inset)] border border-[var(--border)] px-2 py-1.5">
-            <button type="button" onClick={() => setStart(addMonths(start, -1))} className="pressable size-9 rounded-full hover:bg-[var(--hover)] flex items-center justify-center" aria-label={t('Earlier month')}>
-              <ChevronLeft size={16} />
-            </button>
-            <span className="min-w-0 text-center">
-              <span className="block text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('First due in')}</span>
-              <span className="block text-sm font-extrabold text-[var(--text)]">{formatMonth(start)}</span>
-            </span>
-            <button type="button" onClick={() => setStart(addMonths(start, 1))} className="pressable size-9 rounded-full hover:bg-[var(--hover)] flex items-center justify-center" aria-label={t('Later month')}>
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
-        <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">
-          {safeEvery === 1 ? t('Due every month.') : t('Due every {n} months, counted from the month above. It only shows on the checklist in those months.', { n: safeEvery })}
-        </p>
       </div>
+
+      {weekly ? (
+        <div>
+          <SectionLabel htmlFor="rec-anchor">{t('First due on')}</SectionLabel>
+          <input id="rec-anchor" type="date" value={anchor} onChange={(event) => setAnchor(event.target.value)} className={`${textInput} text-sm`} />
+          <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">
+            {/^\d{4}-\d{2}-\d{2}$/.test(anchor)
+              ? safeEvery === 1
+                ? t('Due every week, on the same weekday as {v}. Each due date is its own line on the checklist.', { v: formatDay(anchor, false) })
+                : t('Due every {n} weeks, counted from {v}. Each due date is its own line on the checklist.', { n: safeEvery, v: formatDay(anchor, false) })
+              : t('Pick the first date it is due.')}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div>
+            <SectionLabel>{t('Day of the month')}</SectionLabel>
+            <AmountStepper value={day} onChange={setDay} unit={t('day')} min={1} max={28} decimals={0} ariaLabel={t('Day of the month')} />
+            <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">{t('Days stop at the 28th so every month has one.')}</p>
+          </div>
+          {safeEvery > 1 && (
+            <div className="flex items-center justify-between gap-2 rounded-2xl bg-[var(--inset)] border border-[var(--border)] px-2 py-1.5">
+              <button type="button" onClick={() => setStart(addMonths(start, -1))} className="pressable size-9 rounded-full hover:bg-[var(--hover)] flex items-center justify-center" aria-label={t('Earlier month')}>
+                <ChevronLeft size={16} />
+              </button>
+              <span className="min-w-0 text-center">
+                <span className="block text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('First due in')}</span>
+                <span className="block text-sm font-extrabold text-[var(--text)]">{formatMonth(start)}</span>
+              </span>
+              <button type="button" onClick={() => setStart(addMonths(start, 1))} className="pressable size-9 rounded-full hover:bg-[var(--hover)] flex items-center justify-center" aria-label={t('Later month')}>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+          <p className="-mt-2 text-[11px] font-medium text-[var(--muted)]">
+            {safeEvery === 1 ? t('Due every month.') : t('Due every {n} months, counted from the month above. It only shows on the checklist in those months.', { n: safeEvery })}
+          </p>
+        </>
+      )}
 
       <SaveRow
         tone={kind}

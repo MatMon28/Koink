@@ -41,7 +41,9 @@ Everything is `localStorage`, on the device, never sent anywhere.
 | `koink_journal_v1` | The whole `AppData` as JSON. Written after every change (`store.tsx`). The constant is `STORAGE_KEY` in `storage.ts`. |
 | `koink_month_layout`, `koink_month_open`, `koink_month_trackers_open` | Month page: layout, open category cards, open tracker cards. |
 | `koink_tx_filter` | Transactions page filter. |
-| `koink_stats_range`, `koink_stats_trend_open`, `koink_stats_months_open` | Statistics page: range and open sections. |
+| `koink_stats_range`, `koink_stats_from`, `koink_stats_to`, `koink_stats_trend_open`, `koink_stats_months_open`, `koink_stats_where_open`, `koink_stats_chart_open`, `koink_stats_chart_res` | Statistics page: period (1 / 3 / 6 / 12 / custom, with its two dates), open sections, expense-chart resolution. |
+| `koink_tx_filter_open` | Transactions page: whether the filter panel is open. |
+| `koink_budgets_open_<id>` | Budgets page: whether a card (`bucket_<bucket>`, `goals`, `recurring`) is open. |
 | `koink_boot` | `{ theme, style, bg, ultra }`: the few values the inline script of `index.html` needs to paint the first frame in the saved colours. Rewritten by `themes.ts` on every theme change; safe to delete. [launch-intro.md](launch-intro.md) |
 | `koink_intro_last` | Index of the launch animation played last, so the next launch picks another. |
 
@@ -85,3 +87,9 @@ Other functions: `ruleShares` (needs / wants / savings as % of income, or of eve
 - `dates.ts`: days and months are **local** strings (`YYYY-MM-DD`, `YYYY-MM`), never UTC timestamps, so an entry logged late in the evening stays on its day. Month and weekday names are English constants, not `Intl`.
 
 Changing the currency changes the symbol only: amounts are not converted.
+
+## Changes of this round (types)
+
+- `Profile.monthlyBudget: number` (0 = off): the generic monthly budget. Missing in older backups = 0. `budgetSummary` returns `{ budget, spent, left, generic, categoryBudget, unplanned }`.
+- `Recurring.unit?: 'month' | 'week'` and `Recurring.anchor?: string` (`YYYY-MM-DD`, weekly items only). `every` counts months or weeks depending on `unit`. Missing = monthly, so older backups load unchanged.
+- `logRecurring(item, month, date?)`: `date` is the due date of one weekly occurrence.

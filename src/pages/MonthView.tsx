@@ -6,7 +6,7 @@ import { MonthNavigator } from '../components/MonthNavigator';
 import { WidgetStrip } from '../components/WidgetStrip';
 import { RecurringRow } from '../components/RecurringRow';
 import { Bar, ConfirmDialog } from '../components/ui';
-import { budgetSummary, goalSaved, monthTotals, recurringEntry, recurringForMonth, ruleShares } from '../lib/calc';
+import { budgetSummary, goalSaved, monthTotals, recurringSlots, ruleShares, slotEntry } from '../lib/calc';
 import { allExpenseCategories, categoryMeta, isCategoryHidden } from '../lib/categories';
 import { elapsedDays, formatDay, todayStr } from '../lib/dates';
 import { giftCardBalance, giftCardExpired } from '../lib/giftcards';
@@ -200,10 +200,10 @@ export function MonthView() {
   const incomeItems = totals.items.filter((tx) => tx.kind === 'income');
   const savingItems = totals.items.filter((tx) => tx.kind === 'saving');
   // Only what belongs to this month: monthly items and the ones whose turn it is (every 3 months...).
-  const monthRecurring = recurringForMonth(data.recurring, selectedMonth, totals.items);
-  const logged = monthRecurring.filter((r) => recurringEntry(totals.items, r));
-  const due = monthRecurring.filter((r) => !recurringEntry(totals.items, r));
-  const dueTotal = due.filter((r) => r.kind === 'expense').reduce((sum, r) => sum + r.amount, 0);
+  const monthRecurring = recurringSlots(data.recurring, selectedMonth, totals.items);
+  const logged = monthRecurring.filter((slot) => slotEntry(totals.items, slot));
+  const due = monthRecurring.filter((slot) => !slotEntry(totals.items, slot));
+  const dueTotal = due.filter((slot) => slot.item.kind === 'expense').reduce((sum, slot) => sum + slot.item.amount, 0);
 
   const trackerCard = (id: TrackerId) => {
     const open = layout === 'expanded' || openTrackers.includes(id);
@@ -338,8 +338,8 @@ export function MonthView() {
         addLabel={t('New recurring item')}
       >
         {data.recurring.length === 0 && <EmptyRow text={t('Rent, salary, subscriptions')} action={t('New')} onAdd={add} />}
-        {monthRecurring.map((item) => (
-          <RecurringRow key={item.id} item={item} month={selectedMonth} monthItems={totals.items} />
+        {monthRecurring.map((slot) => (
+          <RecurringRow key={`${slot.item.id}${slot.date ?? ''}`} item={slot.item} date={slot.date} month={selectedMonth} monthItems={totals.items} />
         ))}
       </FoldCard>
     );
@@ -404,9 +404,6 @@ export function MonthView() {
           </div>
           {!hideSplit && (
             <div className="space-y-1.5">
-              <div className="um-hide px-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{showOther ? t('Needs · Wants · Other · Savings') : t('Needs · Wants · Savings')}</span>
-              </div>
             <div className={`grid gap-2.5 sm:gap-3.5 ${showOther ? 'grid-cols-2 min-[480px]:grid-cols-4' : 'grid-cols-3'}`}>
               <ShareCard
                 tone="needs"

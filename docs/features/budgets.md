@@ -10,13 +10,21 @@ The page follows the month chosen in the month row (shared with the Month page).
 
 | Block | What it shows |
 | --- | --- |
-| Budget / Spent | `HeroPair`: the sum of all category budgets and the spending **in budgeted categories**; the pill is what is left (or over) |
+| Budget / Spent | `HeroPair`. **With a monthly budget set in the Profile** (below) it is that one amount against **everything spent**; otherwise the sum of all category budgets against the spending **in budgeted categories**. The pill is what is left (or over). A line under it shows the monthly budget (tap: opens the Profile) or invites you to set one |
 | Days left | days remaining in the month, today included |
 | Safe / day | budget left divided by days left (a dash without budgets or for a past month) |
-| Unplanned | spending in categories that have no budget |
+| Unplanned | spending in categories that have no budget (`budgetSummary().unplanned`; independent of the generic budget) |
 | Needs, Wants, your own types | one card per type (your own only once it has a category); a row per category: name, a green "left" or pink "over" pill, amount, percent of budget, bar. "Set a budget" when there is none. Tap a row to open the budget sheet |
 | Savings goals | every goal with its progress; tap to edit, `+` on the right to move money to it, `+` in the title to create one |
-| Recurring | every recurring item (the management list), with its frequency; in a month an item is not due its row says *Next Mar* instead of *Log*; `+` in the title to create one ([recurring.md](recurring.md)) |
+| Recurring | every recurring item (the management list), with its frequency (a weekly item has one row per due date in the month); in a month an item is not due its row says *Next Mar* instead of *Log*; `+` in the title to create one ([recurring.md](recurring.md)) |
+
+## Generic monthly budget
+
+**Profile > Monthly budget** (`profile.monthlyBudget`, 0 = off, step 50, chips +500 / +1000 / +2000) is one budget for all spending, on top of the category budgets, which keep working in the cards and category bars. `budgetSummary(profile, totals)` in `calc.ts` switches the Budget figure of this page and the Budget card of the Month page to it. Safe / day uses it too.
+
+## Collapsing the cards
+
+Every card (Needs, Wants, your own types, Savings goals, Recurring) folds shut with a tap on its header or chevron; the **+** of goals / recurring keeps working while folded. Open or closed is remembered per card as `koink_budgets_open_<id>` (`bucket_<bucket>`, `goals`, `recurring`). Folded cards still show their total in the header. The component is `SectionCard` in `BudgetsView.tsx`.
 
 ## Budget sheet (`BudgetSheet`)
 

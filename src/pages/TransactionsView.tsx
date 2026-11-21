@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Columns2, Columns3, List, Repeat, Search, StickyNote, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Columns2, Columns3, List, Repeat, Search, SlidersHorizontal, StickyNote, Trash2, X } from 'lucide-react';
 import { categoryMeta } from '../lib/categories';
 import { formatDay } from '../lib/dates';
 import { formatMoney, round2 } from '../lib/format';
-import { KeyIcon } from '../components/ui';
+import { KeyIcon, textInput } from '../components/ui';
 import { useApp } from '../lib/store';
 import type { Kind, Tx } from '../lib/types';
 import { usePersistentState } from '../lib/usePersistentState';
@@ -24,9 +24,23 @@ type View = 'list' | 'days' | 'pair';
 const VIEWS: { id: View; label: string; icon: typeof List; hint: string }[] = [
   { id: 'list', label: 'List', icon: List, hint: 'One list, newest first' },
   { id: 'pair', label: '2 days', icon: Columns2, hint: 'Two days next to each other' },
-  { id: 'days', label: 'Days', icon: Columns3, hint: 'Each day in its own card, side by side' },
+  { id: 'days', label: 'Day cards', icon: Columns3, hint: 'Each day in its own card; swipe sideways, scroll the page as usual' },
 ];
 const PAGE = 14;
+
+/** The extra filters behind the filter button. Empty = no restriction. */
+interface Extra {
+  /** `kind|categoryId` keys. */
+  cats: string[];
+  accounts: string[];
+  from: string;
+  to: string;
+  min: string;
+  max: string;
+}
+const NO_EXTRA: Extra = { cats: [], accounts: [], from: '', to: '', min: '', max: '' };
+const catKey = (tx: Tx) => `${tx.kind}|${tx.categoryId}`;
+const toggle = (list: string[], id: string) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
 
 interface Group {
   date: string;
@@ -118,11 +132,42 @@ export function TransactionsView() {
   const [filter, setFilter] = usePersistentState<Filter>('koink_tx_filter', 'all');
   const [view, setView] = usePersistentState<View>('koink_tx_view', 'list');
   const [limit, setLimit] = useState(PAGE);
+  const [panelOpen, setPanelOpen] = usePersistentState('koink_tx_filter_open', false);
+  const [extra, setExtra] = useState<Extra>(NO_EXTRA);
   const rail = useRef<HTMLDivElement>(null);
   const q = query.trim().toLowerCase();
+  const minAmount = parseFloat(extra.min.replace(',', '.'));
+  const maxAmount = parseFloat(extra.max.replace(',', '.'));
+  // How many of the extra filters are on (shown on the filter button).
+  const activeExtra = [extra.cats.length > 0, extra.accounts.length > 0, !!extra.from || !!extra.to, !Number.isNaN(minAmount) || !Number.isNaN(maxAmount)].filter(Boolean).length;
+  const patch = (next: Partial<Extra>) => {
+    setExtra((prev) => ({ ...prev, ...next }));
+    setLimit(PAGE);
+  };
+
+  // Categories offered in the panel: only the ones that carry entries of the kind being shown.
+  const catOptions = useMemo(() => {
+    const seen = new Map<string, { key: string; kind: Kind; name: string; icon: typeof List }>();
+    for (const tx of data.txs) {
+      if (filter !== 'all' && tx.kind !== filter) continue;
+      const key = catKey(tx);
+      if (seen.has(key)) continue;
+      const meta = categoryMeta(tx.kind, tx.categoryId, data.goals);
+      seen.set(key, { key, kind: tx.kind, name: meta.name, icon: meta.icon });
+    }
+    return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
+    // data.categories: names come from the category list
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.txs, data.goals, data.categories, filter]);
 
   const filtered = useMemo(() => data.txs.filter((tx) => {
     if (filter !== 'all' && tx.kind !== filter) return false;
+    if (extra.cats.length > 0 && !extra.cats.includes(catKey(tx))) return false;
+    if (extra.accounts.length > 0 && !extra.accounts.includes(tx.accountId ?? '_none')) return false;
+    if (extra.from && tx.date < extra.from) return false;
+    if (extra.to && tx.date > extra.to) return false;
+    if (!Number.isNaN(minAmount) && tx.amount < minAmount) return false;
+    if (!Number.isNaN(maxAmount) && tx.amount > maxAmount) return false;
     if (!q) return true;
     const account = tx.accountId ? data.accounts.find((a) => a.id === tx.accountId)?.name ?? '' : '';
     return (
@@ -134,7 +179,7 @@ export function TransactionsView() {
     );
     // data.categories: the names searched come from the category list
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [data.txs, data.goals, data.accounts, data.categories, filter, q]);
+  }), [data.txs, data.goals, data.accounts, data.categories, filter, q, extra, minAmount, maxAmount]);
 
   const groups = useMemo(() => {
     const out: Group[] = [];
@@ -172,33 +217,8 @@ export function TransactionsView() {
 
   return (
     <div className="um-stack space-y-3.5">
-      <div className="relative">
-        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none" aria-hidden="true" />
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setLimit(PAGE);
-          }}
-          placeholder={t('Search titles, notes, categories, amounts')}
-          aria-label={t('Search entries')}
-          enterKeyHint="search"
-          className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-full pl-11 pr-11 py-2.5 text-sm font-bold text-[var(--text)] placeholder:text-[var(--muted)]/70 placeholder:font-medium focus:outline-none focus:border-[var(--muted)] transition-colors [&::-webkit-search-cancel-button]:hidden"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery('')}
-            aria-label={t('Clear search')}
-            className="pressable absolute right-1.5 top-1/2 -translate-y-1/2 size-8 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
-          >
-            <X size={15} />
-          </button>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-center gap-2">
+      {/* Kind filter: above the search bar */}
+      <div className="flex justify-center">
         <div role="group" aria-label={t('Show')} className="inline-flex w-fit max-w-full items-center justify-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
           {FILTERS.map((item) => (
             <button
@@ -207,6 +227,7 @@ export function TransactionsView() {
               aria-pressed={filter === item.id}
               onClick={() => {
                 setFilter(item.id);
+                setExtra((prev) => ({ ...prev, cats: [] })); // the category list changes with the kind
                 setLimit(PAGE);
               }}
               className={`pressable px-3.5 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap ${
@@ -219,7 +240,148 @@ export function TransactionsView() {
             </button>
           ))}
         </div>
-        <div role="group" aria-label={t('Layout')} className="um-hide inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
+      </div>
+
+      {/* Search bar with the filter button next to it */}
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none" aria-hidden="true" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setLimit(PAGE);
+            }}
+            placeholder={t('Search titles, notes, categories, amounts')}
+            aria-label={t('Search entries')}
+            enterKeyHint="search"
+            className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-full pl-11 pr-11 py-2.5 text-sm font-bold text-[var(--text)] placeholder:text-[var(--muted)]/70 placeholder:font-medium focus:outline-none focus:border-[var(--muted)] transition-colors [&::-webkit-search-cancel-button]:hidden"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              aria-label={t('Clear search')}
+              className="pressable absolute right-1.5 top-1/2 -translate-y-1/2 size-8 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setPanelOpen(!panelOpen)}
+          aria-expanded={panelOpen}
+          aria-label={t('Filters')}
+          title={t('Filters')}
+          className={`pressable relative size-11 shrink-0 rounded-full border flex items-center justify-center ${
+            panelOpen || activeExtra > 0
+              ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]'
+              : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text)] hover:bg-[var(--inset)]'
+          }`}
+        >
+          <SlidersHorizontal size={17} aria-hidden="true" />
+          {activeExtra > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-[#F6D0D0] text-[#7A2727] text-[10px] font-extrabold flex items-center justify-center tabular-nums">{activeExtra}</span>
+          )}
+        </button>
+      </div>
+
+      {/* Filter panel: category, account, dates, amounts */}
+      <div className="accordion-grid" data-open={panelOpen} inert={!panelOpen}>
+        <div className="accordion-inner">
+          <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-4 space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-extrabold text-[var(--text)]">{t('Filters')}</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setExtra(NO_EXTRA);
+                  setLimit(PAGE);
+                }}
+                disabled={activeExtra === 0}
+                className="pressable px-2.5 py-1 rounded-lg text-[11px] font-extrabold border bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)] disabled:opacity-40"
+              >
+                {t('Clear filters')}
+              </button>
+            </div>
+
+            {catOptions.length > 0 && (
+              <div>
+                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Category')}</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {catOptions.map((option) => {
+                    const Icon = option.icon;
+                    const on = extra.cats.includes(option.key);
+                    return (
+                      <button
+                        key={option.key}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => patch({ cats: toggle(extra.cats, option.key) })}
+                        className={`pressable inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-extrabold border ${
+                          on ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] text-[var(--text)] border-[var(--border)] hover:bg-[var(--hover)]'
+                        }`}
+                      >
+                        <Icon size={12} strokeWidth={2.4} aria-hidden="true" />
+                        {option.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {data.accounts.length > 0 && (
+              <div>
+                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Account')}</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[...data.accounts.map((a) => ({ id: a.id, name: a.name, icon: a.icon })), { id: '_none', name: t('No account'), icon: '' }].map((account) => {
+                    const on = extra.accounts.includes(account.id);
+                    return (
+                      <button
+                        key={account.id}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => patch({ accounts: toggle(extra.accounts, account.id) })}
+                        className={`pressable inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-extrabold border ${
+                          on ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] text-[var(--text)] border-[var(--border)] hover:bg-[var(--hover)]'
+                        }`}
+                      >
+                        {account.icon && <KeyIcon name={account.icon} size={12} strokeWidth={2.4} aria-hidden="true" />}
+                        {account.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <label className="block min-w-0">
+                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('From')}</span>
+                <input type="date" value={extra.from} max={extra.to || undefined} onChange={(event) => patch({ from: event.target.value })} className={`${textInput} text-sm`} />
+              </label>
+              <label className="block min-w-0">
+                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('To')}</span>
+                <input type="date" value={extra.to} min={extra.from || undefined} onChange={(event) => patch({ to: event.target.value })} className={`${textInput} text-sm`} />
+              </label>
+              <label className="block min-w-0">
+                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Amount from')}</span>
+                <input type="number" inputMode="decimal" min={0} value={extra.min} onChange={(event) => patch({ min: event.target.value })} placeholder="0" className={`${textInput} text-sm`} />
+              </label>
+              <label className="block min-w-0">
+                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Amount to')}</span>
+                <input type="number" inputMode="decimal" min={0} value={extra.max} onChange={(event) => patch({ max: event.target.value })} placeholder="∞" className={`${textInput} text-sm`} />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="um-hide flex justify-center">
+        <div role="group" aria-label={t('Layout')} className="inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
           {VIEWS.map((item) => {
             const Icon = item.icon;
             return (
@@ -255,12 +417,13 @@ export function TransactionsView() {
           <p className="kc-section-empty mt-1 text-xs font-medium text-[var(--muted)]">
             {data.txs.length === 0 ? t('Use the buttons at the bottom to log your first expense or income.') : t('Try another word, or show all kinds of entries.')}
           </p>
-          {data.txs.length > 0 && (query || filter !== 'all') && (
+          {data.txs.length > 0 && (query || filter !== 'all' || activeExtra > 0) && (
             <button
               type="button"
               onClick={() => {
                 setQuery('');
                 setFilter('all');
+                setExtra(NO_EXTRA);
               }}
               className="pressable mt-4 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] px-4 py-2 text-xs font-extrabold text-[var(--text)]"
             >
@@ -305,7 +468,7 @@ export function TransactionsView() {
             data-no-swipe
             tabIndex={0}
             aria-label={t('Days, side by side. Scroll sideways.')}
-            className="no-scrollbar -mx-3.5 sm:-mx-6 px-3.5 sm:px-6 flex items-start gap-3 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-3.5 sm:scroll-px-6 pb-1 focus:outline-none"
+            className="no-scrollbar -mx-3.5 sm:-mx-6 px-3.5 sm:px-6 flex items-start gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x touch-pan-y snap-x snap-mandatory scroll-px-3.5 sm:scroll-px-6 pb-1 focus:outline-none"
           >
             {visible.map((group) => (
               <section

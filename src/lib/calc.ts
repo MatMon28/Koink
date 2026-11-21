@@ -1,5 +1,5 @@
 import { bucketOf } from './categories';
-import { addMonths, monthOf } from './dates';
+import { addDays, addMonths, daysInMonth, monthOf } from './dates';
 import { round2 } from './format';
 import { accountShare } from './giftcards';
 import type { Account, Goal, Profile, Recurring, Tx } from './types';
@@ -89,15 +89,30 @@ export function ruleShares(t: Pick<MonthTotals, 'income' | 'needs' | 'wants' | '
   return { needs: share(t.needs), wants: share(t.wants), other: share(other), savings: share(t.saved), ofIncome: t.income > 0 };
 }
 
+/**
+ * The Budget figure of a month. With a generic monthly budget (Profile) it is that one amount, measured
+ * against everything spent; otherwise it is the sum of the category budgets, measured against the spending
+ * in those categories. `unplanned` is always the spending in categories that have no budget.
+ */
 export function budgetSummary(profile: Profile, totals: MonthTotals) {
-  let budget = 0;
-  let spent = 0;
+  let categoryBudget = 0;
+  let categorySpent = 0;
   for (const [id, amount] of Object.entries(profile.budgets)) {
     if (!(amount > 0)) continue;
-    budget += amount;
-    spent += totals.byCategory[id]?.total ?? 0;
+    categoryBudget += amount;
+    categorySpent += totals.byCategory[id]?.total ?? 0;
   }
-  return { budget: round2(budget), spent: round2(spent), left: round2(budget - spent) };
+  const generic = profile.monthlyBudget > 0;
+  const budget = generic ? profile.monthlyBudget : categoryBudget;
+  const spent = generic ? totals.spent : categorySpent;
+  return {
+    budget: round2(budget),
+    spent: round2(spent),
+    left: round2(budget - spent),
+    generic,
+    categoryBudget: round2(categoryBudget),
+    unplanned: round2(totals.spent - categorySpent),
+  };
 }
 
 /** Everything ever moved to a goal. */
@@ -153,12 +168,31 @@ export function accountBalance(txs: Tx[], account: Account): number {
 
 const monthIndex = (month: string) => Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
 
+/** A weekly item counts `every` weeks from its anchor date; everything else counts months. */
+export const isWeekly = (item: Recurring): boolean => item.unit === 'week' && !!item.anchor;
+
+const dayNumber = (date: string) => Math.round(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10))) / 86400000);
+
+/** The dates a weekly item is due on inside `month` (none for a monthly item). */
+export function recurringDates(item: Recurring, month: string): string[] {
+  if (!isWeekly(item) || !item.anchor) return [];
+  const step = 7 * Math.max(1, item.every);
+  const first = dayNumber(`${month}-01`);
+  const last = first + daysInMonth(month) - 1;
+  const anchor = dayNumber(item.anchor);
+  if (last < anchor) return [];
+  const out: string[] = [];
+  for (let k = Math.max(0, Math.ceil((first - anchor) / step)); anchor + k * step <= last; k += 1) out.push(addDays(item.anchor, k * step));
+  return out;
+}
+
 /**
  * Is a recurring item due in `month`? Monthly items (every = 1) are due every month. Others are due
  * every `every` months counted from their `start` month (every 3 from March: Mar, Jun, Sep, Dec) and
- * not before it.
+ * not before it. A weekly item is due in every month that holds at least one of its dates.
  */
 export function recurringDue(item: Recurring, month: string): boolean {
+  if (isWeekly(item)) return recurringDates(item, month).length > 0;
   if (item.every <= 1) return true;
   const diff = monthIndex(month) - monthIndex(item.start);
   return diff >= 0 && diff % item.every === 0;
@@ -171,8 +205,53 @@ export function recurringDue(item: Recurring, month: string): boolean {
 export const recurringForMonth = (items: Recurring[], month: string, monthItems: Tx[]): Recurring[] =>
   items.filter((r) => recurringDue(r, month) || !!recurringEntry(monthItems, r));
 
+/** One row of a recurring checklist: an item, and for a weekly item the date of this occurrence. */
+export interface RecurringSlot {
+  item: Recurring;
+  date?: string;
+}
+
+/** The entry that logged one slot: by month for a monthly item, by due date for a weekly one. */
+export const slotEntry = (monthItems: Tx[], slot: RecurringSlot): Tx | undefined =>
+  slot.date ? monthItems.find((tx) => tx.recurringId === slot.item.id && tx.date === slot.date) : recurringEntry(monthItems, slot.item);
+
+/**
+ * The checklist of a month, one slot per occurrence (a weekly item has several in a month). With
+ * `includeAll` the items that are not due this month are kept as a slot without a date (the management
+ * list on the Budgets page shows them with a "Next ..." label).
+ */
+export function recurringSlots(items: Recurring[], month: string, monthItems: Tx[], includeAll = false): RecurringSlot[] {
+  const out: RecurringSlot[] = [];
+  for (const item of items) {
+    if (isWeekly(item)) {
+      const dates = new Set(recurringDates(item, month));
+      // An occurrence logged on another date (the entry was edited) stays on the list.
+      for (const tx of monthItems) if (tx.recurringId === item.id) dates.add(tx.date);
+      const sorted = [...dates].sort();
+      if (sorted.length === 0) {
+        if (includeAll) out.push({ item });
+      } else {
+        for (const date of sorted) out.push({ item, date });
+      }
+    } else if (includeAll || recurringDue(item, month) || recurringEntry(monthItems, item)) {
+      out.push({ item });
+    }
+  }
+  return out;
+}
+
+/** The next date (from `from`, inclusive) a weekly item is due. */
+export function nextDueDate(item: Recurring, from: string): string {
+  if (!item.anchor) return from;
+  const step = 7 * Math.max(1, item.every);
+  const diff = dayNumber(from) - dayNumber(item.anchor);
+  if (diff <= 0) return item.anchor;
+  return addDays(item.anchor, Math.ceil(diff / step) * step);
+}
+
 /** The next month (this one included) in which a recurring item is due. */
 export function nextDueMonth(item: Recurring, from: string): string {
+  if (isWeekly(item)) return monthOf(nextDueDate(item, `${from}-01`));
   if (item.every <= 1) return from;
   const diff = monthIndex(from) - monthIndex(item.start);
   if (diff <= 0) return item.start;

@@ -16,6 +16,14 @@ export function addDays(date: string, n: number): string {
   return toStr(d);
 }
 
+/** The Monday of the week `date` falls in (weeks run Monday to Sunday). */
+export function weekStart(date: string): string {
+  return addDays(date, -((parse(date).getDay() + 6) % 7));
+}
+
+/** Whole days from `a` to `b` (negative when `b` is earlier). */
+export const daysBetween = (a: string, b: string): number => Math.round((parse(b).getTime() - parse(a).getTime()) / 86400000);
+
 export function addMonths(month: string, n: number): string {
   const d = new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)) - 1 + n, 1);
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;

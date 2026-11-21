@@ -44,6 +44,7 @@ export const SAMPLE_PROFILE: Profile = {
     housing: 850, groceries: 360, transport: 140, bills: 120, health: 70,
     eating_out: 150, fun: 90, shopping: 130,
   },
+  monthlyBudget: 0,
 };
 
 /** Six months of believable entries ending today. */

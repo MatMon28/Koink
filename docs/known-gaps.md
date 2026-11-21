@@ -66,3 +66,11 @@
 
 - The Italian texts were written without a native review. Reminder notifications, the sample journal and the Android widget picker names stay English.
 - The new widget look (round buttons, circle / pill / card trays, theme colours) was written without an Android SDK, like the rest of `android/`: the RemoteViews layouts, `setViewPadding` / `setColorFilter` calls and the tray drawables are untested on a device. The in-app version was built and type-checked only; no browser was available to look at it.
+
+## Added with weekly recurring items, the expense chart and the filter panel
+
+- A weekly recurring occurrence is matched to its entry by **date**. If you edit the date of a logged occurrence, it stays on the checklist as its own line and the original due date is offered again.
+- Weekly recurring items have no reminder notification.
+- The expense chart at day resolution over a long period is a wide, sideways-scrolling chart (at most 800 bars); the custom statistics period is limited to 60 months.
+- The Transactions filter panel (categories, accounts, dates, amounts) is not remembered between visits, only whether it is open.
+- The vertical-scroll fix on the *Day cards* layout (`overflow-y-hidden touch-pan-x touch-pan-y`) and the new screens were built and type-checked but **not tested on a phone**.

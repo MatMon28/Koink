@@ -44,7 +44,7 @@ Other values (budgets, goal targets, recurring amounts, balances, the day of the
 
 ### Unsaved input
 
-Dismissing the sheet (scrim, swipe down, X, Escape, Back; a swipe down springs back first, `canClose` in `Modal.tsx`) with something typed, or with an existing entry changed, opens **Save this entry?** (`SaveBeforeCloseDialog` in `ui.tsx`) instead of closing: **Save**, **Don't save**, **Keep editing**. Without an amount there is nothing to save, so only the last two are offered. Dismissing the question itself keeps editing. An untouched form closes at once. The form reports `{ dirty, valid, save }` to its sheet through a ref (`FormGuard` in `TxSheet.tsx`).
+Dismissing the sheet (scrim, swipe down, X, Escape, Back; a swipe down springs back first, `canClose` in `Modal.tsx`) with something typed, or with an existing entry changed, opens **Save this entry?** (`SaveBeforeCloseDialog` in `ui.tsx`) instead of closing: **Save**, then **Keep editing** (left) and **Don't save** (right, in red). Both are translated (*Non salvare*). Without an amount there is nothing to save, so only the last two are offered. Dismissing the question itself keeps editing. An untouched form closes at once. The form reports `{ dirty, valid, save }` to its sheet through a ref (`FormGuard` in `TxSheet.tsx`).
 
 ## Log again (`QuickSheet`)
 

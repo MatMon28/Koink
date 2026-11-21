@@ -101,8 +101,8 @@ export function buildNotificationPlan(
   if (settings.recurring.enabled) {
     const byDay = new Map<number, Recurring[]>();
     // The alarm repeats every month, so only monthly items get one (an item that is due every 3 months
-    // would ring in the two months it is not due).
-    for (const item of recurring.filter((r) => r.every <= 1)) byDay.set(item.day, [...(byDay.get(item.day) ?? []), item]);
+    // would ring in the two months it is not due). Weekly items have no reminder either.
+    for (const item of recurring.filter((r) => r.every <= 1 && r.unit !== 'week')) byDay.set(item.day, [...(byDay.get(item.day) ?? []), item]);
     for (const [day, items] of [...byDay.entries()].sort((a, b) => a[0] - b[0])) {
       const [first] = items;
       plan.push({

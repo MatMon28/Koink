@@ -1,14 +1,15 @@
 import { useMemo, type ReactNode } from 'react';
-import { ChevronRight, CircleHelp, Hourglass, ListChecks, Plus, ShieldCheck, Target } from 'lucide-react';
+import { ChevronDown, ChevronRight, CircleHelp, Hourglass, ListChecks, Plus, ShieldCheck, Target } from 'lucide-react';
 import { HeroPair, NoteCard } from '../components/cards';
 import { MonthNavigator } from '../components/MonthNavigator';
 import { RecurringRow } from '../components/RecurringRow';
 import { Bar } from '../components/ui';
-import { budgetSummary, goalSaved, monthTotals } from '../lib/calc';
+import { budgetSummary, goalSaved, monthTotals, recurringSlots } from '../lib/calc';
 import { allBuckets, allExpenseCategories, bucketLabel, isCategoryHidden } from '../lib/categories';
 import { currentMonth, daysInMonth, elapsedDays } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
 import { useApp } from '../lib/store';
+import { usePersistentState } from '../lib/usePersistentState';
 import type { Bucket } from '../lib/types';
 import { t } from '../lib/i18n';
 
@@ -20,27 +21,39 @@ const BUCKET_BAR: Record<string, { track: string; fill: string; dot: string }> =
   other: { track: 'bg-[#C9EFD3]', fill: 'bg-[#1A5632]', dot: 'bg-[#C9EFD3] border-[#1A5632]/30' },
 };
 
-function SectionCard({ title, aside, children, onAdd, addLabel }: { title: ReactNode; aside?: ReactNode; children: ReactNode; onAdd?: () => void; addLabel?: string }) {
+/**
+ * A card of the Budgets page that folds shut: tap the header (or the chevron). Open or closed is
+ * remembered per card (`koink_budgets_open_<id>`). The + button stays usable while folded.
+ */
+function SectionCard({ id, title, aside, children, onAdd, addLabel }: { id: string; title: ReactNode; aside?: ReactNode; children: ReactNode; onAdd?: () => void; addLabel?: string }) {
+  const [open, setOpen] = usePersistentState(`koink_budgets_open_${id}`, true);
   return (
     <section className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-2 mb-3 min-h-8">
-        <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">{title}</h3>
-        <span className="flex items-center gap-2">
-          {aside}
-          {onAdd && (
-            <button
-              type="button"
-              onClick={onAdd}
-              aria-label={addLabel}
-              title={addLabel}
-              className="pressable size-8 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] flex items-center justify-center"
-            >
-              <Plus size={16} strokeWidth={2.5} />
-            </button>
-          )}
-        </span>
+      <div className="flex items-center justify-between gap-2 min-h-8">
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="min-w-0 flex-1 flex items-center justify-between gap-2 text-left">
+          <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">{title}</h3>
+          <span className="flex items-center gap-2">
+            {aside}
+            <ChevronDown size={16} className={`text-[var(--muted)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          </span>
+        </button>
+        {onAdd && (
+          <button
+            type="button"
+            onClick={onAdd}
+            aria-label={addLabel}
+            title={addLabel}
+            className="pressable size-8 shrink-0 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] flex items-center justify-center"
+          >
+            <Plus size={16} strokeWidth={2.5} />
+          </button>
+        )}
       </div>
-      {children}
+      <div className="accordion-grid" data-open={open} inert={!open}>
+        <div className="accordion-inner">
+          <div className="pt-3">{children}</div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -52,7 +65,7 @@ export function BudgetsView() {
 
   const isCurrent = selectedMonth === currentMonth();
   const daysLeft = daysInMonth(selectedMonth) - elapsedDays(selectedMonth) + (isCurrent ? 1 : 0);
-  const unbudgeted = round2(totals.spent - summary.spent);
+  const unbudgeted = summary.unplanned;
   const safePerDay = summary.budget > 0 && daysLeft > 0 ? Math.max(0, summary.left) / daysLeft : null;
 
   const bucketCard = (bucket: Bucket) => {
@@ -66,6 +79,7 @@ export function BudgetsView() {
     return (
       <SectionCard
         key={bucket}
+        id={`bucket_${bucket}`}
         title={<><span className={`size-2.5 rounded-full border ${tone.dot}`} aria-hidden="true" />{bucketLabel(bucket)}</>}
         aside={<span className="text-xs font-bold tabular-nums text-[var(--muted)]">{money(spent)}{limit > 0 && ` of ${money(limit)}`}</span>}
       >
@@ -118,7 +132,21 @@ export function BudgetsView() {
     <div className="um-stack space-y-3.5">
       <MonthNavigator />
 
-      <HeroPair inIcon={Target} inLabel={t('Budget')} outLabel={t('Spent')} inAmount={summary.budget} outAmount={summary.spent} pillTitle={t('Budget minus spending in budgeted categories')} />
+      <HeroPair inIcon={Target} inLabel={t('Budget')} outLabel={t('Spent')} inAmount={summary.budget} outAmount={summary.spent} pillTitle={summary.generic ? t('Monthly budget minus everything spent') : t('Budget minus spending in budgeted categories')} />
+
+      <button
+        type="button"
+        onClick={() => openSheet({ type: 'profile' })}
+        className="um-hide pressable pressable-soft mx-auto flex max-w-full items-center gap-2 rounded-full bg-[var(--surface)] hover:bg-[var(--inset)] border border-[var(--border)] px-3.5 py-1.5 text-[11px] font-extrabold text-[var(--text)]"
+      >
+        <Target size={13} aria-hidden="true" className="shrink-0 text-[var(--muted)]" />
+        <span className="truncate">
+          {summary.generic
+            ? t('Monthly budget {v} (from your profile)', { v: money(data.profile.monthlyBudget) })
+            : t('Set one monthly budget for everything')}
+        </span>
+        <ChevronRight size={13} aria-hidden="true" className="shrink-0 text-[var(--muted)]" />
+      </button>
 
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
         <NoteCard tone="needs" icon={Hourglass} label={t('Days left')} value={String(Math.max(0, daysLeft))} title={t('Days left in this month, today included')} />
@@ -130,6 +158,7 @@ export function BudgetsView() {
         {allBuckets().map((b) => bucketCard(b.id))}
 
         <SectionCard
+          id="goals"
           title={<><span className="size-2.5 rounded-full border bg-[#E2D6FF] border-[#49346F]/30" aria-hidden="true" />{t('Savings goals')}</>}
           onAdd={() => openSheet({ type: 'goal' })}
           addLabel={t('New savings goal')}
@@ -178,6 +207,7 @@ export function BudgetsView() {
         </SectionCard>
 
         <SectionCard
+          id="recurring"
           title={<><span className="size-2.5 rounded-full border bg-[#CFE7FE] border-[#183B5E]/30" aria-hidden="true" />{t('Recurring')}</>}
           onAdd={() => openSheet({ type: 'recurringEdit' })}
           addLabel={t('New recurring item')}
@@ -186,8 +216,8 @@ export function BudgetsView() {
             <p className="um-hide kc-section-empty text-xs font-medium text-[var(--muted)] pb-1">{t('Rent, salary, subscriptions: set them up once, then log each month with one tap.')}</p>
           ) : (
             <div className="divide-y divide-[var(--border)] -my-1.5">
-              {data.recurring.map((item) => (
-                <RecurringRow key={item.id} item={item} month={selectedMonth} monthItems={totals.items} />
+              {recurringSlots(data.recurring, selectedMonth, totals.items, true).map((slot) => (
+                <RecurringRow key={`${slot.item.id}${slot.date ?? ''}`} item={slot.item} date={slot.date} month={selectedMonth} monthItems={totals.items} />
               ))}
             </div>
           )}

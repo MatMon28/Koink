@@ -423,11 +423,12 @@ export function SaveBeforeCloseDialog({ open, canSave, onSave, onDiscard, onKeep
             </button>
           )}
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={onDiscard} className={`${quiet} bg-[#F6D0D0] hover:bg-[#F0BDBD] text-[#7A2727]`}>
-              Don&rsquo;t save
-            </button>
             <button type="button" onClick={onKeep} className={`${quiet} bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)]`}>
               {t('Keep editing')}
+            </button>
+            {/* Destructive choice on the right, away from the primary Save button's thumb path. */}
+            <button type="button" onClick={onDiscard} className={`${quiet} bg-[#F6D0D0] hover:bg-[#F0BDBD] text-[#7A2727]`}>
+              {t('Don’t save')}
             </button>
           </div>
         </div>

@@ -42,7 +42,7 @@ function legacySplitHidden(): boolean {
   }
 }
 
-const emptyProfile = (): Profile => ({ name: '', rule: { needs: 50, wants: 30, savings: 20 }, budgets: {} });
+const emptyProfile = (): Profile => ({ name: '', rule: { needs: 50, wants: 30, savings: 20 }, budgets: {}, monthlyBudget: 0 });
 
 function sampleData(settings: Settings = defaultSettings()): AppData {
   return {
@@ -125,6 +125,8 @@ function sanitize(raw: unknown): AppData | null {
       // Items saved before frequencies existed are monthly.
       every: isNum(r.every) && r.every >= 1 ? Math.min(60, Math.round(r.every)) : 1,
       start: isStr(r.start) && /^\d{4}-\d{2}$/.test(r.start) ? r.start : currentMonth(),
+      // Weekly items count `every` in weeks from `anchor`; everything saved before is monthly.
+      ...(r.unit === 'week' && isStr(r.anchor) && /^\d{4}-\d{2}-\d{2}$/.test(r.anchor) ? { unit: 'week' as const, anchor: r.anchor } : {}),
     }));
 
   const accounts: Account[] = (Array.isArray(src.accounts) ? src.accounts : [])
@@ -186,7 +188,7 @@ function sanitize(raw: unknown): AppData | null {
     giftCards,
     categories,
     categoryTypes,
-    profile: { name: isStr(p.name) ? p.name : '', rule: { needs: rule.needs, wants: rule.wants, savings: rule.savings }, budgets },
+    profile: { name: isStr(p.name) ? p.name : '', rule: { needs: rule.needs, wants: rule.wants, savings: rule.savings }, budgets, monthlyBudget: isNum(p.monthlyBudget) && p.monthlyBudget > 0 ? round2(p.monthlyBudget) : 0 },
     settings,
   };
 }
@@ -236,7 +238,8 @@ interface AppContextValue {
   removeGoal: (id: string) => void;
   saveRecurring: (item: Omit<Recurring, 'id'> & { id?: string }) => void;
   removeRecurring: (id: string) => void;
-  logRecurring: (item: Recurring, month: string) => void;
+  /** `date` is the due date of one occurrence of a weekly item; monthly items use their day of the month. */
+  logRecurring: (item: Recurring, month: string, date?: string) => void;
   saveAccount: (account: { id?: string; name: string; icon: string; opening: number }) => void;
   removeAccount: (id: string) => void;
   /** Creates or edits a gift card; returns its id. */
@@ -422,9 +425,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData((prev) => ({ ...prev, recurring: prev.recurring.filter((r) => r.id !== id) }));
   }, []);
 
-  const logRecurring = useCallback((item: Recurring, month: string) => {
+  const logRecurring = useCallback((item: Recurring, month: string, date?: string) => {
     const day = Math.min(item.day, daysInMonth(month));
-    addTx({ kind: item.kind, categoryId: item.categoryId, note: item.name, amount: item.amount, date: `${month}-${pad(day)}`, recurringId: item.id });
+    addTx({ kind: item.kind, categoryId: item.categoryId, note: item.name, amount: item.amount, date: date ?? `${month}-${pad(day)}`, recurringId: item.id });
   }, [addTx]);
 
   const saveAccount = useCallback<AppContextValue['saveAccount']>((account) => {

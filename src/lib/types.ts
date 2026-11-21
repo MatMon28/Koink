@@ -96,10 +96,14 @@ export interface Recurring {
   categoryId: string;
   /** Day of the month it is due (1-28). */
   day: number;
-  /** Every how many months it is due: 1 (every month), 2, 3, 6, 12... Counted from `start`. */
+  /** Every how many months (or weeks, see `unit`) it is due: 1 (every one), 2, 3, 6, 12... Counted from `start` / `anchor`. */
   every: number;
   /** The first month it is due, YYYY-MM: the anchor of the `every` count. */
   start: string;
+  /** What `every` counts. Missing = months (items saved before weekly items existed). */
+  unit?: 'month' | 'week';
+  /** Weekly items only: the first date it is due (YYYY-MM-DD). It sets the weekday and the count. */
+  anchor?: string;
 }
 
 export interface BudgetRule {
@@ -113,6 +117,11 @@ export interface Profile {
   rule: BudgetRule;
   /** Monthly budget per expense category id. 0 or missing = no budget. */
   budgets: Record<string, number>;
+  /**
+   * One generic monthly budget for all spending, set in the Profile. 0 = off. When set it is the
+   * "Budget" figure of the Budgets and Month pages, measured against everything spent in the month.
+   */
+  monthlyBudget: number;
 }
 
 export type QuickAddKey = 'income' | 'expense' | 'recurring' | 'quick' | 'saving' | 'giftcard';

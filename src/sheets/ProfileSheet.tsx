@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Minus, Plus, RotateCcw, Wallet } from 'lucide-react';
 import { Modal } from '../components/Modal';
-import { SectionLabel, textInput } from '../components/ui';
+import { AmountStepper, SectionLabel, textInput } from '../components/ui';
 import { accountBalance } from '../lib/calc';
 import { t } from '../lib/i18n';
 import { round2 } from '../lib/format';
@@ -27,9 +27,10 @@ export function ProfileSheet() {
 }
 
 function ProfileForm() {
-  const { data, money, updateProfile, closeSheet } = useApp();
+  const { data, money, symbol, updateProfile, closeSheet } = useApp();
   const [name, setName] = useState(data.profile.name);
   const [rule, setRule] = useState<BudgetRule>(data.profile.rule);
+  const [monthlyBudget, setMonthlyBudget] = useState(data.profile.monthlyBudget);
 
   // What is in all the accounts together: the profile's headline now that balances live in accounts.
   const totalInAccounts = useMemo(() => round2(data.accounts.reduce((sum, account) => sum + accountBalance(data.txs, account), 0)), [data.accounts, data.txs]);
@@ -67,6 +68,14 @@ function ProfileForm() {
       </div>
 
       <ProfileAccounts />
+
+      <div>
+        <SectionLabel>{t('Monthly budget')}</SectionLabel>
+        <AmountStepper value={monthlyBudget} onChange={setMonthlyBudget} unit={symbol} step={50} min={0} ariaLabel={t('Monthly budget')} chips={[500, 1000, 2000]} />
+        <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">
+          {t('One generic budget for all your spending each month, on top of the category budgets. Leave it at 0 to budget by category only.')}
+        </p>
+      </div>
 
       <div>
         <div className="flex items-center justify-between gap-2 mb-2">
@@ -107,7 +116,7 @@ function ProfileForm() {
         tone="neutral"
         disabled={total !== 100}
         onSave={() => {
-          updateProfile({ name: name.trim(), rule });
+          updateProfile({ name: name.trim(), rule, monthlyBudget });
           closeSheet();
         }}
         label={t('Save profile')}
