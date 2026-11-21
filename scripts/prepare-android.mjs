@@ -37,9 +37,9 @@ function run(label, command, args) {
 
 run('Type check', bin('tsc'), ['-b']);
 run('Web build (mode: android)', bin('vite'), ['build', '--mode', 'android']);
-if (existsSync('dist/offline-worker.js')) throw new Error('The offline worker must not be part of the Android build.');
-// The project archive (public/downloads/) and the brand sheet (public/brand/) are website files;
+// The offline worker, project archive (public/downloads/) and brand sheet (public/brand/) are website files;
 // they do not belong in the APK.
+await rm('dist/offline-worker.js', { force: true });
 await rm('dist/downloads', { recursive: true, force: true });
 await rm('dist/brand', { recursive: true, force: true });
 run('Capacitor sync', bin('cap'), ['sync', 'android']);
