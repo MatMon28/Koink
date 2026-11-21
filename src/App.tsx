@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Banknote, Gift, Receipt, Repeat, Zap } from 'lucide-react';
 import { t } from './lib/i18n';
 import { PigIcon } from './lib/pig';
@@ -11,7 +11,7 @@ import { useBackLayer } from './lib/back';
 import { currentMonth } from './lib/dates';
 import { usePillTab } from './lib/pillTab';
 import { useReportAppReady } from './lib/intro';
-import { isAppShell, isStandaloneApp } from './lib/platform';
+import { isAppShell } from './lib/platform';
 import { takeLaunchAction } from './lib/pwa';
 import { AppProvider, useApp } from './lib/store';
 import type { ActiveTab, OpenTarget } from './lib/types';
@@ -30,9 +30,6 @@ import { ProfileSheet } from './sheets/ProfileSheet';
 import { QuickSheet, RecurringSheet } from './sheets/QuickSheet';
 import { SettingsSheet } from './sheets/SettingsSheet';
 import { TxSheet } from './sheets/TxSheet';
-import { AppTour } from './components/tour/AppTour';
-import { InstallGuideHost } from './components/InstallGuide';
-import type { TourScreen } from './components/tour/tourContent';
 
 const PAGE_TITLES = { month: 'Month', transactions: 'Transactions', budgets: 'Budgets', stats: 'Statistics' };
 
@@ -108,66 +105,6 @@ function Shell() {
   // Android home-screen widgets: keeps them drawn and opens the screen behind a tapped button.
   useWidgetSync();
 
-  // Interactive tour driver: responds to postMessage from parent when embedded in tour
-  const showScreenRef = useRef<(screen: TourScreen) => void>(() => {});
-  showScreenRef.current = (screen: TourScreen) => {
-    closeSheet();
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    switch (screen) {
-      case 'month':
-        setActiveTab('month');
-        break;
-      case 'transactions':
-        setActiveTab('transactions');
-        break;
-      case 'budgets':
-        setActiveTab('budgets');
-        break;
-      case 'stats':
-        setActiveTab('stats');
-        break;
-      case 'expense':
-        setActiveTab('month');
-        openSheet({ type: 'tx', kind: 'expense' });
-        break;
-      case 'income':
-        setActiveTab('month');
-        openSheet({ type: 'tx', kind: 'income' });
-        break;
-      case 'recurring':
-        setActiveTab('budgets');
-        openSheet({ type: 'recurring' });
-        break;
-      case 'goals':
-        setActiveTab('budgets');
-        openSheet({ type: 'goal' });
-        break;
-      case 'giftcards':
-        setActiveTab('month');
-        openSheet({ type: 'giftCards' });
-        break;
-      case 'widgets':
-        setActiveTab('month');
-        break;
-      case 'settings':
-        openSheet({ type: 'settings' });
-        break;
-    }
-  };
-
-  useEffect(() => {
-    const onMessage = (event: MessageEvent) => {
-      if (event.data?.channel === 'koink' && event.data?.type === 'show-screen') {
-        showScreenRef.current(event.data.screen);
-      }
-    };
-    window.addEventListener('message', onMessage);
-    if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'koink:ready' }, '*');
-    }
-    return () => window.removeEventListener('message', onMessage);
-  }, []);
-
   return (
     <div data-journal-root className="min-h-dvh bg-[var(--bg)] text-[var(--text)] flex flex-col font-sans pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
       <Header />
@@ -200,33 +137,9 @@ function Shell() {
 }
 
 export default function App() {
-  const view = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('view') : null;
-  const isInstalled = isStandaloneApp();
-  const hasSeenTour = () => {
-    try {
-      return localStorage.getItem('koink_tour_seen') === '1';
-    } catch {
-      return false;
-    }
-  };
-
-  // Normal mode: installed PWA, iOS home screen, or explicit ?view=app opens the journal directly.
-  // First-time web visitors (or ?view=tour) see the guided tour and installation guide.
-  const showJournal = view === 'app' || (view !== 'tour' && (isInstalled || hasSeenTour()));
-
-  if (!showJournal) {
-    return (
-      <>
-        <InstallGuideHost />
-        <AppTour />
-      </>
-    );
-  }
-
   return (
     <AppProvider>
       <Shell />
-      <InstallGuideHost />
     </AppProvider>
   );
 }
