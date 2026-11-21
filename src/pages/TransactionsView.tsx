@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Columns2, Columns3, List, Repeat, Search, SlidersHorizontal, StickyNote, Trash2, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Columns2, List, Repeat, Search, SlidersHorizontal, StickyNote, Trash2, X } from 'lucide-react';
 import { categoryMeta } from '../lib/categories';
-import { formatDay } from '../lib/dates';
+import { formatDay, formatMonth, monthOf } from '../lib/dates';
 import { formatMoney, round2 } from '../lib/format';
 import { KeyIcon, textInput } from '../components/ui';
 import { useApp } from '../lib/store';
@@ -17,14 +17,13 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'saving', label: 'Savings' },
 ];
 /**
- * One long list with day headings, one card per day in a sideways scroller ('days'), or exactly two day
- * cards next to each other, two columns on every screen ('pair').
+ * One long list with day headings inside one card per month ('list'), or two day cards next to each other,
+ * two columns on every screen ('pair'). Months are always told apart by a heading.
  */
-type View = 'list' | 'days' | 'pair';
+type View = 'list' | 'pair';
 const VIEWS: { id: View; label: string; icon: typeof List; hint: string }[] = [
   { id: 'list', label: 'List', icon: List, hint: 'One list, newest first' },
   { id: 'pair', label: '2 days', icon: Columns2, hint: 'Two days next to each other' },
-  { id: 'days', label: 'Day cards', icon: Columns3, hint: 'Each day in its own card; swipe sideways, scroll the page as usual' },
 ];
 const PAGE = 14;
 
@@ -46,6 +45,14 @@ interface Group {
   date: string;
   items: Tx[];
   net: number;
+}
+
+/** The day groups of one month (the ones shown so far) and the month's figures over all matching entries. */
+interface MonthBlock {
+  month: string;
+  groups: Group[];
+  net: number;
+  count: number;
 }
 
 /**
@@ -126,15 +133,38 @@ function DayNet({ net }: { net: number }) {
   );
 }
 
+/**
+ * The divider between two months: the month name with the month's entry count and net. `band` is the tinted
+ * strip at the top of a month card (list view); without it, a line with the name (two-column view).
+ */
+function MonthHeading({ block, band }: { block: MonthBlock; band: boolean }) {
+  const label = `${block.count} ${block.count === 1 ? t('entry') : t('entries')}`;
+  return band ? (
+    <div className="flex items-center justify-between gap-2 px-4 py-2.5 bg-[var(--inset)] border-b border-[var(--border)]">
+      <h2 className="min-w-0 truncate text-xs font-extrabold uppercase tracking-wider text-[var(--text)]">
+        {formatMonth(block.month)} <span className="ml-1 normal-case tracking-normal font-bold text-[var(--muted)]">· {label}</span>
+      </h2>
+      <DayNet net={block.net} />
+    </div>
+  ) : (
+    <div className="flex items-center gap-2.5 px-1 pt-1">
+      <h2 className="shrink-0 text-xs font-extrabold uppercase tracking-wider text-[var(--text)]">{formatMonth(block.month)}</h2>
+      <span className="h-px min-w-4 flex-1 bg-[var(--border)]" aria-hidden="true" />
+      <span className="shrink-0 text-[11px] font-bold text-[var(--muted)]">{label}</span>
+      <DayNet net={block.net} />
+    </div>
+  );
+}
+
 export function TransactionsView() {
   const { data, money } = useApp();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = usePersistentState<Filter>('koink_tx_filter', 'all');
-  const [view, setView] = usePersistentState<View>('koink_tx_view', 'list');
+  const [storedView, setView] = usePersistentState<string>('koink_tx_view', 'list');
+  const view: View = storedView === 'pair' ? 'pair' : 'list'; // the removed 'days' layout falls back to the list
   const [limit, setLimit] = useState(PAGE);
   const [panelOpen, setPanelOpen] = usePersistentState('koink_tx_filter_open', false);
   const [extra, setExtra] = useState<Extra>(NO_EXTRA);
-  const rail = useRef<HTMLDivElement>(null);
   const q = query.trim().toLowerCase();
   const minAmount = parseFloat(extra.min.replace(',', '.'));
   const maxAmount = parseFloat(extra.max.replace(',', '.'));
@@ -206,14 +236,29 @@ export function TransactionsView() {
     return { in: round2(inSum), out: round2(outSum) };
   }, [filtered]);
 
-  const visible = groups.slice(0, limit);
+  // Day groups shown so far, collected per month (newest first) with the month's figures over everything that matches.
+  const months = useMemo(() => {
+    const out: MonthBlock[] = [];
+    const byMonth = new Map<string, MonthBlock>();
+    for (const group of groups) {
+      const month = monthOf(group.date);
+      let block = byMonth.get(month);
+      if (!block) {
+        block = { month, groups: [], net: 0, count: 0 };
+        byMonth.set(month, block);
+      }
+      block.net += group.net;
+      block.count += group.items.length;
+    }
+    for (const group of groups.slice(0, limit)) {
+      const block = byMonth.get(monthOf(group.date));
+      if (!block) continue;
+      if (block.groups.length === 0) out.push(block);
+      block.groups.push(group);
+    }
+    return out;
+  }, [groups, limit]);
   const more = () => setLimit((n) => n + PAGE);
-
-  /** Days view on a computer: the arrows move the rail by about one card. */
-  const nudge = (direction: 1 | -1) => {
-    const el = rail.current;
-    if (el) el.scrollBy({ left: direction * Math.max(280, el.clientWidth * 0.8), behavior: 'smooth' });
-  };
 
   return (
     <div className="um-stack space-y-3.5">
@@ -239,6 +284,32 @@ export function TransactionsView() {
               {t(item.label)}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* View type (layout): above the search bar */}
+      <div className="um-hide flex justify-center">
+        <div role="group" aria-label={t('Layout')} className="inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
+          {VIEWS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={view === item.id}
+                onClick={() => setView(item.id)}
+                title={t(item.hint)}
+                className={`pressable inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap ${
+                  view === item.id
+                    ? 'bg-[var(--text)] text-[var(--on-text)]'
+                    : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
+                }`}
+              >
+                <Icon size={14} aria-hidden="true" />
+                {t(item.label)}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -380,31 +451,6 @@ export function TransactionsView() {
         </div>
       </div>
 
-      <div className="um-hide flex justify-center">
-        <div role="group" aria-label={t('Layout')} className="inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
-          {VIEWS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={view === item.id}
-                onClick={() => setView(item.id)}
-                title={t(item.hint)}
-                className={`pressable inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap ${
-                  view === item.id
-                    ? 'bg-[var(--text)] text-[var(--on-text)]'
-                    : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
-                }`}
-              >
-                <Icon size={14} aria-hidden="true" />
-                {t(item.label)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       <p className="px-1 text-center text-xs font-bold tabular-nums text-[var(--muted)]" aria-live="polite">
         {filtered.length} {filtered.length === 1 ? t('entry') : t('entries')}
         {sums.in > 0 && <> {t('· in')} {money(sums.in)}</>}
@@ -432,84 +478,51 @@ export function TransactionsView() {
           )}
         </div>
       ) : view === 'list' ? (
-        <section className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl overflow-hidden pb-1.5">
-          {visible.map((group) => (
-            <div key={group.date}>
-              <div className="px-4 pt-3.5 pb-1.5 flex items-center justify-between gap-2">
-                <h3 className="text-sm font-extrabold text-[var(--text)]">{formatDay(group.date)}</h3>
-                <DayNet net={group.net} />
-              </div>
-              <div className="px-1.5">
-                {group.items.map((tx) => <EntryRow key={tx.id} tx={tx} />)}
-              </div>
-            </div>
-          ))}
-        </section>
-      ) : view === 'pair' ? (
-        // Two days next to each other, on every screen size: newest on the left, the day before on the right.
-        <div className="grid grid-cols-2 items-start gap-2 sm:gap-3">
-          {visible.map((group) => (
-            <section key={group.date} className="kc-themed-card min-w-0 bg-[var(--surface)] border border-[var(--border)] rounded-3xl overflow-hidden">
-              <div className="px-3 pt-3 pb-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                <h3 className="min-w-0 truncate text-xs sm:text-sm font-extrabold text-[var(--text)]">{formatDay(group.date)}</h3>
-                <DayNet net={group.net} />
-              </div>
-              <div className="px-1 pb-1.5">
-                {group.items.map((tx) => <EntryRow key={tx.id} tx={tx} narrow />)}
-              </div>
+        // One card per month, so two months are never mixed: a tinted month heading, then the days.
+        <div className="space-y-4">
+          {months.map((block) => (
+            <section key={block.month} aria-label={formatMonth(block.month)} className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl overflow-hidden pb-1.5">
+              <MonthHeading block={block} band />
+              {block.groups.map((group) => (
+                <div key={group.date}>
+                  <div className="px-4 pt-3.5 pb-1.5 flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-extrabold text-[var(--text)]">{formatDay(group.date)}</h3>
+                    <DayNet net={group.net} />
+                  </div>
+                  <div className="px-1.5">
+                    {group.items.map((tx) => <EntryRow key={tx.id} tx={tx} />)}
+                  </div>
+                </div>
+              ))}
             </section>
           ))}
         </div>
       ) : (
-        <div className="relative">
-          {/* Days side by side. A sideways scroller: on a phone one card (and a peek of the next) fits, swipe to move; the page swipe leaves it alone. */}
-          <div
-            ref={rail}
-            data-no-swipe
-            tabIndex={0}
-            aria-label={t('Days, side by side. Scroll sideways.')}
-            className="no-scrollbar -mx-3.5 sm:-mx-6 px-3.5 sm:px-6 flex items-start gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x touch-pan-y snap-x snap-mandatory scroll-px-3.5 sm:scroll-px-6 pb-1 focus:outline-none"
-          >
-            {visible.map((group) => (
-              <section
-                key={group.date}
-                className="kc-themed-card snap-start shrink-0 w-[85%] min-[480px]:w-[22rem] bg-[var(--surface)] border border-[var(--border)] rounded-3xl overflow-hidden"
-              >
-                <div className="px-4 pt-3.5 pb-2 flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-extrabold text-[var(--text)] truncate">{formatDay(group.date)}</h3>
-                  <DayNet net={group.net} />
-                </div>
-                <div className="px-1.5 pb-1.5">
-                  {group.items.map((tx) => <EntryRow key={tx.id} tx={tx} />)}
-                </div>
-              </section>
-            ))}
-            {groups.length > limit && (
-              <div className="snap-start shrink-0 w-40 self-stretch flex items-center justify-center pr-3.5">
-                <button
-                  type="button"
-                  onClick={more}
-                  className="pressable rounded-full bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] px-4 py-2 text-xs font-extrabold text-[var(--text)]"
-                >
-                  {t('Older days')}
-                </button>
+        // Two days next to each other, on every screen size: newest on the left, the day before on the right.
+        // Every month starts a new grid under its own heading, so the pairs never straddle two months.
+        <div className="space-y-3">
+          {months.map((block) => (
+            <section key={block.month} aria-label={formatMonth(block.month)} className="space-y-2">
+              <MonthHeading block={block} band={false} />
+              <div className="grid grid-cols-2 items-start gap-2 sm:gap-3">
+                {block.groups.map((group) => (
+                  <section key={group.date} className="kc-themed-card min-w-0 bg-[var(--surface)] border border-[var(--border)] rounded-3xl overflow-hidden">
+                    <div className="px-3 pt-3 pb-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                      <h3 className="min-w-0 truncate text-xs sm:text-sm font-extrabold text-[var(--text)]">{formatDay(group.date)}</h3>
+                      <DayNet net={group.net} />
+                    </div>
+                    <div className="px-1 pb-1.5">
+                      {group.items.map((tx) => <EntryRow key={tx.id} tx={tx} narrow />)}
+                    </div>
+                  </section>
+                ))}
               </div>
-            )}
-          </div>
-          {visible.length > 1 && (
-            <div className="hidden md:flex items-center justify-center gap-2 mt-2.5">
-              <button type="button" onClick={() => nudge(-1)} aria-label={t('Scroll to newer days')} className="pressable size-9 rounded-full bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center">
-                <ChevronLeft size={17} />
-              </button>
-              <button type="button" onClick={() => nudge(1)} aria-label={t('Scroll to older days')} className="pressable size-9 rounded-full bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center">
-                <ChevronRight size={17} />
-              </button>
-            </div>
-          )}
+            </section>
+          ))}
         </div>
       )}
 
-      {view !== 'days' && groups.length > limit && (
+      {groups.length > limit && (
         <div className="flex justify-center">
           <button
             type="button"

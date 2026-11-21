@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, CalendarRange, ChartColumn, ChartPie, ChevronDown, ChevronRight, HandCoins, LineChart, Tag } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { CalendarDays, CalendarRange, ChartPie, ChevronDown, ChevronRight, HandCoins, LineChart, Tag } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { HeroPair, NoteCard, ShareCard } from '../components/cards';
+import { ExpenseChart } from '../components/ExpenseChart';
 import { Bar, textInput } from '../components/ui';
 import { monthsBack, ruleShares, totalsByMonth } from '../lib/calc';
 import { allExpenseCategories } from '../lib/categories';
 import { addDays, addMonths, currentMonth, daysBetween, daysInMonth, elapsedDays, formatDay, formatMonth, monthOf, todayStr } from '../lib/dates';
-import { axisLabel, bucketTitle, expenseSeries, SLOT_PX, type Resolution } from '../lib/expenseSeries';
 import { percent, round2 } from '../lib/format';
 import { useApp } from '../lib/store';
 import { usePersistentState } from '../lib/usePersistentState';
@@ -20,11 +20,6 @@ const RANGES: { id: RangeKey; label: string }[] = [
   { id: '6', label: '6 months' },
   { id: '12', label: '12 months' },
   { id: 'custom', label: 'Custom' },
-];
-const RESOLUTIONS: { id: Resolution; label: string }[] = [
-  { id: 'day', label: 'Per day' },
-  { id: 'week', label: 'Per week' },
-  { id: 'month', label: 'Per month' },
 ];
 /** The longest custom period: five years of months. */
 const MAX_CUSTOM_MONTHS = 60;
@@ -40,11 +35,7 @@ export function StatsView() {
   const [trendOpen, setTrendOpen] = usePersistentState('koink_stats_trend_open', true);
   const [monthsOpen, setMonthsOpen] = usePersistentState('koink_stats_months_open', true);
   const [whereOpen, setWhereOpen] = usePersistentState('koink_stats_where_open', true);
-  const [chartOpen, setChartOpen] = usePersistentState('koink_stats_chart_open', true);
-  const [resolution, setResolution] = usePersistentState<Resolution>('koink_stats_chart_res', 'week');
-  const [pickedCategories, setPickedCategories] = useState<string[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
-  const [selectedBar, setSelectedBar] = useState<number | null>(null);
 
   const custom = range === 'custom';
   // Totals (not monthly averages) for one month and for a custom period; averages for 3 / 6 / 12 months.
@@ -135,33 +126,8 @@ export function StatsView() {
   const maxMonth = Math.max(...list.map((m) => Math.max(m.income, m.spent)), 1);
   const maxCategory = period.byCategory[0]?.total ?? 1;
 
-  // Expense chart: all expenses, or only the picked categories, per day / week / month.
+  // Ids of the categories that exist: the chart gathers entries of deleted ones under "Other".
   const knownIds = useMemo(() => new Set(allExpenseCategories().map((c) => c.id)), [data.categories]); // eslint-disable-line react-hooks/exhaustive-deps
-  const pickable = period.byCategory.map((row) => row.category);
-  const picked = pickedCategories.filter((id) => pickable.some((c) => c.id === id));
-  const series = useMemo(
-    () => expenseSeries(
-      data.txs,
-      fromDate,
-      toDate,
-      resolution,
-      picked.length === 0 ? undefined : (tx) => picked.includes(knownIds.has(tx.categoryId) ? tx.categoryId : '_other'),
-    ),
-    // `picked` is derived from pickedCategories and the period
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data.txs, fromDate, toDate, resolution, pickedCategories, knownIds, period.byCategory],
-  );
-  const seriesMax = Math.max(...series.map((p) => p.total), 0);
-  const seriesTotal = round2(series.reduce((acc, p) => acc + p.total, 0));
-  const seriesAvg = series.length > 0 ? seriesTotal / series.length : 0;
-  const barIndex = selectedBar !== null && selectedBar < series.length ? selectedBar : null;
-  const barsRef = useRef<HTMLDivElement>(null);
-  const slot = SLOT_PX[resolution];
-  // The newest bars are the ones that matter: start scrolled to the right.
-  useEffect(() => {
-    const el = barsRef.current;
-    if (el) el.scrollLeft = el.scrollWidth;
-  }, [series.length, resolution, chartOpen]);
 
   const goToMonth = (month: string) => {
     setSelectedMonth(month);
@@ -235,137 +201,8 @@ export function StatsView() {
         <NoteCard tone="savings" icon={CalendarDays} label={t('Per day')} value={moneyFit(period.perDay, 7)} title={t('Average spending per day')} />
       </div>
 
-      {/* Expense chart: all expenses or only the picked categories, per day / week / month */}
-      <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-4 sm:p-5">
-        <button type="button" onClick={() => setChartOpen(!chartOpen)} aria-expanded={chartOpen} className="w-full flex items-center justify-between gap-2 text-left">
-          <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
-            <ChartColumn size={16} className="text-[var(--muted)]" aria-hidden="true" />
-            {t('Expenses over time')}
-          </h3>
-          <span className="flex items-center gap-2 tabular-nums">
-            <span className="text-xs font-bold text-[var(--muted)]">{money(seriesTotal)}</span>
-            <ChevronDown size={16} className={`text-[var(--muted)] transition-transform duration-200 ${chartOpen ? 'rotate-180' : ''}`} />
-          </span>
-        </button>
-        <div className="accordion-grid" data-open={chartOpen} inert={!chartOpen}>
-          <div className="accordion-inner">
-            <div className="pt-3 space-y-3">
-              <div role="group" aria-label={t('Resolution')} className="flex justify-center">
-                <div className="inline-flex items-center gap-1 p-1 bg-[var(--inset)] border border-[var(--border)] rounded-full">
-                  {RESOLUTIONS.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      aria-pressed={resolution === item.id}
-                      onClick={() => {
-                        setResolution(item.id);
-                        setSelectedBar(null);
-                      }}
-                      className={`pressable px-3 py-1.5 rounded-full text-[11px] font-extrabold whitespace-nowrap ${
-                        resolution === item.id ? 'bg-[var(--text)] text-[var(--on-text)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover)]'
-                      }`}
-                    >
-                      {t(item.label)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {pickable.length > 0 && (
-                <div>
-                  <span className="block mb-1.5 px-1 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Categories')}</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      aria-pressed={picked.length === 0}
-                      onClick={() => {
-                        setPickedCategories([]);
-                        setSelectedBar(null);
-                      }}
-                      className={`pressable px-2.5 py-1.5 rounded-full text-[11px] font-extrabold border ${
-                        picked.length === 0 ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] text-[var(--text)] border-[var(--border)] hover:bg-[var(--hover)]'
-                      }`}
-                    >
-                      {t('All expenses')}
-                    </button>
-                    {pickable.map((category) => {
-                      const Icon = category.icon;
-                      const on = picked.includes(category.id);
-                      return (
-                        <button
-                          key={category.id}
-                          type="button"
-                          aria-pressed={on}
-                          onClick={() => {
-                            setPickedCategories(on ? picked.filter((id) => id !== category.id) : [...picked, category.id]);
-                            setSelectedBar(null);
-                          }}
-                          className={`pressable inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-extrabold border ${
-                            on ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] text-[var(--text)] border-[var(--border)] hover:bg-[var(--hover)]'
-                          }`}
-                        >
-                          <Icon size={12} strokeWidth={2.4} aria-hidden="true" />
-                          {t(category.name)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {series.length === 0 || seriesTotal === 0 ? (
-                <p className="kc-section-empty text-xs font-medium text-[var(--muted)]">{t('No spending in this period.')}</p>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between gap-2 text-xs font-bold tabular-nums px-1" aria-live="polite">
-                    <span className="text-[var(--muted)]">
-                      {barIndex !== null ? bucketTitle(series[barIndex].start, resolution) : `${t('Average')} / ${t(resolution)}`}
-                    </span>
-                    <span className="text-[var(--activity-on-surface)] font-extrabold">{money(barIndex !== null ? series[barIndex].total : seriesAvg, { cents: barIndex !== null })}</span>
-                  </div>
-                  {/* Bars: a plain flex row that scrolls sideways when there are too many to fit. */}
-                  <div ref={barsRef} data-no-swipe className="no-scrollbar overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x touch-pan-y">
-                    <div style={{ minWidth: series.length * slot }}>
-                      <div className="flex items-end h-32 gap-[3px] border-b border-[var(--border)]" role="group" aria-label={t('Expenses per {v}', { v: t(resolution) })}>
-                        {series.map((point, index) => {
-                          const height = seriesMax > 0 ? Math.max(point.total > 0 ? 3 : 0, (point.total / seriesMax) * 100) : 0;
-                          const on = barIndex === index;
-                          return (
-                            <button
-                              key={point.start}
-                              type="button"
-                              onClick={() => setSelectedBar(on ? null : index)}
-                              aria-pressed={on}
-                              aria-label={`${bucketTitle(point.start, resolution)}: ${money(point.total, { cents: true })}`}
-                              className="group h-full flex-1 min-w-0 flex items-end focus:outline-none"
-                            >
-                              <span
-                                className={`block w-full rounded-t-md transition-colors ${on ? 'bg-[var(--text)]' : 'bg-activity-accent group-hover:opacity-80 group-focus-visible:opacity-80'}`}
-                                style={{ height: `${height}%` }}
-                              />
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="flex gap-[3px]" aria-hidden="true">
-                        {series.map((point) => (
-                          <span key={point.start} className="relative h-5 flex-1 min-w-0">
-                            <span className="absolute left-1/2 top-1 -translate-x-1/2 whitespace-nowrap text-[9.5px] font-bold text-[var(--muted)]">{axisLabel(point.start, resolution)}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="um-hide px-1 text-center text-[11px] font-medium text-[var(--muted)]">
-                    {picked.length === 0 ? t('All expenses') : picked.map((id) => pickable.find((c) => c.id === id)?.name).filter(Boolean).map((name) => t(name as string)).join(', ')}
-                    {' · '}{t('Tap a bar to read it')}
-                  </p>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Expense chart: bars or line, optional comparison of periods / categories, full view */}
+      <ExpenseChart txs={data.txs} fromDate={fromDate} toDate={toDate} categories={period.byCategory} knownIds={knownIds} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {/* Balance trend */}

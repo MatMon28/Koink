@@ -41,7 +41,7 @@ Everything is `localStorage`, on the device, never sent anywhere.
 | `koink_journal_v1` | The whole `AppData` as JSON. Written after every change (`store.tsx`). The constant is `STORAGE_KEY` in `storage.ts`. |
 | `koink_month_layout`, `koink_month_open`, `koink_month_trackers_open` | Month page: layout, open category cards, open tracker cards. |
 | `koink_tx_filter` | Transactions page filter. |
-| `koink_stats_range`, `koink_stats_from`, `koink_stats_to`, `koink_stats_trend_open`, `koink_stats_months_open`, `koink_stats_where_open`, `koink_stats_chart_open`, `koink_stats_chart_res` | Statistics page: period (1 / 3 / 6 / 12 / custom, with its two dates), open sections, expense-chart resolution. |
+| `koink_stats_range`, `koink_stats_from`, `koink_stats_to`, `koink_stats_trend_open`, `koink_stats_months_open`, `koink_stats_where_open`, `koink_stats_chart_open`, `koink_stats_chart_res`, `koink_stats_chart_type`, `koink_stats_chart_cmp`, `koink_stats_chart_base`, `koink_stats_chart_cfrom`, `koink_stats_chart_cto` | Statistics page: period (1 / 3 / 6 / 12 / custom, with its two dates), open sections, expense-chart resolution, type (bars / line), comparison (off / periods / categories), the second period's kind and its two dates. |
 | `koink_tx_filter_open` | Transactions page: whether the filter panel is open. |
 | `koink_budgets_open_<id>` | Budgets page: whether a card (`bucket_<bucket>`, `goals`, `recurring`) is open. |
 | `koink_boot` | `{ theme, style, bg, ultra }`: the few values the inline script of `index.html` needs to paint the first frame in the saved colours. Rewritten by `themes.ts` on every theme change; safe to delete. [launch-intro.md](launch-intro.md) |

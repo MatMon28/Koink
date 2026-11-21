@@ -26,7 +26,7 @@
 | Feature | Open |
 | --- | --- |
 | Month page: hero cards, shares, category cards, layouts | [features/month.md](features/month.md) |
-| Transactions page: kind chips, search, filter panel, day groups, list / 2 days / day cards | [features/transactions.md](features/transactions.md) |
+| Transactions page: kind chips, search, filter panel, day groups, month sections, list / 2 days layout | [features/transactions.md](features/transactions.md) |
 | Budgets page: collapsible cards, category budgets, generic monthly budget, goals, recurring, hiding the page | [features/budgets.md](features/budgets.md) |
 | Statistics page: averages, balance trend, breakdown | [features/statistics.md](features/statistics.md) |
 | Adding and editing entries, Log again, toasts and Undo | [features/entries.md](features/entries.md) |

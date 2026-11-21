@@ -73,4 +73,5 @@
 - Weekly recurring items have no reminder notification.
 - The expense chart at day resolution over a long period is a wide, sideways-scrolling chart (at most 800 bars); the custom statistics period is limited to 60 months.
 - The Transactions filter panel (categories, accounts, dates, amounts) is not remembered between visits, only whether it is open.
-- The vertical-scroll fix on the *Day cards* layout (`overflow-y-hidden touch-pan-x touch-pan-y`) and the new screens were built and type-checked but **not tested on a phone**.
+- The *Day cards* layout was removed; the new screens were built and type-checked but **not tested on a phone**.
+- The expense chart's comparison, line and full view (and the month sections of the Transactions page) were type-checked, linted and the date maths (`comparisonPeriod`) was run, but they were **not looked at in a browser or on a phone**. When comparing periods the slots are lined up by position, so a week-resolution comparison of two periods that start on different weekdays pairs weeks that are not exactly the same days.

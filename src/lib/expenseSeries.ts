@@ -1,4 +1,4 @@
-import { addDays, addMonths, formatMonth, MONTH_SHORT, monthOf, weekStart } from './dates';
+import { addDays, addMonths, daysBetween, daysInMonth, formatMonth, MONTH_SHORT, monthOf, weekStart } from './dates';
 import { round2 } from './format';
 import { t } from './i18n';
 import type { Tx } from './types';
@@ -72,3 +72,40 @@ export function bucketTitle(start: string, resolution: Resolution): string {
   }
   return `${day} ${month} ${start.slice(0, 4)}`;
 }
+
+/** What the chart's second period is: the one right before, the same days a year earlier, or two chosen dates. */
+export type CompareBase = 'prev' | 'year' | 'custom';
+
+export interface Period {
+  from: string;
+  to: string;
+}
+
+const lastOfMonth = (month: string) => `${month}-${String(daysInMonth(month)).padStart(2, '0')}`;
+
+/** The same calendar day `n` months earlier (31 March - 1 month = 28 / 29 February). */
+function shiftMonths(date: string, n: number): string {
+  const month = addMonths(monthOf(date), n);
+  const day = Math.min(Number(date.slice(8, 10)), daysInMonth(month));
+  return `${month}-${String(day).padStart(2, '0')}`;
+}
+
+/**
+ * The period to compare `from..to` with. `prev` is the span of the same length right before it: whole months
+ * (3 months -> the 3 months before) when the period is whole months, otherwise the same number of days.
+ * `year` is the same days one year earlier. `custom` is whatever the user typed (swapped when reversed).
+ */
+export function comparisonPeriod(from: string, to: string, base: CompareBase, custom: Period): Period {
+  if (base === 'custom') return custom.from <= custom.to ? custom : { from: custom.to, to: custom.from };
+  if (base === 'year') return { from: shiftMonths(from, -12), to: shiftMonths(to, -12) };
+  const wholeMonths = from.slice(8, 10) === '01' && to === lastOfMonth(monthOf(to));
+  if (wholeMonths) {
+    const count = Math.round((Number(to.slice(0, 4)) * 12 + Number(to.slice(5, 7)) - (Number(from.slice(0, 4)) * 12 + Number(from.slice(5, 7)))) + 1);
+    return { from: `${addMonths(monthOf(from), -count)}-01`, to: lastOfMonth(addMonths(monthOf(to), -count)) };
+  }
+  const length = daysBetween(from, to) + 1;
+  return { from: addDays(from, -length), to: addDays(from, -1) };
+}
+
+/** Colours of the lines / bars when several categories are compared (readable on light and dark themes). */
+export const SERIES_COLORS = ['#D9674E', '#3E86C8', '#5FA352', '#A56FC4', '#DDA11F', '#25A0A0', '#D45D96', '#7C8794'];
