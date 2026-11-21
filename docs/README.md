@@ -12,6 +12,7 @@
 | Change colours, tokens, presets, motion classes | [design-system.md](design-system.md) |
 | Change swipe rules or what Back does | [gestures.md](gestures.md) |
 | Change animation timing, springs, how sheets leave | [motion.md](motion.md) |
+| Produce or apply `changes.patch` | [changes-patch.md](changes-patch.md) |
 | Change reminders: plan, wording, Android alarms, browser timers | [notifications.md](notifications.md) |
 | Change a launch animation, the first paint, or the Android launch-screen colour | [launch-intro.md](launch-intro.md) |
 | Change the manifest, offline worker, install card, shortcuts | [pwa.md](pwa.md) |

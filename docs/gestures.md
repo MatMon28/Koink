@@ -19,7 +19,8 @@
 | Back (button, back swipe, browser Back) | anywhere | closes the top sheet or the month picker; installed: then returns to Month | `back.ts` |
 | Tap | the launch animation | skips it | `intro.ts` |
 | Hold | `+` / `-` of an amount stepper | repeats the step | `ui.tsx` (`AmountStepper`) |
-| Scroll down / up | page | the header folds to the page pill; the bottom dock stays where it is, always visible | `Header.tsx`, `ActionDock.tsx` |
+| Scroll down / up | page | the header folds to the page pill; the bottom dock (Month page only) stays where it is | `Header.tsx`, `ActionDock.tsx` |
+| Any new touch or key | while an animation of a gesture runs | the animation ends at once ([motion.md](motion.md#ending-an-animation-early)); a swipe that was finishing lands the new page and the touch is for it | `PageSwiper.tsx`, `Modal.tsx`, `lib/interrupt.ts` |
 | Tap the scrim, Escape | open sheet | closes it (or asks, see above) | `Modal.tsx` |
 
 Settings no longer shows a gestures list (it was removed); this page is the only reference.

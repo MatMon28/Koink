@@ -61,7 +61,8 @@ for (const needed of [
   if (!existsSync(needed)) throw new Error(`${needed} is missing. Run npm run brand, or see docs/android.md.`);
 }
 // One launch-screen style per app background, or the launch screen cannot follow the theme.
-run('Launch-screen styles', process.execPath, ['scripts/generate-splash-themes.mjs', '--check']);
+const nodeExec = process.platform === 'win32' ? `"${process.execPath}"` : process.execPath;
+run('Launch-screen styles', nodeExec, ['scripts/generate-splash-themes.mjs', '--check']);
 
 console.log(`\nAndroid assets ready (${config.appName}, ${config.appId}). index.html SHA-256: ${createHash('sha256').update(html).digest('hex').slice(0, 16)}`);
 console.log('Next: npm run android:open (Android Studio), or see docs/prepare-apps.md for the command line.');

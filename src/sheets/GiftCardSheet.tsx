@@ -65,14 +65,6 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
       </div>
 
       <div>
-        <SectionLabel>{original ? t('Value when added') : t('Value')}</SectionLabel>
-        <AmountStepper value={initial} onChange={setInitial} unit={symbol} step={5} ariaLabel={t('Value of the gift card')} startOpen={!original} chips={[10, 25, 50]} />
-        {original && spent > 0 && (
-          <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">{money(spent, { cents: true })} {t('has been spent from it so far; the balance above follows the value you set.')}</p>
-        )}
-      </div>
-
-      <div>
         <SectionLabel htmlFor="gift-expires">{t('Valid until')} <span className="normal-case tracking-normal font-bold opacity-70">{t('· optional')}</span></SectionLabel>
         <div className="flex items-center gap-1.5">
           <input
@@ -88,6 +80,14 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
             </button>
           )}
         </div>
+      </div>
+
+      <div>
+        <SectionLabel>{original ? t('Value when added') : t('Value')}</SectionLabel>
+        <AmountStepper value={initial} onChange={setInitial} unit={symbol} step={5} ariaLabel={t('Value of the gift card')} startOpen={!original} chips={[10, 25, 50]} />
+        {original && spent > 0 && (
+          <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">{money(spent, { cents: true })} {t('has been spent from it so far; the balance above follows the value you set.')}</p>
+        )}
       </div>
 
       <div>

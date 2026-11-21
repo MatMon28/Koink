@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { whenIdle } from '../lib/idle';
 import { setPillTab } from '../lib/pillTab';
 import { SPRING } from '../lib/spring';
@@ -87,6 +88,8 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
   const arrivedBySwipe = useRef(false);
   const swallowClick = useRef(false);
   const shownTab = useRef(activeTab);
+  /** The rail animation that is running, with what ends it at once (see the touch guard below). */
+  const running = useRef<{ end: () => void } | null>(null);
   const [peek, setPeek] = useState<Peek | null>(null);
   /** Pages kept mounted but hidden, ready to ride along. */
   const [warm, setWarm] = useState<ActiveTab[]>([]);
@@ -117,14 +120,27 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
       return;
     }
     if (prefersReducedMotion() || typeof el.animate !== 'function') return;
-    el.animate(
+    const enter = el.animate(
       [
         { opacity: 0.3, transform: `translate3d(${direction * ENTER_OFFSET_PX}px, 0, 0)` },
         { opacity: 1, transform: 'translate3d(0, 0, 0)' },
       ],
       { duration: SPRING.soft.duration, easing: SPRING.soft.easing },
     );
+    const mine = { end: () => enter.cancel() }; // no fill: cancelling is the finished state
+    running.current = mine;
+    enter.onfinish = enter.oncancel = () => {
+      if (running.current === mine) running.current = null;
+    };
   }, [activeTab]);
+
+  // A new touch (or key) ends whatever the rail is doing at once: the slide-in, the spring back, or
+  // the last stretch of a committed swipe (the new page is then simply in place). Kakcal's rule.
+  useEffect(() => {
+    const endNow = () => running.current?.end();
+    (['pointerdown', 'touchstart', 'keydown'] as const).forEach((type) => document.addEventListener(type, endNow, { capture: true, passive: true }));
+    return () => (['pointerdown', 'touchstart', 'keydown'] as const).forEach((type) => document.removeEventListener(type, endNow, true));
+  }, []);
 
   /** Lets go of the rail: it springs back to rest from wherever the finger left it. */
   const settle = () => {
@@ -137,7 +153,19 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
       return;
     }
     const back = el.animate([{ transform: from }, { transform: 'translate3d(0, 0, 0)' }], { duration: SPRING.soft.duration, easing: SPRING.soft.easing });
-    back.onfinish = () => setPeek(null); // the neighbour leaves once it is out of sight again
+    const mine = {
+      end: () => {
+        back.onfinish = null;
+        back.cancel(); // at rest at once
+        running.current = null;
+        setPeek(null);
+      },
+    };
+    running.current = mine;
+    back.onfinish = () => {
+      if (running.current === mine) running.current = null;
+      setPeek(null); // the neighbour leaves once it is out of sight again
+    };
   };
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -203,8 +231,11 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     }
 
     arrivedBySwipe.current = true;
+    // The side the new page lies on: the dock (which only belongs to the Month page) enters or leaves that way.
+    document.documentElement.style.setProperty('--kc-swipe-dir', String(step));
     // One render: the neighbour's element is kept (same key) and becomes the current page.
     const promote = () => {
+      running.current = null;
       setActiveTab(next);
       setPillTab(null); // the real page has caught up with the pill
       setPeek(null);
@@ -228,6 +259,14 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
       setPillTab(null);
       leaving.current = false;
       arrivedBySwipe.current = false;
+    };
+    // A touch during the last stretch: the new page lands now, and that touch is already for it.
+    running.current = {
+      end: () => {
+        exit.onfinish = null;
+        exit.oncancel = null;
+        flushSync(promote);
+      },
     };
   };
 

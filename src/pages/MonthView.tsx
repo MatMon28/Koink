@@ -14,6 +14,7 @@ import { percent, round2 } from '../lib/format';
 import { t } from '../lib/i18n';
 import { useApp } from '../lib/store';
 import type { Bucket } from '../lib/types';
+import { endOnTouch } from '../lib/interrupt';
 import { usePersistentState } from '../lib/usePersistentState';
 
 type Layout = 'compact' | 'normal' | 'expanded';
@@ -82,12 +83,14 @@ export function MonthView() {
     shown.current = selectedMonth;
     const el = panel.current;
     if (!el || prefersReducedMotion() || typeof el.animate !== 'function') return;
-    el.animate(
-      [
-        { opacity: 0.3, transform: `translate3d(${forward ? 24 : -24}px, 0, 0)` },
-        { opacity: 1, transform: 'translate3d(0, 0, 0)' },
-      ],
-      { duration: 260, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+    endOnTouch( // the next touch ends the slide at once
+      el.animate(
+        [
+          { opacity: 0.3, transform: `translate3d(${forward ? 24 : -24}px, 0, 0)` },
+          { opacity: 1, transform: 'translate3d(0, 0, 0)' },
+        ],
+        { duration: 260, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+      ),
     );
   }, [selectedMonth]);
 

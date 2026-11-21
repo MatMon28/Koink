@@ -25,6 +25,7 @@
 | `intro.ts` | `startLaunchIntro`, `shouldShowIntro`, `pickIntroAnimation`, `markAppReady`, `onLaunchIntroEnd`, `afterFirstPaint`, `useReportAppReady`, `IntroAnimation`, `INTRO_LAST_KEY` | The launch animation's overlay (plain DOM), pick (signature animation first, then random), timing, skip. The animations themselves are in `src/brand/art.js`. See [../launch-intro.md](../launch-intro.md) |
 | `earlyStart.ts` | (side effects only) | Imported first by `main.tsx`: storage migration, saved theme, motion tokens, launch animation, before the app is evaluated |
 | `spring.ts` | `SPRING`, `makeSpring`, `applyMotionTokens`, `SpringEase` | Damped springs sampled into CSS `linear()` curves; publishes `--ease-soft` / `--ease-bounce`. See [../motion.md](../motion.md) |
+| `interrupt.ts` | `endOnTouch`, `endRunningAnimations` | A new touch or key ends the registered Web Animations at once (month slide, the dock's pulse). [../motion.md](../motion.md#ending-an-animation-early) |
 | `velocity.ts` | `trackSample`, `releaseSpeed`, `Sample` | Release speed of a drag, shared by the page swipe and the sheets |
 | `idle.ts` | `whenIdle` | Runs a task in an idle moment with a deadline (rescheduling reminders, pre-mounting neighbour pages) |
 | `journal.ts` | `hasMoneyData`, `currencyLocked`, `summarizeJournal`, `JournalSummary`, `BackupPreview` | Pure helpers about a whole journal: is a currency change safe, and what is in it (restore preview). No React, no storage | [../features/currencies.md](../features/currencies.md), [../features/backup.md](../features/backup.md) |

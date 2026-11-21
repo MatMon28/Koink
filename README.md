@@ -43,7 +43,7 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **Excel export** (a readable spreadsheet, not a backup) | `src/lib/excel.ts` (loaded on demand), `saveBlobFile` in `src/lib/platform.ts`, the *Export to Excel* button in `src/sheets/SettingsSheet.tsx` | [features/excel-export.md](docs/features/excel-export.md) |
 | **Themes and style presets** | `src/lib/themes.ts`, `src/index.css`, `src/styles/presets.css` | [features/themes.md](docs/features/themes.md), [design-system.md](docs/design-system.md) |
 | **Smooth sheet drag / header scroll, logo click animation** | `src/components/Modal.tsx`, `src/components/Header.tsx`, end of `src/index.css` | [motion.md](docs/motion.md#smoothness-fixes-sheet-drag-scrolling) |
-| **Swipes, Back button, drag-to-close** | `src/components/PageSwiper.tsx`, `src/lib/pillTab.ts`, `src/lib/back.ts`, `src/components/Modal.tsx`, `src/components/MonthNavigator.tsx`, `src/lib/velocity.ts` | [gestures.md](docs/gestures.md) |
+| **Swipes, Back button, drag-to-close, "a new touch ends the animation"** | `src/components/PageSwiper.tsx`, `src/lib/interrupt.ts`, `src/lib/pillTab.ts`, `src/lib/back.ts`, `src/components/Modal.tsx`, `src/components/MonthNavigator.tsx`, `src/lib/velocity.ts` | [gestures.md](docs/gestures.md) |
 | **Reminder notifications** | `src/lib/reminders.ts` (plan), `src/lib/notifications.ts` (delivery), `src/lib/useReminders.ts`, `src/sheets/NotificationSettings.tsx` | [notifications.md](docs/notifications.md) |
 | **Ultra minimal mode** | `um-*` classes at the end of `src/index.css`, `src/components/cards.tsx`, `Tabs.tsx`, `MonthNavigator.tsx` | [features/ultra-minimal.md](docs/features/ultra-minimal.md) |
 | **Launch animations, first paint, Android launch-screen colour** | `src/brand/art.js` (`INTRO_ANIMATIONS`), `src/lib/intro.ts`, `src/styles/intro.css`, `src/lib/earlyStart.ts`, inline script in `index.html`; Android: `LaunchBackground.java`, `values/splash_themes.xml`, `scripts/generate-splash-themes.mjs` | [launch-intro.md](docs/launch-intro.md) |
@@ -51,13 +51,14 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **Unsaved-input question** | `src/sheets/TxSheet.tsx` (`FormGuard`), `SaveBeforeCloseDialog` in `src/components/ui.tsx` | [features/entries.md](docs/features/entries.md) |
 | **PWA**: manifest, offline worker, install prompt, shortcuts | `public/manifest.webmanifest`, `scripts/offline-worker.template.js`, `vite.config.ts`, `src/lib/pwa.ts`, `index.html` | [pwa.md](docs/pwa.md) |
 | **Android app**: Capacitor config, native project and its Java, back button, file sharing | `capacitor.config.json`, `android/` (Java in `android/app/src/main/java/com/koink/app/`), `src/lib/platform.ts`, `src/lib/back.ts`, `scripts/prepare-android.mjs` | [android.md](docs/android.md) |
+| **Hand work back as a patch** (`changes.patch`) | `docs/changes-patch.md` | [changes-patch.md](docs/changes-patch.md) |
 | **Build, host or release either app** | `package.json`, `scripts/` | [prepare-apps.md](docs/prepare-apps.md) |
 | **Project archive** (the "Download project" card in Settings) | `scripts/package-project.mjs`, `src/components/ProjectDownload.tsx`, `public/downloads/` | [prepare-apps.md](docs/prepare-apps.md#3-the-project-archive) |
 | **Logo, icon, wordmark** (light and dark), generated icon files, notification icon, the **pig icon** (`PigIcon`) | `src/brand/art.js` (the one source), `src/lib/pig.ts`, `src/components/Brand.tsx`, `scripts/render-brand.mjs`, `public/brand/` | [brand.md](docs/brand.md) |
 | **State, actions, what is stored** | `src/lib/store.tsx`, `src/lib/types.ts`, `src/lib/storage.ts` | [data-model.md](docs/data-model.md) |
 | **Money maths** (totals, shares, budgets, formatting) | `src/lib/calc.ts`, `src/lib/format.ts`, `src/lib/dates.ts` | [data-model.md](docs/data-model.md) |
 | **Categories and income sources** | `src/lib/categories.ts` | [data-model.md](docs/data-model.md) |
-| **Header, page pill, bottom dock (always visible), sheets, toasts** | `src/components/Header.tsx`, `Tabs.tsx`, `ActionDock.tsx`, `Modal.tsx`, `ui.tsx`, `src/lib/pillTab.ts`, `src/lib/dock.ts` | [architecture.md](docs/architecture.md) |
+| **Header, page pill, bottom dock (Month page only), sheets, toasts** | `src/components/Header.tsx`, `Tabs.tsx`, `ActionDock.tsx`, `Modal.tsx`, `ui.tsx`, `src/lib/pillTab.ts`, `src/lib/dock.ts`, `src/lib/interrupt.ts` | [architecture.md](docs/architecture.md) |
 | **Shared inputs** (amount stepper, switch, confirm dialog) | `src/components/ui.tsx` | [file-map/components.md](docs/file-map/components.md) |
 | **How the whole thing fits together** | `src/App.tsx`, `src/main.tsx` | [architecture.md](docs/architecture.md) |
 | **Which file does X?** | | [file-map/README.md](docs/file-map/README.md) |
@@ -88,7 +89,19 @@ docs/                 documentation (index: docs/README.md)
 3. Every sheet is a `<Modal>`; every sheet is opened with `openSheet({ type: ... })`. The list of types is the `Sheet` union in `src/lib/types.ts`.
 4. After adding, renaming or deleting a file, update its row in `docs/file-map/` and, if it is a feature, the matching `docs/features/*.md` (rule and table in [docs/README.md](docs/README.md#keeping-the-docs-current)).
 
-## Newest round: transactions switch, instant page pill, sheets sucked into the bar
+## Latest round: button bar on Month only, interrupting touches, sticky confirm, one row of categories
+
+Inspired by [Kakcal](https://github.com/MatMon28/Kakcalculator) (its `docs/motion.md` and `docs/gestures.md`).
+
+- **Gesture animations end on the next touch.** The page rail (slide-in after the pill or Back, the spring back of a cancelled swipe, and the last stretch of a committed swipe), the month slide, the dock's pulse and its entrance all stop at once when a new finger or key arrives; a committed swipe lands the new page immediately, and the new touch is already for that page. New `src/lib/interrupt.ts` (`endOnTouch`), used by `PageSwiper.tsx`, `MonthView.tsx`, `Modal.tsx`, `ActionDock.tsx`. [docs/motion.md](docs/motion.md#ending-an-animation-early), [docs/gestures.md](docs/gestures.md)
+- **Savings button, closing.** The *New savings goal* sheet that the savings button opens (when there is no goal yet) was the one sheet without a `dockId`, so it dropped away while income, expense, recurring, log again and gift cards shrink into their button. It now shrinks into the pig button too. [docs/features/savings-goals.md](docs/features/savings-goals.md)
+- **The button bar exists on the Month page only.** On Transactions, Budgets and Statistics it is gone, and the pages get the normal bottom padding. It enters from the side the page came from and leaves towards the side the page went (`--kc-swipe-dir`, 130 / 110 ms, bounce spring), Kakcal's dock animation; with a swipe it starts the moment the swipe is committed (like the header pill). `ActionDock` has a `show` prop and an in / out / gone phase. Sheets opened on another page just drop away (no button to shrink into). [docs/motion.md](docs/motion.md), [docs/features/month.md](docs/features/month.md)
+- **The confirm button is always visible.** The save row of every sheet (entry, recurring, goal, budget, account, gift card, profile) and the *Confirm amount* / *Use this rate* key of the number pad stick to the bottom of the sheet's scroll area (`.kc-sticky-footer`). [docs/features/entries.md](docs/features/entries.md)
+- **Add expense: one row of categories.** The sheet shows only the 4 most recently used categories; a *Show all · N* button opens the rest, also most recent first, plus the *New* tile. A choice made in the open list stays visible when it is folded. The same `ChoiceGrid` (`collapsible`) serves income sources, goals and the recurring sheet. [docs/features/entries.md](docs/features/entries.md), [docs/features/categories.md](docs/features/categories.md)
+- **Date above the amount** in the entry sheet, and in the same spirit in the sheets that have both: the recurring sheet (*Repeats* and its date / day now come before the amount) and the gift card sheet (*Valid until* before the value). [docs/features/recurring.md](docs/features/recurring.md), [docs/features/gift-cards.md](docs/features/gift-cards.md)
+- **`changes.patch`:** how it was made and how to apply it: [docs/changes-patch.md](docs/changes-patch.md). Not tested in a real browser (see [docs/known-gaps.md](docs/known-gaps.md)).
+
+## Previous round: transactions switch, instant page pill, sheets sucked into the bar
 
 - **Transactions:** the **List / 2 days** switch now sits at the **right end of the entries recap** line ("12 entries · in … · out …") and shows **icons only** (no text; the names stay as tooltip and screen-reader label). [docs/features/transactions.md](docs/features/transactions.md)
 - **Page pill:** when a swipe changes the page, the coloured pill now moves **the moment the swipe is committed**; it used to wait until the page had finished sliding (about 170 ms later). New `src/lib/pillTab.ts`, used by `Tabs.tsx` and `PageSwiper.tsx`. [docs/gestures.md](docs/gestures.md), [docs/motion.md](docs/motion.md)
@@ -125,7 +138,7 @@ docs/                 documentation (index: docs/README.md)
 - **Expense categories** are an expandable field in Settings (groups per type that fold open and shut), and you can add **your own types** next to Needs and Wants. [docs/features/categories.md](docs/features/categories.md)
 - **Budgets:** the Accounts card is gone (accounts live in the Profile), and **Settings > Appearance > Hide the Budgets page** removes the page from the pill and the swipe. [docs/features/budgets.md](docs/features/budgets.md)
 - **Recurring items** can repeat every 1, 2, 3, 6, 12 (or any number of) months, counted from a first month; they only show on the checklist in the months they are due. [docs/features/recurring.md](docs/features/recurring.md)
-- **Bottom buttons** (add expense / income...) are pinned and always visible on every page, and the month **calendar** is the first thing on the Month page. [docs/features/month.md](docs/features/month.md)
+- **Bottom buttons** (add expense / income...) are pinned and never hide on scroll (since the *Latest round* they only exist on the Month page), and the month **calendar** is the first thing on the Month page. [docs/features/month.md](docs/features/month.md)
 - **Entries in lists:** the category is the first line and the title sits right below it. [docs/features/transactions.md](docs/features/transactions.md)
 - **Transactions:** a new **2 days** layout shows two days next to each other. [docs/features/transactions.md](docs/features/transactions.md)
 

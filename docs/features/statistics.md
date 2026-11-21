@@ -26,7 +26,7 @@ Notes:
 - The balance-trend chart is a hand-written SVG (no chart library): a 320 x 120 view box, points are focusable `role="button"` groups with an enlarged hit area.
 - The balance trend starts at the first month that has entries, and counts everything before the period into its starting value.
 - The weekly-review reminder opens this page ([../notifications.md](../notifications.md)).
-- The bottom dock is shown here too (always visible on every page, `hasDock` in `App.tsx`).
+- There is no bottom dock here: the button bar belongs to the Month page (`show` in `ActionDock.tsx`, `App.tsx`).
 - The expense chart (now `ExpenseChart.tsx`) is plain HTML (a flex row of buttons) so it can scroll sideways at any width; slot widths per resolution are `SLOT_PX` in `expenseSeries.ts`. `expenseSeries(txs, from, to, resolution, include)` returns every bucket of the span (empty ones too) and stops at 800 buckets. Entries of a deleted category are gathered under the *Other* chip.
 - A custom period starting mid-month starts the balance trend from everything dated before the first day.
 

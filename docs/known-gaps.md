@@ -88,3 +88,8 @@
 ## This round (transactions switch, page pill, sheets into the bar)
 
 - `tsc`, `eslint` and `vite build` pass, and a workbook built from the sample journal was unzipped to confirm its five sheets. The new motion (the pill moving at once after a committed swipe, Profile / Settings flying into the middle of the button bar, the icon-only layout switch beside the recap) was **not watched in a browser or on a phone**: headless Chromium could not start where this was written (missing system libraries). Check them by hand: swipe between pages and watch the pill; open and close Profile and Settings; open Transactions in List and 2 days, also with Ultra minimal on (the switch is hidden there, the recap stays).
+
+## Latest round (button bar on Month, interrupting touches, sticky confirm, one row of categories)
+
+- `tsc` (with `tsconfig.app.json`) and `vite build` pass. **None of it was run in a browser**: headless Chromium could not start where this was written (missing system libraries), so the dock phases, the touch interruptions, the sticky confirm row and the collapsible category row are checked by reading and building only. Please try on a phone: swipe Month > Transactions > Month watching the bar; start a swipe and touch again during its last stretch; open *Add expense* on a small screen and look at the confirm button; open *Show all*.
+- Possible rough edges to look at first: the bar stays put while the page is dragged (it only reacts on release); `.kc-sticky-footer` sits on the sheet's own `--surface`, a style preset that paints the sheet in another colour would need the same variable; the sticky number-pad key is limited to the pad's own box.

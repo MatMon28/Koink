@@ -37,3 +37,7 @@ Deleting a gift card keeps the entries; they lose the link and count as paid the
 ## The button (changed)
 
 The dock button (label **Gift cards**) and the widget button used to open *New gift card*. They now open the picker above (`openSheet({ type: 'giftCards' })`); the sheet type `giftCard` (add / edit) is reached from the picker, from the *+* of the Gift cards tracker and from a card's row on the Month page.
+
+## Order of the gift card sheet
+
+*Name*, *Valid until* (the date), then the *Value*, then the note. The date comes before the amount, as in the entry sheet; the save row sticks to the bottom of the sheet. [entries.md](entries.md)

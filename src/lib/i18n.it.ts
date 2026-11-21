@@ -710,4 +710,6 @@ export const IT: Record<string, string> = {
   "{n} entries in the file were not valid and are left out.": "{n} movimenti nel file non erano validi e vengono esclusi.",
   "{v} of the {v2} overall monthly budget (everything you spent)": "{v} del budget mensile complessivo di {v2} (tutto ciò che hai speso)",
   "{v} of {v2} in budgeted categories. Unbudgeted spending of {v3} is not counted. Tap to see it.": "{v} di {v2} nelle categorie con budget. Le spese senza budget di {v3} non sono contate. Tocca per vederle.",
+  "Show all": "Mostra tutte",
+  "Show fewer": "Mostra meno",
 };

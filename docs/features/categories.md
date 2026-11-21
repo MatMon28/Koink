@@ -36,3 +36,7 @@
 Backups include `categories` and `settings.hiddenCategories`; older backups load with none.
 
 > **Bills icon:** a sheet of paper with lines (Lucide `FileText`) instead of a lightning bolt. Built-in names are getters that go through `t()`, so they follow the language ([language.md](language.md)).
+
+## Order in the entry sheets
+
+In *Add / Edit expense* the category tiles are ordered by **most recent use** (the ledger is sorted newest first; categories never used keep their usual order after), and only the first row is shown until *Show all · N* is pressed. The recurring sheet uses the same order and the same collapsible `ChoiceGrid`. [entries.md](entries.md)

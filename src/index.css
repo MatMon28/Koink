@@ -206,6 +206,15 @@
   from { opacity: 0; transform: translate3d(calc(var(--kc-swipe-dir, 1) * 10px), 0, 0) scale(0.92); }
   to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
+/* The way out is the way in played towards the other side: the bar leaves the way the page went. */
+@keyframes kc-dock-out {
+  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  to { opacity: 0; transform: translate3d(calc(var(--kc-swipe-dir, 1) * -22px), 0, 0) scale(0.95); }
+}
+@keyframes kc-dock-btn-out {
+  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  to { opacity: 0; transform: translate3d(calc(var(--kc-swipe-dir, 1) * -10px), 0, 0) scale(0.92); }
+}
 /* A changed number settles in from slightly below. */
 @keyframes kc-value-in {
   from { opacity: 0.2; transform: translate3d(0, 7px, 0); }
@@ -226,6 +235,12 @@
   transition: opacity 85ms ease-out;
 }
 .anim-dock .kc-dock-btn { animation: kc-dock-btn-in 130ms var(--ease-bounce) backwards; }
+/* Leaving the Month page (ActionDock.tsx). Takes no input; the next touch removes it at once. */
+.anim-dock-out {
+  animation: kc-dock-out 110ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none !important;
+}
+.anim-dock-out .kc-dock-btn { animation: kc-dock-btn-out 110ms cubic-bezier(0.4, 0, 1, 1) forwards; }
 .anim-value {
   display: inline-block;
   animation: kc-value-in var(--dur-soft) var(--ease-soft) backwards;
@@ -251,6 +266,31 @@ html.kc-sheet-open, .kc-sheet-open body { overscroll-behavior: none; }
   transform: translate3d(0, calc(100% + 3rem), 0);
   visibility: hidden;
   transition: transform 240ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 240ms;
+}
+
+/* The button that ends a form stays on screen: it sticks to the bottom of the sheet's scroll area
+   (SaveRow in sheets/shared.tsx, the confirm key of the number pad). The negative margins cancel the
+   area's padding, so at the end of the form it sits exactly where it used to. */
+.kc-sticky-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 0 -1rem -1rem;
+  padding: 0.625rem 1rem 1rem;
+  background: var(--surface);
+}
+@media (min-width: 640px) {
+  .kc-sticky-footer { margin: 0 -1.25rem -1.25rem; padding: 0.625rem 1.25rem 1.25rem; }
+}
+.kc-sticky-footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 0.875rem;
+  background: linear-gradient(to top, var(--surface), transparent);
+  pointer-events: none;
 }
 
 /* Smooth height accordion via CSS Grid (no overshoot, so the rows never jump). */
@@ -296,6 +336,11 @@ html.kc-sheet-open, .kc-sheet-open body { overscroll-behavior: none; }
   .anim-dock .kc-dock-btn,
   .anim-value {
     animation: none !important;
+  }
+  .anim-dock-out,
+  .anim-dock-out .kc-dock-btn {
+    animation: none !important;
+    visibility: hidden;
   }
   .accordion-grid,
   .pressable,

@@ -73,3 +73,7 @@ Remembered in `localStorage`: `koink_month_layout`, `koink_month_open`, `koink_m
 ## Card styles swapped
 
 `NoteCard` (Left, Per day, Budget; also Days left / Safe per day / Unbudgeted on Budgets and Saved / Kept / Per day on Statistics) now wears the pastel, tall card the shares used to have (`kc-macro-*` colours, `tone` prop: `needs` blue, `wants` amber, `savings` purple). `ShareCard` (Needs, Wants, Savings) now wears the small yellow note card (`bg-nutrient`) with its share line under the amount. Both live in `src/components/cards.tsx`; the status icons (target reached / over) stay on the share cards.
+
+## The button bar (Month page only)
+
+The bottom bar of add buttons (`QuickAddBar` in `App.tsx`, `ActionDock.tsx`) is shown on this page only. Moving to Transactions, Budgets or Statistics (swipe or pill) makes it leave towards the side the page went; coming back, it enters from the side the Month page came from. With a swipe it reacts the moment the swipe is committed. The other pages use the normal bottom padding. Sheets opened elsewhere have no button to shrink into and drop away. [../motion.md](../motion.md)

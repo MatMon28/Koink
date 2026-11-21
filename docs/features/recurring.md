@@ -56,3 +56,7 @@ Kind (Expense / Income), name, amount (each month / each time), category or sour
 - Entries logged from a recurring item carry a small loop icon in lists, and are left out of "Log again" and of the recent-note chips.
 - Deleting an item does not delete its entries; they simply keep an id that no longer matches anything.
 - The list is kept sorted by day.
+
+## Order of the recurring sheet
+
+*Kind*, *Name*, then **when** (*Repeats*, and *First due on* / *Day of the month* / *First due in*), then the **amount**, then the **category** (one row, most recently used first, *Show all · N* for the rest), then the save row, which stays on screen at the bottom of the sheet. The date part comes before the amount, as in the entry sheet. [entries.md](entries.md)

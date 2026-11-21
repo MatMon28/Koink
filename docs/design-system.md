@@ -41,7 +41,8 @@ The presets style elements by the reference app's hooks. They are kept so `prese
 | `[data-tracker]`, `.kc-tracker-icon` | Income / Savings / Recurring cards |
 | `.kc-water-track`, `.kc-water-fill` | progress bars inside cards |
 | `.kc-themed-card` | any other surface card |
-| `.kc-dock`, `.kc-dock-btn` | bottom bar and its buttons (coloured by position, `nth-child`) |
+| `.kc-dock`, `.kc-dock-btn` | bottom bar and its buttons (coloured by position, `nth-child`); `.anim-dock` enters, `.anim-dock-out` leaves |
+| `.kc-sticky-footer` | the row that ends a sheet's form (save row, number pad confirm): sticks to the bottom of the sheet's scroll area, with a soft fade above it |
 | `.kc-nav-pill`, `.kc-nav-tab`, `.kc-nav-tab-active`, `.kc-icon-btn`, `.kc-header-surface` | header pieces (the wordmark's own class is `koink-wordmark`: the presets' `.kc-wordmark` rule belongs to the reference app's wordmark and must not match ours) |
 | `.kc-balance-badge`, `.kc-primary-btn`, `.kc-modal-banner`, `.kc-section-empty` | balance pill, save button, sheet banner, empty text |
 

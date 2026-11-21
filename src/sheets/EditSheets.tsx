@@ -44,7 +44,11 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
   const [confirm, setConfirm] = useState(false);
 
   // Hidden categories are not offered, except the one this item already has.
-  const choices = kind === 'expense' ? visibleExpenseCategories().concat(original && isCategoryHidden(original.categoryId) ? allExpenseCategories().filter((c) => c.id === original.categoryId) : []) : INCOME_SOURCES;
+  // Most recently used first, like in the entry sheet (the ledger is sorted newest first).
+  const rank = new Map<string, number>();
+  for (const tx of data.txs) if (tx.kind === kind && !rank.has(tx.categoryId)) rank.set(tx.categoryId, rank.size);
+  const base = kind === 'expense' ? visibleExpenseCategories().concat(original && isCategoryHidden(original.categoryId) ? allExpenseCategories().filter((c) => c.id === original.categoryId) : []) : INCOME_SOURCES;
+  const choices = base.map((choice, index) => ({ choice, index })).sort((a, b) => (rank.get(a.choice.id) ?? Infinity) - (rank.get(b.choice.id) ?? Infinity) || a.index - b.index).map((x) => x.choice);
   const category = choices.some((c) => c.id === categoryId) ? categoryId : choices[0].id;
   const safeDay = Math.min(28, Math.max(1, Math.round(day) || 1));
   const weekly = unit === 'week';
@@ -95,16 +99,6 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
           autoComplete="off"
           className={`${textInput} text-sm`}
         />
-      </div>
-
-      <div>
-        <SectionLabel>{safeEvery === 1 && !weekly ? t('Amount each month') : t('Amount each time')}</SectionLabel>
-        <AmountStepper value={amount} onChange={setAmount} unit={symbol} ariaLabel={safeEvery === 1 && !weekly ? t('Amount each month') : t('Amount each time')} startOpen={!original} chips={kind === 'expense' ? [5, 10, 50, 100] : [100, 500, 1000]} />
-      </div>
-
-      <div>
-        <SectionLabel>{kind === 'expense' ? t('Category') : t('Source')}</SectionLabel>
-        <ChoiceGrid choices={choices} value={category} onChange={setCategoryId} label={kind === 'expense' ? t('Category') : t('Source')} />
       </div>
 
       <div>
@@ -172,6 +166,16 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
         </>
       )}
 
+      <div>
+        <SectionLabel>{safeEvery === 1 && !weekly ? t('Amount each month') : t('Amount each time')}</SectionLabel>
+        <AmountStepper value={amount} onChange={setAmount} unit={symbol} ariaLabel={safeEvery === 1 && !weekly ? t('Amount each month') : t('Amount each time')} startOpen={!original} chips={kind === 'expense' ? [5, 10, 50, 100] : [100, 500, 1000]} />
+      </div>
+
+      <div>
+        <SectionLabel>{kind === 'expense' ? t('Category') : t('Source')}</SectionLabel>
+        <ChoiceGrid choices={choices} value={category} onChange={setCategoryId} label={kind === 'expense' ? t('Category') : t('Source')} collapsible />
+      </div>
+
       <SaveRow
         tone={kind}
         disabled={!valid}
@@ -202,7 +206,7 @@ export function GoalSheet() {
   const { isOpen, sheet, seq } = useSheet('goal');
   const { closeSheet } = useApp();
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? t('Edit savings goal') : t('New savings goal')} maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? t('Edit savings goal') : t('New savings goal')} dockId={sheet?.id ? undefined : 'saving'} maxWidth="max-w-md">
       {sheet && <GoalForm key={seq} sheet={sheet} />}
     </Modal>
   );

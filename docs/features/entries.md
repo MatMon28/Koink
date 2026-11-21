@@ -12,7 +12,7 @@
 
 | From | Opens |
 | --- | --- |
-| Bottom dock (green, pink, lilac buttons), **always visible** (pinned, never hides on scroll) | Add income / Add expense / Move to savings |
+| Bottom dock (green, pink, lilac buttons) on the **Month page** (pinned, never hides on scroll; not on the other pages) | Add income / Add expense / Move to savings |
 | `+` on a category card | Add expense with that category chosen |
 | `+` on a goal | Move to savings with that goal chosen |
 | Any entry row (Month, Transactions) | the same sheet in edit mode |
@@ -30,13 +30,13 @@ A new entry is two screens, so the phone's keyboard never covers the sheet while
 **Screen 2, everything else:**
 
 1. **Banner**: what the month (or goal) will look like with this entry counted in.
-2. **Amount** (tap to change). For a foreign amount a second line shows `= converted at 1 USD = 0.92 EUR`; tapping it opens the **rate screen** (pad again, "Use the current rate" resets it). See [currencies.md](currencies.md).
-3. **Category / Source / Goal**: icon tiles. Hidden categories are not offered (an entry already in one keeps it). For expenses the last tile, **New**, makes a category on the spot (name, icon, need or want; [categories.md](categories.md)). A new entry starts on the category used last.
-4. **Account** (only when accounts exist): **None** or one of them, starting on the last one used; a line shows what the account will hold afterwards ([accounts.md](accounts.md)).
-5. **Title**: the *short* description, optional (the category name is used when empty). This field used to be called "Note"; it is stored in `Tx.note`. Chips under it offer the last four titles used in this category. Max 60 characters.
-6. **Note**: the *long* text, optional, up to 1000 characters, stored in `Tx.details`. Shown as a small note icon and a one-line preview in the lists.
-7. **Date**: Today, Yesterday, or any date.
-8. **Save** (disabled until the amount is above zero). In edit mode a delete button sits beside it.
+2. **Date**: Today, Yesterday, or any date. It comes *before* the amount.
+3. **Amount** (tap to change). For a foreign amount a second line shows `= converted at 1 USD = 0.92 EUR`; tapping it opens the **rate screen** (pad again, "Use the current rate" resets it). See [currencies.md](currencies.md).
+4. **Category / Source / Goal**: **one row** of icon tiles, the most recently used first (4 per row; 3 goals), and a **Show all · N** button that opens the others, again most recent first (never used ones keep the usual order after). A tile chosen in the open list takes the last place of the row when it is folded. Hidden categories are not offered (an entry already in one keeps it). For expenses the **New** tile, inside the open list, makes a category on the spot (name, icon, need or want; [categories.md](categories.md)); a category made there goes first. A new entry starts on the category used last, which is the first tile.
+5. **Account** (only when accounts exist): **None** or one of them, starting on the last one used; a line shows what the account will hold afterwards ([accounts.md](accounts.md)).
+6. **Title**: the *short* description, optional (the category name is used when empty). This field used to be called "Note"; it is stored in `Tx.note`. Chips under it offer the last four titles used in this category. Max 60 characters.
+7. **Note**: the *long* text, optional, up to 1000 characters, stored in `Tx.details`. Shown as a small note icon and a one-line preview in the lists.
+8. **Save** (disabled until the amount is above zero). In edit mode a delete button sits beside it. The save row is **always visible**: it sticks to the bottom of the sheet (`SaveRow`, `.kc-sticky-footer`), so a long form never needs a scroll to confirm. The same goes for the *Confirm amount* key of the number pad (screen 1, `NumPad stickyConfirm`) and *Use this rate*, and for every other sheet's save row (recurring, goal, budget, account, gift card, profile).
 
 Moving to savings with no goals shows a prompt to create one first.
 

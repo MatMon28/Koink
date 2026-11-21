@@ -19,7 +19,7 @@ A goal is a name and a target (`0` = an open-ended pot). Money "moved to savings
 
 | Place | What |
 | --- | --- |
-| Dock, lilac button | Move to savings (or the new-goal sheet when there are no goals) |
+| Dock (Month page), lilac button | Move to savings (or the new-goal sheet when there are no goals). Closing either sheet shrinks it into this button (`dockId="saving"`; the new-goal sheet used to drop away instead) |
 | Month page, Savings card | month total; each goal with a bar and `+`; the month's saving entries |
 | Budgets page, Savings goals card | each goal with percent / "Reached" / "Open", a bar, `+` to add money, title `+` to create |
 

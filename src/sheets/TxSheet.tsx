@@ -77,6 +77,13 @@ export function TxSheet() {
   );
 }
 
+/** Position of each category in the order it was last used (0 = most recent), for one kind of entry. */
+function recencyRank(txs: { kind: Kind; categoryId: string }[], kind: Kind): Map<string, number> {
+  const rank = new Map<string, number>();
+  for (const tx of txs) if (tx.kind === kind && !rank.has(tx.categoryId)) rank.set(tx.categoryId, rank.size);
+  return rank;
+}
+
 /** The form has three screens: the amount on a number pad, the other details, and a few small side trips. */
 type Step = 'amount' | 'rate' | 'details' | 'category';
 
@@ -89,18 +96,21 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
   // Added in this sheet: a category made on the spot is offered at once, ahead of the list.
   const [fresh, setFresh] = useState<Choice[]>([]);
   const choices: Choice[] = useMemo(() => {
+    // Most recently used first (the ledger is sorted newest first); never used ones keep their usual order after.
+    const rank = recencyRank(data.txs, kind);
+    const byRecent = (list: Choice[]) => list.map((choice, index) => ({ choice, index })).sort((a, b) => (rank.get(a.choice.id) ?? Infinity) - (rank.get(b.choice.id) ?? Infinity) || a.index - b.index).map((x) => x.choice);
     if (kind === 'expense') {
-      const list: Choice[] = visibleExpenseCategories().filter((c) => !fresh.some((f) => f.id === c.id));
+      const list: Choice[] = byRecent(visibleExpenseCategories().filter((c) => !fresh.some((f) => f.id === c.id)));
       // An entry in a category that was hidden since keeps showing it, so editing never loses it.
       if (original && !list.some((c) => c.id === original.categoryId) && isCategoryHidden(original.categoryId)) {
         const hidden = categoryMeta('expense', original.categoryId, data.goals);
         list.push({ id: original.categoryId, name: hidden.name, icon: hidden.icon });
       }
-      return [...list, ...fresh];
+      return [...[...fresh].reverse(), ...list];
     }
-    if (kind === 'income') return INCOME_SOURCES;
-    return data.goals.map((goal) => ({ id: goal.id, name: goal.name, icon: PigIcon }));
-  }, [kind, data.goals, original, fresh]);
+    if (kind === 'income') return byRecent(INCOME_SOURCES);
+    return byRecent(data.goals.map((goal) => ({ id: goal.id, name: goal.name, icon: PigIcon })));
+  }, [kind, data.txs, data.goals, original, fresh]);
 
   // A new entry starts on the category used last for this kind of entry.
   const [categoryId, setCategoryId] = useState(() => {
@@ -316,6 +326,22 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
     <div className="space-y-4">
       <Banner tone={kind} icon={meta.icon} label={t(banner.label)} value={banner.value} sub={banner.sub ? t(banner.sub) : undefined} />
 
+      <div>
+        <SectionLabel htmlFor="tx-date">{t('Date')}</SectionLabel>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {dateChip(today, 'Today')}
+          {dateChip(yesterday, 'Yesterday')}
+          <input
+            id="tx-date"
+            type="date"
+            value={date}
+            onChange={(event) => setDate(event.target.value || date)}
+            aria-label={t('Date: {v}', { v: formatDay(date, false) })}
+            className="min-w-0 flex-1 bg-[var(--inset)] border border-[var(--border)] rounded-xl px-2.5 py-[0.4375rem] text-xs font-bold text-[var(--text)] tabular-nums focus:outline-none focus:border-[var(--muted)]"
+          />
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--inset)] p-1.5">
         <button
           type="button"
@@ -354,7 +380,8 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
           value={categoryId}
           onChange={setCategoryId}
           label={sectionName}
-          columns={kind === 'saving' ? (choices.length > 3 ? 2 : (Math.max(2, choices.length) as 2 | 3)) : 4}
+          columns={kind === 'saving' ? (choices.length > 3 ? 3 : (Math.max(2, choices.length) as 2 | 3)) : 4}
+          collapsible
           extra={kind === 'expense' ? { label: 'New', icon: Plus, onClick: () => setStep('category') } : undefined}
         />
       </div>
@@ -475,22 +502,6 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
         />
       </div>
 
-      <div>
-        <SectionLabel htmlFor="tx-date">{t('Date')}</SectionLabel>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {dateChip(today, 'Today')}
-          {dateChip(yesterday, 'Yesterday')}
-          <input
-            id="tx-date"
-            type="date"
-            value={date}
-            onChange={(event) => setDate(event.target.value || date)}
-            aria-label={t('Date: {v}', { v: formatDay(date, false) })}
-            className="min-w-0 flex-1 bg-[var(--inset)] border border-[var(--border)] rounded-xl px-2.5 py-[0.4375rem] text-xs font-bold text-[var(--text)] tabular-nums focus:outline-none focus:border-[var(--muted)]"
-          />
-        </div>
-      </div>
-
       <SaveRow
         tone={kind}
         disabled={!valid}
@@ -555,6 +566,7 @@ function AmountStep({ kind, amount, onAmount, currency, picking, onPicking, onCu
           confirmDisabled={converted <= 0}
           confirmClass={CONFIRM_TONE[kind]}
           confirmLabel={t('Confirm amount')}
+          stickyConfirm
           decimal={currencyDecimals(currency) > 0}
         />
       )}
@@ -591,7 +603,7 @@ function RateStep({ currency, mainCurrency, rate, amount, onRate, onReset, onDon
         <RefreshCw size={13} aria-hidden="true" />
         {t('Use the current rate')}
       </button>
-      <NumPad onPress={press} onConfirm={onDone} confirmDisabled={rate <= 0} confirmLabel={t('Use this rate')} />
+      <NumPad onPress={press} onConfirm={onDone} confirmDisabled={rate <= 0} confirmLabel={t('Use this rate')} stickyConfirm />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { StorageBanner } from './components/StorageBanner';
 import { ToastHost } from './components/ui';
 import { useBackLayer } from './lib/back';
 import { currentMonth } from './lib/dates';
+import { usePillTab } from './lib/pillTab';
 import { useReportAppReady } from './lib/intro';
 import { isAppShell } from './lib/platform';
 import { takeLaunchAction } from './lib/pwa';
@@ -40,8 +41,8 @@ function renderPage(tab: ActiveTab) {
   return <MonthView />;
 }
 
-/** Income, expense and the shortcuts, on every page that logs things. */
-function QuickAddBar() {
+/** Income, expense and the shortcuts. The bar belongs to the Month page: `show` is false elsewhere. */
+function QuickAddBar({ show }: { show: boolean }) {
   const { data, openSheet } = useApp();
   const quick = data.settings.quickAdd;
   const actions: DockAction[] = [];
@@ -60,12 +61,16 @@ function QuickAddBar() {
   }
   // The gift card button is opt-in (Settings > Buttons in the bottom bar).
   if (quick.giftcard) actions.push({ id: 'giftcard', icon: <Gift />, tone: 'bg-[#FFD9E8] text-[#7A1F4B]', label: 'Gift cards', onClick: () => openSheet({ type: 'giftCards' }) });
-  return <ActionDock label={t('Quick add')} actions={actions} />;
+  return <ActionDock label={t('Quick add')} actions={actions} show={show} />;
 }
 
 function Shell() {
   const { activeTab, setActiveTab, setSelectedMonth, openSheet, closeSheet, data } = useApp();
   const hasDock = Object.values(data.settings.quickAdd).some(Boolean);
+  // The button bar is only on the Month page. A committed swipe counts at once (like the header pill),
+  // so the bar comes or goes while the page is still travelling.
+  const shownTab = usePillTab() ?? activeTab;
+  const dockOnPage = hasDock && activeTab === 'month';
 
   // Tells the launch animation that the first screen is painted (it leaves once it has also finished).
   useReportAppReady();
@@ -105,14 +110,14 @@ function Shell() {
       <Header />
 
       <main className="flex-1 min-w-0 overflow-x-clip">
-        <div className={`w-full max-w-4xl mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 ${hasDock ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : 'pb-8'}`}>
+        <div className={`w-full max-w-4xl mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 ${dockOnPage ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : 'pb-8'}`}>
           <StorageBanner />
           <h1 className="sr-only">{t('Koink:')} {PAGE_TITLES[activeTab]}</h1>
           <PageSwiper renderPage={renderPage} />
         </div>
       </main>
 
-      {hasDock && <QuickAddBar />}
+      {hasDock && <QuickAddBar show={shownTab === 'month'} />}
 
       <TxSheet />
       <QuickSheet />

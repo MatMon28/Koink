@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { pushBackLayer } from '../lib/back';
 import { getDockCenterTarget, getDockTarget } from '../lib/dock';
+import { endOnTouch } from '../lib/interrupt';
 import { SPRING } from '../lib/spring';
 import { releaseSpeed, trackSample, type Sample } from '../lib/velocity';
 import { t } from '../lib/i18n';
@@ -266,10 +267,11 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
     activeExits.add(end);
     anim.onfinish = () => {
       if (done) return;
-      target?.pulse.animate?.(
+      const pulse = target?.pulse.animate?.(
         [{ transform: 'scale(1)' }, { transform: `scale(${target.pulse.hasAttribute('data-dock') ? 1.05 : 1.16})` }, { transform: 'scale(1)' }], // the whole bar swells less than one button
         { duration: PULSE_MS, easing: SPRING.bounce.easing },
       );
+      if (pulse) endOnTouch(pulse); // the next touch ends the pulse too
       end();
     };
     const control = {

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Check, Plus, Trash2, type LucideIcon } from 'lucide-react';
+import { Check, ChevronDown, Plus, Trash2, type LucideIcon } from 'lucide-react';
 import { SectionLabel, seg, textInput } from '../components/ui';
 import { allBuckets } from '../lib/categories';
 import { useApp } from '../lib/store';
@@ -13,8 +13,15 @@ export interface Choice {
   icon: LucideIcon;
 }
 
-/** Icon tiles to pick a category, an income source or a goal. The chosen one is a solid block. */
-export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra }: {
+/**
+ * Icon tiles to pick a category, an income source or a goal. The chosen one is a solid block.
+ *
+ * `collapsible`: only ONE row is shown (the first `columns` choices: the callers list them most
+ * recent first) and a slim button underneath opens the rest, in the same order, plus the `extra`
+ * tile. A choice made in the opened list stays visible once it is folded again: it takes the last
+ * place of the row. A list that fits in one row has no button.
+ */
+export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra, collapsible = false }: {
   choices: Choice[];
   value: string;
   onChange: (id: string) => void;
@@ -22,41 +29,86 @@ export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra
   columns?: 2 | 3 | 4;
   /** A last tile that is an action rather than a choice ("New"). */
   extra?: { label: string; icon: LucideIcon; onClick: () => void };
+  /** Show one row, with the rest behind a button. */
+  collapsible?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const cols = columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : 'grid-cols-4';
+  const fold = collapsible && choices.length > columns;
+
+  const tile = (choice: Choice) => {
+    const Icon = choice.icon;
+    const active = choice.id === value;
+    return (
+      <button
+        key={choice.id}
+        type="button"
+        role="radio"
+        aria-checked={active}
+        onClick={() => onChange(choice.id)}
+        className={`pressable min-w-0 flex flex-col items-center justify-center gap-1 rounded-2xl border px-1 py-2.5 ${
+          active
+            ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]'
+            : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'
+        }`}
+      >
+        <Icon size={17} strokeWidth={2.2} aria-hidden="true" />
+        <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{choice.name}</span>
+      </button>
+    );
+  };
+
+  const extraTile = extra && (
+    <button
+      key="extra"
+      type="button"
+      onClick={extra.onClick}
+      className="pressable min-w-0 flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--border)] px-1 py-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]"
+    >
+      <extra.icon size={17} strokeWidth={2.2} aria-hidden="true" />
+      <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{t(extra.label)}</span>
+    </button>
+  );
+
+  if (!fold) {
+    return (
+      <div role="radiogroup" aria-label={t(label)} className={`grid ${cols} gap-1.5`}>
+        {choices.map(tile)}
+        {extraTile}
+      </div>
+    );
+  }
+
+  // The first row. Folded, the chosen tile is kept in view even when it lies further down the list.
+  let row = choices.slice(0, columns);
+  if (!expanded) {
+    const chosen = choices.find((choice) => choice.id === value);
+    if (chosen && !row.includes(chosen)) row = [...row.slice(0, columns - 1), chosen];
+  }
+  const rest = choices.filter((choice) => !row.includes(choice));
+
   return (
-    <div role="radiogroup" aria-label={t(label)} className={`grid ${cols} gap-1.5`}>
-      {choices.map((choice) => {
-        const Icon = choice.icon;
-        const active = choice.id === value;
-        return (
-          <button
-            key={choice.id}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            onClick={() => onChange(choice.id)}
-            className={`pressable min-w-0 flex flex-col items-center justify-center gap-1 rounded-2xl border px-1 py-2.5 ${
-              active
-                ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]'
-                : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'
-            }`}
-          >
-            <Icon size={17} strokeWidth={2.2} aria-hidden="true" />
-            <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{choice.name}</span>
-          </button>
-        );
-      })}
-      {extra && (
-        <button
-          type="button"
-          onClick={extra.onClick}
-          className="pressable min-w-0 flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--border)] px-1 py-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]"
-        >
-          <extra.icon size={17} strokeWidth={2.2} aria-hidden="true" />
-          <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{t(extra.label)}</span>
-        </button>
-      )}
+    <div>
+      <div role="radiogroup" aria-label={t(label)}>
+        <div className={`grid ${cols} gap-1.5`}>{row.map(tile)}</div>
+        <div className="accordion-grid" data-open={expanded}>
+          <div className="accordion-inner">
+            <div className={`grid ${cols} gap-1.5 pt-1.5`} inert={!expanded}>
+              {rest.map(tile)}
+              {extraTile}
+            </div>
+          </div>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => setExpanded((open) => !open)}
+        aria-expanded={expanded}
+        className="pressable pressable-soft mt-1.5 w-full inline-flex items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-extrabold text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]"
+      >
+        {expanded ? t('Show fewer') : `${t('Show all')} · ${choices.length}`}
+        <ChevronDown size={13} aria-hidden="true" className={`transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+      </button>
     </div>
   );
 }
@@ -99,7 +151,10 @@ const SAVE_TONES = {
   gift: 'bg-[#FFD9E8] text-[#7A1F4B]',
 };
 
-/** The row that ends a form: optional delete on the left, the wide save button on the right. */
+/**
+ * The row that ends a form: optional delete on the left, the wide save button on the right. It sticks to
+ * the bottom of the sheet, so confirming never needs a scroll.
+ */
 export function SaveRow({ tone, label, disabled, onSave, onDelete, deleteLabel }: {
   tone: keyof typeof SAVE_TONES;
   label: ReactNode;
@@ -109,7 +164,7 @@ export function SaveRow({ tone, label, disabled, onSave, onDelete, deleteLabel }
   deleteLabel?: string;
 }) {
   return (
-    <div className="flex gap-2">
+    <div className="kc-sticky-footer flex gap-2">
       {onDelete && (
         <button
           type="button"

@@ -89,10 +89,12 @@ interface NumPadProps {
   decimal?: boolean;
   /** Also answer the physical keyboard (digits, comma, Backspace, Enter). */
   captureKeys?: boolean;
+  /** Keep the confirm button on screen while the keys scroll (the pad that is a sheet's whole screen). */
+  stickyConfirm?: boolean;
 }
 
 /** 3 x 4 keys and one wide confirm button. A long press on the backspace key clears everything. */
-export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, confirmClass = 'bg-[var(--text)] text-[var(--on-text)]', decimal = true, captureKeys = true }: NumPadProps) {
+export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, confirmClass = 'bg-[var(--text)] text-[var(--on-text)]', decimal = true, captureKeys = true, stickyConfirm = false }: NumPadProps) {
   const latest = useRef({ onPress, onConfirm, confirmDisabled });
   const holdTimer = useRef<number | null>(null);
   const cleared = useRef(false);
@@ -164,15 +166,17 @@ export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, conf
           <Delete size={21} aria-hidden="true" />
         </button>
       </div>
-      <button
-        type="button"
-        onClick={onConfirm}
-        disabled={confirmDisabled}
-        className={`kc-primary-btn pressable pressable-soft w-full py-3 hover:brightness-95 font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm tabular-nums disabled:opacity-40 ${confirmClass}`}
-      >
-        <Check size={18} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
-        <span className="truncate">{confirmLabel}</span>
-      </button>
+      <div className={stickyConfirm ? 'kc-sticky-footer' : undefined}>
+        <button
+          type="button"
+          onClick={onConfirm}
+          disabled={confirmDisabled}
+          className={`kc-primary-btn pressable pressable-soft w-full py-3 hover:brightness-95 font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm tabular-nums disabled:opacity-40 ${confirmClass}`}
+        >
+          <Check size={18} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
+          <span className="truncate">{confirmLabel}</span>
+        </button>
+      </div>
     </div>
   );
 }

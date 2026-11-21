@@ -26,7 +26,7 @@ A damped spring is sampled into a CSS `linear()` easing, so CSS transitions, key
 | A pressed button (`.pressable`) | shrinks to 90 % in 110 ms, springs back with the bounce curve; wide rows use `.pressable-soft` (98.5 %) |
 | Page swipe | the current page and its neighbour move together under the finger; a committed swipe finishes in 90-170 ms, a cancelled one springs back with the soft curve ([gestures.md](gestures.md)) |
 | Page reached by the pill or Back | slides in 28 px from the side it lies on, soft curve |
-| Dock | enters from the side the page came from (`--kc-swipe-dir`); always visible, it no longer hides on scroll |
+| Dock (Month page only) | enters from the side the page came from (`--kc-swipe-dir`, 130 ms, bounce) and leaves towards the side the page went (`.anim-dock-out`, 110 ms), as in Kakcal; starts when a swipe is committed or the pill is pressed; it never hides on scroll. `ActionDock.tsx` (`show`, phases in / out / gone) |
 | Page pill | follows a committed swipe at once (`lib/pillTab.ts`); before, it changed when the page had finished travelling |
 | Month change | the Month page's content slides in from the side of the newer month |
 | A changed total (`.anim-value`) | settles in from 7 px below |
@@ -37,7 +37,7 @@ A damped spring is sampled into a CSS `linear()` easing, so CSS transitions, key
 
 - **In:** rises 28 px with the soft curve (`.anim-dialog`), the scrim fades in.
 - **Dragged:** follows the finger; a refused or short drag springs back with the soft curve.
-- **Out:** shrinks into the dock button that opened it (which answers with a small pulse), or drops 48 px and fades when there is no such button. **Profile and Settings** (`dockCenter` prop) have no button of their own: they are sucked into the **middle of the whole button bar** (`getDockCenterTarget()` in `lib/dock.ts`), the bar gives a smaller pulse (x1.05 instead of x1.16), and without a bar on screen they drop away. The exit is short on purpose:
+- **Out:** shrinks into the dock button that opened it (which answers with a small pulse), or drops 48 px and fades when there is no such button. **Profile and Settings** (`dockCenter` prop) have no button of their own: they are sucked into the **middle of the whole button bar** (`getDockCenterTarget()` in `lib/dock.ts`), the bar gives a smaller pulse (x1.05 instead of x1.16), and without a bar on screen (any page but Month) they drop away. The *New savings goal* sheet has `dockId="saving"`, so it shrinks into the pig button like the others. The exit is short on purpose:
 
 | Constant | Value | Meaning |
 | --- | --- | --- |
@@ -50,6 +50,22 @@ A damped spring is sampled into a CSS `linear()` easing, so CSS transitions, key
   1. **Skip the exit:** the next `pointerdown`, `touchstart`, `keydown` or `wheel` ends every running exit immediately (`activeExits`).
   2. **Tap rescue:** after a drag on a `touch-action: none` handle, Chromium (and the Android WebView) can swallow the `click` of the next taps. For 900 ms after a swipe-close (`TAP_RESCUE_MS`), a quick tap (under 12 px, under 700 ms) whose click has not arrived within 80 ms is sent again. A real click cancels the rescue, so normal taps are untouched.
 - **Keyboard:** the sheet's frame follows `window.visualViewport` (CSS variables `--sheet-top/left/width/height` on `.kc-sheet-viewport`), so with the on-screen keyboard open the sheet sits just above it, and the focused field is scrolled into view inside the sheet.
+
+## Ending an animation early
+
+A new touch ends a running gesture animation at once (Kakcal: "a new press cancels the settle"). Pointerdown, touchstart and keydown are caught on `document` (capture phase):
+
+| Animation | Ended by | What the next touch finds |
+| --- | --- | --- |
+| Sheet exit | `activeExits` in `Modal.tsx` | the sheet gone |
+| Page rail: slide-in after pill / Back | `running` in `PageSwiper.tsx` | the page at rest |
+| Page rail: spring back of a cancelled swipe | `running` | the page at rest, the neighbour removed |
+| Page rail: last stretch of a committed swipe | `running` (`flushSync(promote)`) | the new page already current; the touch goes to it |
+| Month slide, the dock's pulse | `endOnTouch()` in `src/lib/interrupt.ts` | the content in place |
+| Dock leaving | `ActionDock.tsx` | the bar removed |
+| Dock arriving | `ActionDock.tsx` (cancels its CSS animations) | the bar in place |
+
+Use `endOnTouch(el.animate(...))` for a new animation whose end state is the normal state (no `fill: forwards`).
 
 ## Reduced motion
 
