@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   One button, like the app's bottom dock: a round pastel button (tinted with setColorFilter) with a small icon.
-  No text (the name is only the accessibility description). Fixed size, so the tiles never stretch with the widget.
+  No text (the name is only the accessibility description). The circle has a fixed size; the slot around it
+  (weight 1 in the row) grows when the widget is made wider, so the space between the buttons increases.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/tile"
-    android:layout_width="48dp"
+    android:layout_width="0dp"
     android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:minWidth="48dp"
     android:gravity="center"
     android:orientation="vertical"
     android:paddingBottom="2dp"

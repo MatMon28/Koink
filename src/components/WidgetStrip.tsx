@@ -21,12 +21,15 @@ export function WidgetStrip() {
           {t('Edit')}
         </button>
       </div>
-      <div className="no-scrollbar flex items-start gap-2.5 overflow-x-auto pb-1">
+      {/* The trays take the width they are given, so their buttons spread out on a wide screen. */}
+      <div className="flex items-center gap-2.5 pb-1">
         <WidgetFace keys={[widgets.single]} onPress={run} />
-        <WidgetFace keys={widgets.multi} onPress={run} />
+        <div className="min-w-0 flex-1">
+          <WidgetFace keys={widgets.multi} onPress={run} stretch />
+        </div>
       </div>
-      <div className="no-scrollbar overflow-x-auto pb-1">
-        <WidgetFace keys={categoryWidgetKeys(widgets)} onPress={run} />
+      <div className="pb-1">
+        <WidgetFace keys={categoryWidgetKeys(widgets)} onPress={run} stretch />
       </div>
     </section>
   );

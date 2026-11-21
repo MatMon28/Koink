@@ -566,7 +566,6 @@ function AmountStep({ kind, amount, onAmount, currency, picking, onPicking, onCu
           confirmDisabled={converted <= 0}
           confirmClass={CONFIRM_TONE[kind]}
           confirmLabel={t('Confirm amount')}
-          stickyConfirm
           decimal={currencyDecimals(currency) > 0}
         />
       )}
@@ -603,7 +602,7 @@ function RateStep({ currency, mainCurrency, rate, amount, onRate, onReset, onDon
         <RefreshCw size={13} aria-hidden="true" />
         {t('Use the current rate')}
       </button>
-      <NumPad onPress={press} onConfirm={onDone} confirmDisabled={rate <= 0} confirmLabel={t('Use this rate')} stickyConfirm />
+      <NumPad onPress={press} onConfirm={onDone} confirmDisabled={rate <= 0} confirmLabel={t('Use this rate')} />
     </div>
   );
 }

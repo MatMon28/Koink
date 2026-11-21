@@ -49,16 +49,79 @@ export function expenseSeries(txs: Tx[], from: string, to: string, resolution: R
 /** Width of one bar slot in pixels: the chart scrolls sideways when the bars do not fit. */
 export const SLOT_PX: Record<Resolution, number> = { day: 16, week: 38, month: 46 };
 
-/** The short label under a bar, or '' when it would crowd its neighbours. */
-export function axisLabel(start: string, resolution: Resolution): string {
+/**
+ * The short label under a bar, or '' for a slot that has none. Days: the 1st carries the month, the 8th, 15th
+ * and 22nd are plain numbers; with `dense` (zoomed in) every day has its number. Whether a label really fits
+ * is decided by `visibleLabels`, which drops the ones that would collide.
+ */
+export function axisLabel(start: string, resolution: Resolution, dense = false): string {
   const day = Number(start.slice(8, 10));
   const month = t(MONTH_SHORT[Number(start.slice(5, 7)) - 1]);
   if (resolution === 'month') return formatMonth(monthOf(start), 'short', false);
   if (resolution === 'week') return `${day} ${month}`;
-  // Days: the 1st carries the month, the 8th, 15th and 22nd are plain numbers.
   if (day === 1) return `${day} ${month}`;
+  if (dense) return String(day);
   return day === 8 || day === 15 || day === 22 ? String(day) : '';
 }
+
+/** Rough width of an axis label in px (9.5 px bold digits and letters), plus a gap. */
+const labelWidth = (label: string): number => label.length * 5.6 + 10;
+
+/**
+ * Which axis labels to draw: walking left to right, a label is kept when it starts after the previous kept
+ * one has ended, so a compressed chart (a whole year on a phone) shows a few readable labels, not a smear.
+ * `slotPx` is the width of one slot; the result lists `{ index, text }`.
+ */
+export function visibleLabels(points: SeriesPoint[], resolution: Resolution, slotPx: number): { index: number; text: string }[] {
+  const dense = resolution === 'day' && slotPx >= 22;
+  // A year of days squeezed into a phone: only the months (the labels that carry a month name) are worth a place.
+  const monthsOnly = resolution === 'day' && slotPx < 10;
+  const kept: { index: number; text: string }[] = [];
+  let edge = -Infinity; // right end (px) of the last kept label, which is centred on its slot
+  points.forEach((point, index) => {
+    const text = axisLabel(point.start, resolution, dense);
+    if (!text || (monthsOnly && !text.includes(' '))) return;
+    const width = labelWidth(text);
+    const centre = (index + 0.5) * slotPx;
+    if (centre - width / 2 < edge) return;
+    kept.push({ index, text });
+    edge = centre + width / 2;
+  });
+  return kept;
+}
+
+/* ---------- Compare: none, period, categories or both ---------- */
+
+/** What the chart compares: nothing, the period with a second one, several categories, or both at once. */
+export type Compare = 'none' | 'period' | 'categories' | 'both';
+
+export const COMPARE_IDS: readonly Compare[] = ['none', 'period', 'categories', 'both'];
+
+/** Reads a stored value; the first version of the chart stored `off` and `periods`. */
+export function normalizeCompare(value: unknown): Compare {
+  if (value === 'off') return 'none';
+  if (value === 'periods') return 'period';
+  return COMPARE_IDS.includes(value as Compare) ? (value as Compare) : 'none';
+}
+
+export const comparesPeriods = (compare: Compare): boolean => compare === 'period' || compare === 'both';
+export const comparesCategories = (compare: Compare): boolean => compare === 'categories' || compare === 'both';
+
+/* ---------- Zoom (full view) ---------- */
+
+/** Narrowest a slot may get when zoomed in all the way, in px: one bar is then easy to hit. */
+export const ZOOM_SLOT_PX = 56;
+export const ZOOM_MIN = 1;
+export const ZOOM_FLOOR_MAX = 4;
+export const ZOOM_CEILING = 60;
+
+/** How far the chart can be zoomed in: always 4x at least, more when there are many slots, never absurd. */
+export function maxZoom(slots: number, viewWidth: number): number {
+  if (viewWidth <= 0) return ZOOM_FLOOR_MAX;
+  return Math.min(ZOOM_CEILING, Math.max(ZOOM_FLOOR_MAX, (slots * ZOOM_SLOT_PX) / viewWidth));
+}
+
+export const clampZoom = (zoom: number, max: number): number => Math.min(max, Math.max(ZOOM_MIN, zoom));
 
 /** The full name of a bucket for the line above the chart. */
 export function bucketTitle(start: string, resolution: Resolution): string {

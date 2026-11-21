@@ -82,3 +82,12 @@ What made swiping a sheet down and scrolling the page stutter, and what replaced
 ## Logo animation
 
 Tapping the header logo plays 1.1 s of CSS on the wordmark's `kk-*` parts (`animated` option of `wordmarkMarkup` in `art.js`): the coin hops, turns, drops into the pig; the pig squashes, jumps and oinks (ears, eyes, snout); a new coin pops back. Origins use `transform-box: fill-box` percentages. `prefers-reduced-motion` replaces it with a small nod.
+
+## Full chart view, settings popup (CSS transitions, `usePresence`)
+
+- **Presence:** `usePresence(open, exitMs)` mounts the layer, paints it hidden for one frame, then flips `shown` (the transitions run), and keeps it mounted for `exitMs` after `open` ends. Reduced motion: no exit delay.
+- **Large view** (`ChartLargeView.tsx`): one `ease-out` curve (`cubic-bezier(0.22, 1, 0.36, 1)`, no overshoot, so the rotation never wobbles). Open / close: the view rises 56 px and fades in (380 ms), and sinks and fades out; a swipe-close keeps sinking from where the finger let go (`exitOffset` = view height). Dragging has no transition (it follows the finger), release re-enables it, so the spring back is the same curve.
+- **The turn between vertical and horizontal** is a single 480 ms transition of `transform` (`rotate(0)` to `rotate(90deg)`; the centring `translate` and the drag `translate` stay in the list so the pieces interpolate one by one), `width` / `height` (`100%` to `100dvh` / `100dvw`) and `padding` (the safe-area insets move with the rotation). The backdrop stays put and keeps the page colour, so no edge shows while the box swings. While it runs, a `requestAnimationFrame` loop keeps the data that was in the middle of the chart in the middle, and the plot does not re-measure (`freeze`) until the end.
+- **Zoom buttons** glide (230 ms, ease-out cubic, geometric steps so every frame zooms by the same share, anchored on the middle); pinch and wheel follow the fingers directly. Pan keeps gliding after release (speed x 0.94 every 16 ms until 0.02 px/ms).
+- **Settings popup** (`ChartPopup.tsx`): the scrim fades (190 ms), the panel fades and rises 14 px with a 0.97 scale (300 ms in, 190 ms out).
+- Touches are never blocked by an exit: the closing view and popup stop taking pointer events at once.

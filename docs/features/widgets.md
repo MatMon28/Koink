@@ -8,7 +8,7 @@
 
 ## Look and shape
 
-- **Coherent with the app:** a button is a round pastel button with a small icon (17 px in the app, 18 dp on Android; the lone button's icon is 22) and **no text**: the name is only the tooltip / screen-reader label (`title` + `aria-label` in the app, `setContentDescription` on Android). Same family as the bottom dock. The tray behind several buttons is the dock's surface: border, soft shadow, `--surface` colour.
+- **Coherent with the app:** a button is a round pastel button with a small icon (17 px in the app, 18 dp on Android; the lone button's icon is 20) and **no text**: the name is only the tooltip / screen-reader label (`title` + `aria-label` in the app, `setContentDescription` on Android). Same family as the bottom dock. The tray behind several buttons is the dock's surface: border, soft shadow, `--surface` colour.
 - **The shape follows the number of buttons** (`widgetShape`, `widgetColumns`, `widgetRows` in `src/lib/widgets.ts`; mirrored in `KoinkWidgetProvider.build`):
 
 | Buttons | Shape | Rows |
@@ -18,7 +18,9 @@
 | 5 to 6 | a rounded card | 2 rows of 3 |
 | 7 to 8 (up to 12 for the category list) | a rounded card | rows of 4 |
 
-  A short last row is centred, never padded. The tray wraps its buttons and is centred in whatever size the launcher gave the widget; buttons keep a fixed size (48 x ~44 dp), so resizing a widget never stretches or enlarges them.
+  A short last row is centred, never padded.
+- **Single button:** the lone circle is **48** px / dp (it was 56), its icon 20.
+- **Multi and category widgets:** the tray is **semitransparent** (the theme surface at `TRAY_ALPHA` = 0.72, its border ring lighter; on Android `setImageAlpha` on a hollow ring drawable plus a solid fill, so nothing is painted twice) and **as wide as the widget**. The buttons keep their size (circle 40) but share the tray's width evenly: **the wider the widget is made, the more space between the buttons** (in the app: `stretch` on `WidgetFace`, used by the Month-page strip; on Android: `layout_weight` tiles in `widget_row.xml`). A short last row is centred on the same grid with half-width spacers (`widget_spacer.xml`, `addSpacers` in `KoinkWidgetProvider.java`).
 - **Theme:** the bridge hands the native side the app's current `--surface`, `--border` and `--text` (`readTheme()` in `widgetBridge.ts`, converted to `#rrggbb`), so the tray matches Light, Soft dark and Dark. It is re-sent when the theme, style, mono colour or language changes. The button names are sent already translated (they are only the accessibility description, nothing is drawn).
 
 ## The three widgets

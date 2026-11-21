@@ -21,13 +21,18 @@ import org.json.JSONObject;
  * The three home-screen widgets: one button ({@link Single}), several buttons ({@link Multi}) and one button
  * per expense category ({@link Categories}). They draw whatever the web app last handed over through
  * {@code KoinkDevice.setWidgets} (src/lib/widgetBridge.ts): label, colours, an icon PNG and a link for each
- * button, plus the app's theme colours. The widget's shape follows the number of buttons (circle, pill, card). A tap opens the app with that link ({@code koink://widget?a=<action>}), which the web app turns
+ * button, plus the app's theme colours. The widget's shape follows the number of buttons (circle, pill, card).
+ * A tray is semitransparent and as wide as the widget; its buttons share that width, so they spread out as
+ * the widget is made wider. The lone circle of the single widget is 48dp. A tap opens the app with that link ({@code koink://widget?a=<action>}), which the web app turns
  * into the matching sheet (src/lib/useWidgets.ts). Layouts use only RemoteViews-safe classes.
  */
 public abstract class KoinkWidgetProvider extends AppWidgetProvider {
 
     private static final String PREFS = "koink_widgets";
     private static final String KEY_JSON = "json";
+    /** Opacity of the tray fill and of its border (0-255). Mirrors TRAY_ALPHA (0.72) in src/lib/widgets.ts. */
+    private static final int TRAY_ALPHA = 184;
+    private static final int RING_ALPHA = 150;
 
     /** Which array of the stored JSON this widget shows: "single", "multi" or "categories". */
     protected abstract String kind();
@@ -78,13 +83,16 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
             root.setViewVisibility(R.id.tray_fill, android.view.View.GONE);
             root.setViewPadding(R.id.rows, 0, 0, 0, 0);
         } else {
-            int tray = count <= 4 ? R.drawable.widget_tray_pill : R.drawable.widget_tray_card;
+            boolean pill = count <= 4;
             root.setViewVisibility(R.id.tray_border, android.view.View.VISIBLE);
             root.setViewVisibility(R.id.tray_fill, android.view.View.VISIBLE);
-            root.setImageViewResource(R.id.tray_border, tray);
-            root.setImageViewResource(R.id.tray_fill, tray);
+            root.setImageViewResource(R.id.tray_border, pill ? R.drawable.widget_tray_pill_ring : R.drawable.widget_tray_card_ring);
+            root.setImageViewResource(R.id.tray_fill, pill ? R.drawable.widget_tray_pill : R.drawable.widget_tray_card);
             root.setInt(R.id.tray_border, "setColorFilter", border);
             root.setInt(R.id.tray_fill, "setColorFilter", surface);
+            // Semitransparent: the colour filter stays opaque (SRC_ATOP keeps the drawable's alpha), the alpha is set on the image.
+            root.setInt(R.id.tray_border, "setImageAlpha", RING_ALPHA);
+            root.setInt(R.id.tray_fill, "setImageAlpha", TRAY_ALPHA);
             float d = context.getResources().getDisplayMetrics().density;
             root.setViewPadding(R.id.rows, (int) (8 * d), (int) (6 * d), (int) (8 * d), (int) (6 * d));
         }
@@ -96,10 +104,21 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
                 row = new RemoteViews(context.getPackageName(), R.layout.widget_row);
             }
             JSONObject button = buttons.optJSONObject(i);
-            if (button != null && row != null) row.addView(R.id.row, tile(context, button, count == 1, text));
+            if (button != null && row != null) {
+                // A short last row is centred on the grid of the rows above: half a slot of spacer per missing button, on each side.
+                int inRow = Math.min(perRow, count - (i / perRow) * perRow);
+                boolean first = i % perRow == 0;
+                if (first && count > 1 && inRow < perRow) addSpacers(context, row, perRow - inRow);
+                row.addView(R.id.row, tile(context, button, count == 1, text));
+                if (count > 1 && inRow < perRow && i % perRow == inRow - 1) addSpacers(context, row, perRow - inRow);
+            }
         }
         if (row != null) root.addView(R.id.rows, row);
         return root;
+    }
+
+    private static void addSpacers(Context context, RemoteViews row, int count) {
+        for (int k = 0; k < count; k++) row.addView(R.id.row, new RemoteViews(context.getPackageName(), R.layout.widget_spacer));
     }
 
     private RemoteViews tile(Context context, JSONObject button, boolean lone, int textColor) {

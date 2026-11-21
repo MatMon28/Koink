@@ -89,12 +89,14 @@ interface NumPadProps {
   decimal?: boolean;
   /** Also answer the physical keyboard (digits, comma, Backspace, Enter). */
   captureKeys?: boolean;
-  /** Keep the confirm button on screen while the keys scroll (the pad that is a sheet's whole screen). */
-  stickyConfirm?: boolean;
 }
 
-/** 3 x 4 keys and one wide confirm button. A long press on the backspace key clears everything. */
-export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, confirmClass = 'bg-[var(--text)] text-[var(--on-text)]', decimal = true, captureKeys = true, stickyConfirm = false }: NumPadProps) {
+/**
+ * 3 x 4 keys and one wide confirm button. A long press on the backspace key clears everything. The confirm
+ * button is plain content under the keys: it never floats above anything (only the save row of the entry
+ * forms does, see `.kc-sticky-footer`).
+ */
+export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, confirmClass = 'bg-[var(--text)] text-[var(--on-text)]', decimal = true, captureKeys = true }: NumPadProps) {
   const latest = useRef({ onPress, onConfirm, confirmDisabled });
   const holdTimer = useRef<number | null>(null);
   const cleared = useRef(false);
@@ -166,7 +168,7 @@ export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, conf
           <Delete size={21} aria-hidden="true" />
         </button>
       </div>
-      <div className={stickyConfirm ? 'kc-sticky-footer' : undefined}>
+      <div>
         <button
           type="button"
           onClick={onConfirm}

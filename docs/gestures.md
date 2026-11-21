@@ -20,8 +20,10 @@
 | Tap | the launch animation | skips it | `intro.ts` |
 | Hold | `+` / `-` of an amount stepper | repeats the step | `ui.tsx` (`AmountStepper`) |
 | Scroll down / up | page | the header folds to the page pill; the bottom dock (Month page only) stays where it is | `Header.tsx`, `ActionDock.tsx` |
-| Any new touch or key | while an animation of a gesture runs | the animation ends at once ([motion.md](motion.md#ending-an-animation-early)); a swipe that was finishing lands the new page and the touch is for it | `PageSwiper.tsx`, `Modal.tsx`, `lib/interrupt.ts` |
+| Any new touch or key | while an animation of a gesture runs | the animation ends at once ([motion.md](motion.md#ending-an-animation-early)); a swipe that was finishing lands the new page; that touch is **used up** by it and never starts a second page swipe (see below) | `PageSwiper.tsx`, `Modal.tsx`, `lib/interrupt.ts` |
 | Tap the scrim, Escape | open sheet | closes it (or asks, see above) | `Modal.tsx` |
+| Pinch, Ctrl / trackpad wheel, drag | the chart in the large view of *Expenses over time* | zoom around the point between the fingers; move, with a glide | `ChartLargeView.tsx` |
+| Swipe down | the title bar or the chart in the large view | closes it (follows the finger, fades; springs back if short); read in the view's own axes, so also when turned sideways | `ChartLargeView.tsx` |
 
 Settings no longer shows a gestures list (it was removed); this page is the only reference.
 
@@ -84,3 +86,7 @@ Details that matter when changing it:
 - In a plain browser tab Back never changes the page, only closes overlays, so the browser's Back still leaves the site as people expect.
 
 To make something new dismissable by Back: `useBackLayer(isOpen, close)`.
+
+## A second swipe during the first
+
+While a committed swipe is still travelling (about 170 ms), a new touch lands the new page at once, as every touch ends a running animation. That touch is then **used up**: it can no longer start a page swipe, so one finger-down can never change the page twice (it used to: the first page landed and the same touch went on to swipe the second). Taps and scrolls with that touch still work; the next touch swipes again. `PageSwiper.tsx`: `running.current.commit` marks the last stretch of a committed swipe, the document-level `pointerdown` guard stores the pointer id in `spentPointer`, `onPointerDown` skips that id. The spring back of a cancelled swipe and the slide-in after the pill are not committed swipes: a swipe started during them works as before.

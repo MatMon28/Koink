@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Shared by the three Koink widgets. RemoteViews may only use framework widget classes.
-  The tray (border + surface, tinted with the app's theme colours) wraps its buttons and sits in the middle of
-  whatever size the launcher gave the widget: the widget's shape follows its content (KoinkWidgetProvider).
+  The tray (surface fill + border ring, tinted with the app's theme colours and drawn semitransparent with
+  setImageAlpha) is as wide as the widget and as tall as its rows, centred vertically: the buttons spread out
+  when the widget is made wider (KoinkWidgetProvider).
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
@@ -12,9 +13,17 @@
 
     <FrameLayout
         android:id="@+id/tray"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center">
+        android:layout_gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/tray_fill"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/widget_tray_card" />
 
         <ImageView
             android:id="@+id/tray_border"
@@ -22,20 +31,11 @@
             android:layout_height="match_parent"
             android:contentDescription="@null"
             android:scaleType="fitXY"
-            android:src="@drawable/widget_tray_card" />
-
-        <ImageView
-            android:id="@+id/tray_fill"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="1dp"
-            android:contentDescription="@null"
-            android:scaleType="fitXY"
-            android:src="@drawable/widget_tray_card" />
+            android:src="@drawable/widget_tray_card_ring" />
 
         <LinearLayout
             android:id="@+id/rows"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="vertical"

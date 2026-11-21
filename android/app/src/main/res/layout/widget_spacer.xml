@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Half a button slot: a short last row gets `missing` of these on each side, which keeps it centred on the grid of the rows above. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="1dp"
+    android:layout_weight="0.5"
+    android:minWidth="24dp" />

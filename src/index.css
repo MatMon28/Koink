@@ -268,29 +268,24 @@ html.kc-sheet-open, .kc-sheet-open body { overscroll-behavior: none; }
   transition: transform 240ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 240ms;
 }
 
-/* The button that ends a form stays on screen: it sticks to the bottom of the sheet's scroll area
-   (SaveRow in sheets/shared.tsx, the confirm key of the number pad). The negative margins cancel the
-   area's padding, so at the end of the form it sits exactly where it used to. */
+/* The button that ends an entry form stays on screen: it sticks to the bottom of the sheet's scroll area
+   (SaveRow in sheets/shared.tsx). Its background is transparent: the form scrolls visibly behind it and
+   only the button itself is solid, so the footer is not a coloured band. The footer itself lets touches
+   through (pointer-events: none); the buttons take them back. The negative margins cancel the area's
+   padding, so at the end of the form it sits exactly where it used to. Number pads do not use it: their
+   confirm button is plain content under the keys. */
 .kc-sticky-footer {
   position: sticky;
   bottom: 0;
   z-index: 5;
   margin: 0 -1rem -1rem;
   padding: 0.625rem 1rem 1rem;
-  background: var(--surface);
+  background: transparent;
+  pointer-events: none;
 }
+.kc-sticky-footer > * { pointer-events: auto; }
 @media (min-width: 640px) {
   .kc-sticky-footer { margin: 0 -1.25rem -1.25rem; padding: 0.625rem 1.25rem 1.25rem; }
-}
-.kc-sticky-footer::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  height: 0.875rem;
-  background: linear-gradient(to top, var(--surface), transparent);
-  pointer-events: none;
 }
 
 /* Smooth height accordion via CSS Grid (no overshoot, so the rows never jump). */
