@@ -3,7 +3,7 @@
   "name": "Koink — Money Journal",
   "short_name": "Koink",
   "description": "A local-first journal for income, expenses, budgets and savings. No account, no backend; your data stays on this device.",
-  "start_url": "./?source=pwa",
+  "start_url": "./?view=app&source=pwa",
   "scope": "./",
   "display": "standalone",
   "display_override": [
@@ -46,7 +46,7 @@
       "name": "Add expense",
       "short_name": "Expense",
       "description": "Open Koink on the Add expense sheet",
-      "url": "./?add=expense",
+      "url": "./?view=app&add=expense",
       "icons": [
         {
           "src": "icons/icon-192.png",
@@ -59,7 +59,7 @@
       "name": "Add income",
       "short_name": "Income",
       "description": "Open Koink on the Add income sheet",
-      "url": "./?add=income",
+      "url": "./?view=app&add=income",
       "icons": [
         {
           "src": "icons/icon-192.png",

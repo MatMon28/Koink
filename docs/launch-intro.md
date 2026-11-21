@@ -25,7 +25,7 @@ Only `coin-oink` turns the coin, and exactly once: one full turn about its verti
 - **Runs to the end.** The overlay leaves only when **both** the animation has played to its last frame plus a 120 ms hold (`HOLD_MS`) **and** the app has reported that it is ready: first screen committed, fonts loaded, two frames painted (`useReportAppReady()` in `App.tsx` -> `markAppReady()`). If the app is slower, the finished logo waits for it, at most 3 s (`MAX_EXTRA_WAIT_MS`). It then fades in 200 ms (`FADE_MS`).
 - **Tap to skip.** A tap fades it in 120 ms (`SKIP_FADE_MS`). The overlay keeps taking taps while it fades, so the skipping tap never presses something underneath.
 - **Light and dark versions.** The overlay's background is the app's own `--bg`. On the light theme the logo is the light version (ink `#0B0F1E`, coin `#F59F00`), on the two dark themes the dark version (ink `#F9F3E6`, coin `#FFC53D`): `--kk-tile-ink` and `--kk-coin` in `index.css`.
-- **Not shown** with `?intro=0` or when the device asks for reduced motion (`shouldShowIntro()`).
+- **Not shown** inside the tour's embedded phone (`?tour=1`), with `?intro=0`, or when the device asks for reduced motion (`shouldShowIntro()`).
 
 ## Files
 

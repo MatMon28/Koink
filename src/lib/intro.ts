@@ -34,10 +34,11 @@ const endListeners = new Set<() => void>();
 
 const query = () => new URLSearchParams(window.location.search);
 
-/** No animation with `?intro=0` or when the device asks for reduced motion. */
+/** No animation inside the tour phone (`?tour=1`), with `?intro=0`, or when the device asks for reduced motion. */
 export function shouldShowIntro(): boolean {
   if (typeof window === 'undefined' || typeof document === 'undefined') return false;
-  if (query().get('intro') === '0') return false;
+  const q = query();
+  if (q.get('intro') === '0' || q.get('tour') === '1') return false;
   return !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 

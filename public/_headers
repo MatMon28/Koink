@@ -1,0 +1,16 @@
+# Honoured by Netlify and Cloudflare Pages (ignored elsewhere; see docs/pwa-setup.md for other hosts).
+# The service worker, the shell and the manifest must always be revalidated so that updates are picked up.
+
+/offline-worker.js
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /
+
+/index.html
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: no-cache
+
+/icons/*
+  Cache-Control: no-cache

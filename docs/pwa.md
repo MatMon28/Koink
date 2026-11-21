@@ -4,19 +4,21 @@
 >
 > **Read when:** you change anything that makes the website installable or offline-capable.
 >
-> **Related:** steps in [prepare-apps.md](prepare-apps.md); [brand.md](brand.md) (icons); [gestures.md](gestures.md) (Back in the installed app); [notifications.md](notifications.md)
+> **Related:** steps in [pwa-setup.md](pwa-setup.md) and [prepare-apps.md](prepare-apps.md); [apk-download.md](apk-download.md); [brand.md](brand.md) (icons); [gestures.md](gestures.md) (Back in the installed app); [notifications.md](notifications.md)
 
 ## Pieces
 
 | Piece | File | Role |
 | --- | --- | --- |
-| Tags | `index.html` (between `pwa:start` / `pwa:end`) | manifest link, apple-touch icon, standalone hints, app title; `viewport-fit=cover` and `theme-color` sit just above |
-| Manifest | `public/manifest.webmanifest` | name, colours, `display: standalone`, portrait, icons, two shortcuts. All URLs are relative, so a sub-path deployment works |
+| Tags | `index.html` (between `pwa:start` / `pwa:end`) | relative manifest link (`./manifest.webmanifest`), apple-touch icon (`./icons/apple-touch-icon.png`), standalone hints, app title; `viewport-fit=cover` and `theme-color` sit just above |
+| Manifest | `public/manifest.webmanifest` | name, colours, `display: standalone`, portrait, `start_url: "./?view=app&source=pwa"` (so installed copies always open the journal, never the tour), icons, two shortcuts (`./?view=app&add=expense`, `./?view=app&add=income`). All URLs are relative, so a sub-path deployment works |
 | Icons | `public/icons/` | `icon-192.png`, `icon-512.png` (any), `maskable-512.png`, `apple-touch-icon.png` (180). Generated: [brand.md](brand.md) |
-| Worker template | `scripts/offline-worker.template.js` | the service worker source, with two tokens |
+| Worker template & fallback | `scripts/offline-worker.template.js`, `public/offline-worker.js` | the service worker source (with two tokens filled by `offlineWorker()` in `vite.config.ts`), plus the standalone worker in `public/offline-worker.js` for single-file builds |
 | Worker build step | `offlineWorker()` in `vite.config.ts` | fills the tokens and writes `dist/offline-worker.js` |
+| Host headers & CI | `public/_headers`, `.github/workflows/pages.yml` | Netlify / Cloudflare revalidation headers for `offline-worker.js`, `index.html`, `manifest.webmanifest` and `icons/*`; GitHub Pages deployment workflow |
 | Run time | `src/lib/pwa.ts` | registration, install state, launch requests (`?add=`, `?open=`) |
-| UI | `src/components/InstallApp.tsx` | the "Install app" card in Settings |
+| Install card | `src/components/InstallApp.tsx` | the "Install app" card in Settings (one-tap install when offered, **How to install** button that opens the device guide, and **App tour** link) |
+| Install guide | `src/components/InstallGuide.tsx` | full device install sheet (`InstallGuideHost`, `openInstallGuide(target?, lang?)`, `detectInstallTarget()`) mounted by `src/App.tsx` above every modal: iPhone/iPad Safari steps, Android PWA steps + APK download (`./downloads/Koink.apk`) with Play Protect warning explanation, and Windows/macOS/Linux steps |
 
 ## The offline worker
 
@@ -70,6 +72,10 @@ To add one: a value in `OpenTarget` (`types.ts`) and `isOpenTarget` (`reminders.
 
 `isStandaloneApp()` (`platform.ts`) is true for `display-mode: standalone / fullscreen / minimal-ui` and iOS `navigator.standalone`. Installed, Back returns to the Month page before it leaves the app ([gestures.md](gestures.md)). Safe-area padding uses `env(safe-area-inset-*)` throughout (header, dock, sheets).
 
+## Installed launch vs browser tour
+
+An installed PWA (`display-mode: standalone`), an iOS Home Screen app (`navigator.standalone`), a shortcut or notification launch (`?add=`, `?open=`, `?source=pwa`) and the native Android app **always** open the journal directly. A first-time browser visitor to `/` (or `?view=tour`) sees the guided tour (`src/components/tour/AppTour.tsx`) and the install card (`openInstallGuide()`); `?view=app` skips the tour and opens the journal in the browser. See [web-preview.md](web-preview.md) and [pwa-setup.md](pwa-setup.md).
+
 ## Not included
 
-No push notifications (reminders are local and, in a browser, only fire while the app is open), no background sync, no `_headers` / `vercel.json` (hosting headers are described in [prepare-apps.md](prepare-apps.md)), no screenshots in the manifest (Chrome then shows its simpler install dialog). See [known-gaps.md](known-gaps.md).
+No push notifications (reminders are local and, in a browser, only fire while the app is open), no background sync, no screenshots in the manifest (Chrome then shows its simpler install dialog). See [known-gaps.md](known-gaps.md).

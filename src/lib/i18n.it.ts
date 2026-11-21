@@ -727,4 +727,8 @@ export const IT: Record<string, string> = {
   "{v} of {v2} in budgeted categories. Unbudgeted spending of {v3} is not counted. Tap to see it.": "{v} di {v2} nelle categorie con budget. Le spese senza budget di {v3} non sono contate. Tocca per vederle.",
   "Show all": "Mostra tutte",
   "Show fewer": "Mostra meno",
+  "How to install": "Come installare",
+  "Other devices": "Altri dispositivi",
+  "Guide for iPhone, Android and PC, plus the Android APK.": "Guida per iPhone, Android e PC, con APK per Android.",
+  "Guided tour": "Visita guidata",
 };

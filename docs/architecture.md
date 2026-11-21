@@ -21,8 +21,11 @@ Before anything else, an inline script in `index.html` paints the saved colours 
 
 ## Shell (`src/App.tsx`)
 
+On a normal browser visit (`/` or `?view=tour`), `App` renders `<InstallGuideHost />` and `<AppTour />` (`src/components/tour/AppTour.tsx`), which explains every page and sheet beside an embedded live journal (`?view=app&tour=1`) and opens the device installation guide (`InstallGuide.tsx`). An installed PWA (`isStandaloneApp()`), an iOS Home Screen app, a shortcut or notification launch (`?add=`, `?open=`, `?source=`), `?view=app` or the native Android app skips the tour and opens the journal directly:
+
 ```
 <AppProvider>                      state + actions (src/lib/store.tsx)
+  <TourBridge/>                    postMessage bridge when running inside the tour phone (?tour=1)
   <Header/>                        profile button, wordmark, settings button, page pill (Tabs)
   <main>
     <PageSwiper renderPage>        the pages on one rail: the current one, plus hidden neighbours on touch devices
@@ -30,6 +33,7 @@ Before anything else, an inline script in `index.html` paints the saved colours 
   <QuickAddBar/>                   the bottom dock (ActionDock); on the Month page only (`show`), never hides on scroll
   <TxSheet/> <QuickSheet/> ...     every sheet is always mounted and shows itself when its type is open
   <ToastHost/>
+<InstallGuideHost/>                device install guide portal (iPhone/iPad, Android PWA + APK, desktop)
 ```
 
 There are four pages (`ActiveTab` = `month | transactions | budgets | stats`); the order lives in `src/lib/tabs.ts`. The current page and the browsed month are plain state in the provider, not URLs.

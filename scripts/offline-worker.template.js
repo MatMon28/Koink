@@ -99,6 +99,6 @@ self.addEventListener('notificationclick', (event) => {
       client.postMessage({ type: 'koink:open', target });
       return;
     }
-    await self.clients.openWindow(new URL(target ? `./?open=${encodeURIComponent(target)}` : './', SCOPE).href);
+    await self.clients.openWindow(new URL(target ? `./?view=app&open=${encodeURIComponent(target)}` : './?view=app', SCOPE).href);
   })());
 });

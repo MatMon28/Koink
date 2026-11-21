@@ -9,7 +9,7 @@
 | Looking for... | Open |
 | --- | --- |
 | `index.html`, `src/main.tsx`, `src/App.tsx`, the three stylesheets, `src/brand/art.js` (all the artwork) | [app-shell.md](app-shell.md), [../brand.md](../brand.md) |
-| `src/components/` (cards, modal, header, dock, page swiper, inputs, install card) | [components.md](components.md) |
+| `src/components/` (cards, modal, header, dock, page swiper, inputs, install card, install guide, `tour/`) | [components.md](components.md) |
 | `src/pages/` (Month, Transactions, Budgets, Statistics) | [pages.md](pages.md) |
 | `src/sheets/` (entry, quick log, recurring, goal, budget, profile, settings) | [sheets.md](sheets.md) |
 | `src/lib/` (store, types, maths, dates, themes, Back, PWA, platform, reminders, launch animation, springs) | [lib.md](lib.md) |

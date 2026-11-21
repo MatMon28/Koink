@@ -4,7 +4,7 @@
 >
 > **Read when:** you set the project up, deploy the web app, or produce an APK / app bundle.
 >
-> **Related:** [pwa.md](pwa.md) and [android.md](android.md) (how each one works), [known-gaps.md](known-gaps.md), [verification.md](verification.md)
+> **Related:** [pwa.md](pwa.md), [pwa-setup.md](pwa-setup.md), [web-preview.md](web-preview.md), [apk-download.md](apk-download.md) and [android.md](android.md) (how each one works), [known-gaps.md](known-gaps.md), [verification.md](verification.md)
 
 ## 0. Requirements
 

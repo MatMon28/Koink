@@ -1,11 +1,14 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Banknote, Gift, Receipt, Repeat, Zap } from 'lucide-react';
 import { t } from './lib/i18n';
 import { PigIcon } from './lib/pig';
 import { ActionDock, type DockAction } from './components/ActionDock';
 import { Header } from './components/Header';
+import { InstallGuideHost, VIEW_CHANGE_EVENT } from './components/InstallGuide';
 import { PageSwiper } from './components/PageSwiper';
 import { StorageBanner } from './components/StorageBanner';
+import { AppTour } from './components/tour/AppTour';
+import { TOUR_CHANNEL, type TourMessage, type TourScreen } from './components/tour/tourContent';
 import { ToastHost } from './components/ui';
 import { useBackLayer } from './lib/back';
 import { currentMonth } from './lib/dates';
@@ -16,7 +19,7 @@ import { takeLaunchAction } from './lib/pwa';
 import { AppProvider, useApp } from './lib/store';
 import type { ActiveTab, OpenTarget } from './lib/types';
 import { useReminders } from './lib/useReminders';
-import { useWidgetSync } from './lib/useWidgets';
+import { useRunWidgetAction, useWidgetSync } from './lib/useWidgets';
 import { BudgetsView } from './pages/BudgetsView';
 import { MonthView } from './pages/MonthView';
 import { StatsView } from './pages/StatsView';
@@ -32,6 +35,8 @@ import { SettingsSheet } from './sheets/SettingsSheet';
 import { TxSheet } from './sheets/TxSheet';
 
 const PAGE_TITLES = { month: 'Month', transactions: 'Transactions', budgets: 'Budgets', stats: 'Statistics' };
+
+const targetOrigin = () => (window.location.origin === 'null' ? '*' : window.location.origin);
 
 /** One page by id. The page swiper also uses it for the neighbour that rides along during a swipe. */
 function renderPage(tab: ActiveTab) {
@@ -64,6 +69,88 @@ function QuickAddBar({ show }: { show: boolean }) {
   return <ActionDock label={t('Quick add')} actions={actions} show={show} />;
 }
 
+/**
+ * Same-origin bridge between the guided tour (`AppTour.tsx`) and the embedded live journal (`?tour=1`).
+ * Announces when the journal is ready (and when its theme / language changes) and opens the page or
+ * sheet requested by the current tour step, notification preview card or widget button.
+ */
+function TourBridge() {
+  const { data, setActiveTab, setSelectedMonth, openSheet, closeSheet } = useApp();
+  const runWidgetAction = useRunWidgetAction();
+
+  const showScreenRef = useRef<(screen: TourScreen) => void>(() => {});
+  showScreenRef.current = (screen) => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    switch (screen) {
+      case 'month':
+      case 'transactions':
+      case 'budgets':
+      case 'stats':
+        closeSheet();
+        setActiveTab(screen);
+        break;
+      case 'expense':
+        setActiveTab('month');
+        openSheet({ type: 'tx', kind: 'expense' });
+        break;
+      case 'income':
+        setActiveTab('month');
+        openSheet({ type: 'tx', kind: 'income' });
+        break;
+      case 'saving':
+        setActiveTab('month');
+        openSheet(data.goals.length ? { type: 'tx', kind: 'saving' } : { type: 'goal' });
+        break;
+      case 'recurring':
+        setActiveTab('month');
+        setSelectedMonth(currentMonth());
+        openSheet({ type: 'recurring' });
+        break;
+      case 'quick':
+        setActiveTab('month');
+        openSheet({ type: 'quick' });
+        break;
+      case 'giftcards':
+        setActiveTab('month');
+        openSheet({ type: 'giftCards' });
+        break;
+      case 'profile':
+        openSheet({ type: 'profile' });
+        break;
+      case 'settings':
+        openSheet({ type: 'settings' });
+        break;
+    }
+  };
+
+  const runActionRef = useRef(runWidgetAction);
+  runActionRef.current = runWidgetAction;
+
+  useEffect(() => {
+    if (window.parent === window) return;
+    window.parent.postMessage({ channel: TOUR_CHANNEL, type: 'ready' } satisfies TourMessage, targetOrigin());
+  }, [data.settings.theme, data.settings.themeStyle, data.settings.monoHue, data.settings.language, data.settings.widgets]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (window.location.origin !== 'null' && event.origin !== window.location.origin) return;
+      const msg = event.data as Partial<TourMessage> | null;
+      if (!msg || msg.channel !== TOUR_CHANNEL) return;
+      if (msg.type === 'show-screen' && typeof msg.screen === 'string') {
+        showScreenRef.current(msg.screen as TourScreen);
+      } else if (msg.type === 'open-action' && typeof msg.action === 'string') {
+        closeSheet();
+        setActiveTab('month');
+        runActionRef.current(msg.action);
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [closeSheet, setActiveTab]);
+
+  return null;
+}
+
 function Shell() {
   const { activeTab, setActiveTab, setSelectedMonth, openSheet, closeSheet, data } = useApp();
   const hasDock = Object.values(data.settings.quickAdd).some(Boolean);
@@ -71,9 +158,6 @@ function Shell() {
   // so the bar comes or goes while the page is still travelling.
   const shownTab = usePillTab() ?? activeTab;
   const dockOnPage = hasDock && activeTab === 'month';
-
-  // Tells the launch animation that the first screen is painted (it leaves once it has also finished).
-  useReportAppReady();
 
   // Installed (Android app or PWA): Back returns to the Month page before it leaves the app.
   useBackLayer(activeTab !== 'month' && isAppShell(), () => setActiveTab('month'));
@@ -107,6 +191,7 @@ function Shell() {
 
   return (
     <div data-journal-root className="min-h-dvh bg-[var(--bg)] text-[var(--text)] flex flex-col font-sans pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+      <TourBridge />
       <Header />
 
       <main className="flex-1 min-w-0 overflow-x-clip">
@@ -136,10 +221,61 @@ function Shell() {
   );
 }
 
+function shouldOpenJournal(): boolean {
+  if (typeof window === 'undefined') return true;
+  // Normal (installed) mode: an installed PWA, an iOS Home Screen app and the Android bundle
+  // always open the journal itself — never the guided-tour page, even with ?view=tour.
+  // The guided tour is the default for browser visitors and can be skipped with ?view=app.
+  const installed =
+    isAppShell() ||
+    import.meta.env.VITE_ANDROID_RELEASE === 'true' ||
+    window.location.protocol === 'capacitor:';
+  if (installed) return true;
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get('view');
+  if (view === 'tour') return false;
+  if (view === 'app' || params.get('tour') === '1' || params.has('add') || params.has('open') || params.has('source')) {
+    return true;
+  }
+  return false;
+}
+
 export default function App() {
+  const [showJournal, setShowJournal] = useState(shouldOpenJournal);
+
+  // Tells the launch animation that the first screen (tour or journal) is painted.
+  useReportAppReady();
+
+  useEffect(() => {
+    const onViewChange = (event: Event) => {
+      const next = (event as CustomEvent<'app' | 'tour'>).detail;
+      if (next === 'app') setShowJournal(true);
+      else if (next === 'tour' && !isAppShell()) setShowJournal(false);
+    };
+    const onPopState = () => setShowJournal(shouldOpenJournal());
+    window.addEventListener(VIEW_CHANGE_EVENT, onViewChange);
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener(VIEW_CHANGE_EVENT, onViewChange);
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, []);
+
+  if (!showJournal) {
+    return (
+      <>
+        <InstallGuideHost />
+        <AppTour />
+      </>
+    );
+  }
+
   return (
-    <AppProvider>
-      <Shell />
-    </AppProvider>
+    <>
+      <AppProvider>
+        <Shell />
+      </AppProvider>
+      <InstallGuideHost />
+    </>
   );
 }

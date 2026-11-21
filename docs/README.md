@@ -6,7 +6,9 @@
 
 | I want to... | Open |
 | --- | --- |
-| Install, build, host the PWA, build / sign the Android app | [prepare-apps.md](prepare-apps.md) |
+| Install, build, host the PWA, build / sign the Android app | [prepare-apps.md](prepare-apps.md), [pwa-setup.md](pwa-setup.md) |
+| Run the browser version, guided tour, URL flags (`?view=`, `?tour=1`, `?intro=`) | [web-preview.md](web-preview.md) |
+| Make the **Download APK** button in the install guide work | [apk-download.md](apk-download.md) |
 | Understand how the app is put together (shell, state, sheets) | [architecture.md](architecture.md) |
 | Know what is stored, the types, the money maths, the backup format | [data-model.md](data-model.md) |
 | Change colours, tokens, presets, motion classes | [design-system.md](design-system.md) |
@@ -15,7 +17,7 @@
 | Produce or apply `changes.patch` | [changes-patch.md](changes-patch.md) |
 | Change reminders: plan, wording, Android alarms, browser timers | [notifications.md](notifications.md) |
 | Change a launch animation, the first paint, or the Android launch-screen colour | [launch-intro.md](launch-intro.md) |
-| Change the manifest, offline worker, install card, shortcuts | [pwa.md](pwa.md) |
+| Change the manifest, offline worker, install card, install guide, shortcuts | [pwa.md](pwa.md), [pwa-setup.md](pwa-setup.md) |
 | Change the Android shell, its config, icons, launch screen, plugins | [android.md](android.md) |
 | Change the logo, icon or wordmark, their light / dark versions, the notification icon, or regenerate the files | [brand.md](brand.md) |
 | Test a change, see what has been checked | [verification.md](verification.md) |
@@ -57,7 +59,7 @@ After **every** new feature or new / renamed / deleted file, update the matching
 | Any file (add / rename / delete) | its row in the matching `file-map/*.md`, and the root README legend if it is a main entry point |
 | A page or a sheet | the matching `features/*.md` |
 | `package.json` scripts, requirements, build flow | [prepare-apps.md](prepare-apps.md), [known-gaps.md](known-gaps.md) |
-| Manifest, icons, offline worker, install card, PWA tags in `index.html` | [pwa.md](pwa.md), [file-map/config-scripts-public.md](file-map/config-scripts-public.md) |
+| Manifest, icons, offline worker, install card / guide, guided tour, PWA tags in `index.html` | [pwa.md](pwa.md), [pwa-setup.md](pwa-setup.md), [web-preview.md](web-preview.md), [file-map/config-scripts-public.md](file-map/config-scripts-public.md), [file-map/components.md](file-map/components.md) |
 | `capacitor.config.json`, anything in `android/`, a Capacitor plugin | [android.md](android.md), [file-map/android-native.md](file-map/android-native.md), [prepare-apps.md](prepare-apps.md) |
 | A swipe threshold or Back rule | [gestures.md](gestures.md) (the constants table) |
 | An animation duration or spring | [motion.md](motion.md), [launch-intro.md](launch-intro.md) |
@@ -82,3 +84,5 @@ Written together with the PWA / Android / gestures round. Checked against the tr
 **Widgets / gift cards round (widgets, gift cards, pig icon, blur and pill fixes):** new documents `features/widgets.md` and `features/gift-cards.md`; `features/month.md`, `entries.md`, `accounts.md`, `settings.md`, `brand.md`, `data-model.md`, `android.md`, `known-gaps.md` and the file maps (`components.md`, `sheets.md`, `lib.md`, `android-native.md`) were updated.
 
 **Wallet round (number pad, title + long note, quick delete, own categories, accounts, many currencies, list / days view, smoother sheet drag and header scroll, logo animation):** new documents `features/accounts.md`, `features/categories.md`, `features/currencies.md`; entries, transactions, month, budgets, settings, data-model, gestures, motion, brand, known-gaps, the lib / sheets / components / pages file maps and the root README updated. Checked in headless Chromium at 390 px: the two-screen entry flow, foreign-currency entry and rate screen, category create / hide, Transactions list and days views and quick delete, sheet swipe-close, header fold, logo animation; `tsc -b`, `eslint` and the build are clean.
+
+**PWA, guided tour and install guide round (on top of `acab4c1`):** added `public/_headers`, `public/offline-worker.js`, `.github/workflows/pages.yml`, `src/components/InstallGuide.tsx`, `src/components/tour/AppTour.tsx`, `src/components/tour/tourContent.ts`, `src/components/tour/NotificationShowcase.tsx`, `src/components/tour/WidgetGallery.tsx`, `docs/pwa-setup.md`, `docs/apk-download.md`, `docs/web-preview.md`; updated `index.html`, `public/manifest.webmanifest`, `scripts/offline-worker.template.js`, `src/App.tsx`, `src/components/InstallApp.tsx`, `src/lib/i18n.ts`, `src/lib/i18n.it.ts`, `src/lib/intro.ts` and the docs.

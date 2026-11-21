@@ -16,9 +16,11 @@ export const LANGUAGES: { id: Language; label: string; tag: string }[] = [
 
 export const normalizeLanguage = (value: unknown): Language => (value === 'it' ? 'it' : 'en');
 
-/** The language to start with before the journal is read: the browser's, when it is one of ours. */
+/** The language to start with before the journal is read: a choice made on the tour, or the browser's. */
 export function detectLanguage(): Language {
   try {
+    const saved = localStorage.getItem('koink_lang');
+    if (saved === 'it' || saved === 'en') return saved;
     return navigator.language?.toLowerCase().startsWith('it') ? 'it' : 'en';
   } catch {
     return 'en';

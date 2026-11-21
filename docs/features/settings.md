@@ -2,7 +2,7 @@
 
 > **Scope:** the sheet behind the cog: language, appearance (with Ultra minimal and the hide-split switch), currency, dock buttons, widgets, notifications, install card, data tools.
 >
-> **Read when:** you change `src/sheets/SettingsSheet.tsx`, `src/sheets/NotificationSettings.tsx`, `src/components/InstallApp.tsx` or `src/components/ProjectDownload.tsx`.
+> **Read when:** you change `src/sheets/SettingsSheet.tsx`, `src/sheets/NotificationSettings.tsx`, `src/components/InstallApp.tsx`, `src/components/InstallGuide.tsx` or `src/components/ProjectDownload.tsx`.
 >
 > **Related:** [themes.md](themes.md), [ultra-minimal.md](ultra-minimal.md), [../notifications.md](../notifications.md), [backup.md](backup.md), [../pwa.md](../pwa.md), [../gestures.md](../gestures.md)
 
@@ -17,7 +17,7 @@ Every control applies at once (`updateSettings()`); there is no save button.
 | Buttons in the bottom bar (collapsible) | a switch per dock button: Income, Expense, Recurring, Log again, Savings, Gift cards (`settings.quickAdd`). With all off, the dock disappears |
 | Widgets (collapsible) | `WidgetsSettings.tsx`: previews and pickers for the three widgets, the Month-page switch. **No popup**: everything is inside the section. See [widgets.md](widgets.md) |
 | Notifications (collapsible) | four opt-in reminders with their times, permission banner, test button. See [../notifications.md](../notifications.md) |
-| Install app | state-dependent card: install button, manual instructions, or "installed". Hidden in the Android app. See [../pwa.md](../pwa.md#install-card) |
+| Install app | state-dependent card: one-tap **Install Koink** button when supported, a **How to install** button (or **Other devices** when installed) that opens `InstallGuide.tsx`, and a **Guided tour** button in the browser. Hidden in the Android app. See [../pwa.md](../pwa.md#install-card) |
 | Your data (collapsible) | `DataStatus` (saved on this device? last backup file), Save backup, Restore backup (opens the preview dialog), **Export to Excel**, Load the sample journal. See [backup.md](backup.md), [excel-export.md](excel-export.md) |
 | Project files | a card with **Download project (.zip)**. Hidden in the Android app. See [../prepare-apps.md](../prepare-apps.md#3-the-project-archive) |
 | Footer | app icon and name |
