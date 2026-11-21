@@ -28,6 +28,9 @@
 | `DataStatus.tsx` | `DataStatus` | The status block at the top of Settings > Your data: saved on this device (or the failure and a Retry), and the date of the last backup file | [../features/backup.md](../features/backup.md) |
 | `ProjectDownload.tsx` | `ProjectDownload` | "Project files" card of Settings: a download link to `downloads/koink-project.zip`; renders nothing in the Android app |
 | `Brand.tsx` | `Wordmark`, `AppIcon` | The wordmark (theme-coloured, class `koink-wordmark`) and the app icon (light or dark tile with the theme), both built from `src/brand/art.js`. See [../brand.md](../brand.md) |
+| `InstallGuide.tsx` | `InstallGuideHost`, `openInstallGuide`, `detectInstallTarget` | Full-screen installation modal with platform tabs (iOS Safari Add to Home Screen, Android PWA install & APK advice, Desktop Chrome/Edge/Safari), one-tap install trigger, offline benefits, English and Italian translations |
+| `tour/AppTour.tsx` | `AppTour` | Guided walkthrough page for first-time browser visitors: header with wordmark, language toggle and install CTA, platform install banner, step-by-step feature breakdown with live interactive phone preview |
+| `tour/tourContent.ts` | `TOUR_STEPS`, `TOUR_UI`, `TourStep`, `TourLang` | Bilingual tour content (EN/IT) across 8 core Koink features: Welcome, Month overview, Transactions, Budgets & Goals, Statistics, Add & Log, Widgets & Dock, Install & Privacy |
 
 ## Patterns worth knowing
 

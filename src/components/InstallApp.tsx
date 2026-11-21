@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { CircleCheck, Download, Smartphone } from 'lucide-react';
+import { CircleCheck, Compass, Download, HelpCircle, Smartphone } from 'lucide-react';
 import { promptInstall, useInstallState, type InstallState } from '../lib/pwa';
 import { t } from '../lib/i18n';
+import { openInstallGuide } from './InstallGuide';
 
 const COPY: Record<Exclude<InstallState, 'hidden'>, string> = {
   available: 'Put Koink on your home screen. It opens in its own window and works offline.',
@@ -11,8 +12,8 @@ const COPY: Record<Exclude<InstallState, 'hidden'>, string> = {
 };
 
 /**
- * "Install app" card of Settings. Offers the browser's install dialog where there is one and says
- * how to install by hand where there is not. Not shown inside the Android app.
+ * "Install app" card of Settings. Offers the browser's install dialog where there is one,
+ * opens the step-by-step install guide, and allows re-opening the guided app tour.
  */
 export function InstallApp() {
   const state = useInstallState();
@@ -21,7 +22,7 @@ export function InstallApp() {
 
   const install = async () => {
     const accepted = await promptInstall();
-    setMessage(accepted ? 'Installing. Look for Koink on your home screen.' : 'Not installed. You can do it later from your browser menu.');
+    setMessage(accepted ? t('Installing. Look for Koink on your home screen.') : t('Not installed. You can do it later from your browser menu.'));
   };
 
   return (
@@ -32,19 +33,44 @@ export function InstallApp() {
           {state === 'installed' ? <CircleCheck size={15} /> : <Smartphone size={15} />}
         </span>
         <p className="flex-1 text-[11px] font-medium leading-relaxed text-[var(--muted)]" aria-live="polite">
-          {message ?? COPY[state]}
+          {message ?? t(COPY[state])}
         </p>
       </div>
-      {state === 'available' && (
-        <button
-          type="button"
-          onClick={() => void install()}
-          className="kc-primary-btn pressable pressable-soft w-full py-2.5 px-3 rounded-xl bg-intake hover:brightness-95 text-intake-ink font-extrabold text-xs flex items-center justify-center gap-1.5"
-        >
-          <Download size={15} />
-          {t('Install Koink')}
-        </button>
-      )}
+
+      <div className="flex flex-col gap-2 pt-1">
+        {state === 'available' && (
+          <button
+            type="button"
+            onClick={() => void install()}
+            className="kc-primary-btn pressable pressable-soft w-full py-2.5 px-3 rounded-xl bg-intake hover:brightness-95 text-intake-ink font-extrabold text-xs flex items-center justify-center gap-1.5"
+          >
+            <Download size={15} />
+            {t('Install Koink')}
+          </button>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => openInstallGuide()}
+            className="pressable pressable-soft py-2 px-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--hover)] font-bold text-xs flex items-center justify-center gap-1.5 text-[var(--text)]"
+          >
+            <HelpCircle size={14} className="text-[var(--muted)]" />
+            <span>{t('Install guide')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = './?view=tour';
+            }}
+            className="pressable pressable-soft py-2 px-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--hover)] font-bold text-xs flex items-center justify-center gap-1.5 text-[var(--text)]"
+          >
+            <Compass size={14} className="text-[var(--muted)]" />
+            <span>{t('App tour')}</span>
+          </button>
+        </div>
+      </div>
     </section>
   );
 }
