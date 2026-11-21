@@ -1,4 +1,5 @@
-import { Banknote, Briefcase, Car, Coins, Gift, HeartPulse, House, Laptop, ShoppingBag, ShoppingBasket, Ticket, UtensilsCrossed, Zap, type LucideIcon } from 'lucide-react';
+import { Banknote, Briefcase, Car, Coins, FileText, Gift, HeartPulse, House, Laptop, ShoppingBag, ShoppingBasket, Ticket, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import { t } from './i18n';
 import { PigIcon } from './pig';
 import { iconFor } from './icons';
 import type { Bucket, CustomCategory, Goal, Kind } from './types';
@@ -12,14 +13,14 @@ export interface ExpenseCategory {
 
 /** Needs first, then wants: the order of the cards on the Month page. */
 export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
-  { id: 'housing', name: 'Housing', icon: House, bucket: 'needs' },
-  { id: 'groceries', name: 'Groceries', icon: ShoppingBasket, bucket: 'needs' },
-  { id: 'transport', name: 'Transport', icon: Car, bucket: 'needs' },
-  { id: 'bills', name: 'Bills', icon: Zap, bucket: 'needs' },
-  { id: 'health', name: 'Health', icon: HeartPulse, bucket: 'needs' },
-  { id: 'eating_out', name: 'Eating out', icon: UtensilsCrossed, bucket: 'wants' },
-  { id: 'fun', name: 'Fun', icon: Ticket, bucket: 'wants' },
-  { id: 'shopping', name: 'Shopping', icon: ShoppingBag, bucket: 'wants' },
+  { id: 'housing', get name() { return t('Housing'); }, icon: House, bucket: 'needs' },
+  { id: 'groceries', get name() { return t('Groceries'); }, icon: ShoppingBasket, bucket: 'needs' },
+  { id: 'transport', get name() { return t('Transport'); }, icon: Car, bucket: 'needs' },
+  { id: 'bills', get name() { return t('Bills'); }, icon: FileText, bucket: 'needs' },
+  { id: 'health', get name() { return t('Health'); }, icon: HeartPulse, bucket: 'needs' },
+  { id: 'eating_out', get name() { return t('Eating out'); }, icon: UtensilsCrossed, bucket: 'wants' },
+  { id: 'fun', get name() { return t('Fun'); }, icon: Ticket, bucket: 'wants' },
+  { id: 'shopping', get name() { return t('Shopping'); }, icon: ShoppingBag, bucket: 'wants' },
 ];
 
 export interface IncomeSource {
@@ -29,13 +30,17 @@ export interface IncomeSource {
 }
 
 export const INCOME_SOURCES: IncomeSource[] = [
-  { id: 'salary', name: 'Salary', icon: Briefcase },
-  { id: 'freelance', name: 'Freelance', icon: Laptop },
-  { id: 'gift', name: 'Gift', icon: Gift },
-  { id: 'other', name: 'Other', icon: Coins },
+  { id: 'salary', get name() { return t('Salary'); }, icon: Briefcase },
+  { id: 'freelance', get name() { return t('Freelance'); }, icon: Laptop },
+  { id: 'gift', get name() { return t('Gift'); }, icon: Gift },
+  { id: 'other', get name() { return t('Other'); }, icon: Coins },
 ];
 
-export const BUCKET_LABEL: Record<Bucket, string> = { needs: 'Needs', wants: 'Wants' };
+/** Getters, so the text follows the language chosen in Settings. */
+export const BUCKET_LABEL: Record<Bucket, string> = {
+  get needs() { return t('Needs'); },
+  get wants() { return t('Wants'); },
+};
 
 /*
  * The expense categories in use = the built-in list above + the user's own (`AppData.categories`).
@@ -71,13 +76,17 @@ export const bucketOf = (id: string): Bucket => expenseById.get(id)?.bucket ?? '
 export function categoryMeta(kind: Kind, id: string, goals: Goal[]): { name: string; icon: LucideIcon } {
   if (kind === 'expense') {
     const c = expenseById.get(id);
-    return { name: c?.name ?? 'Other', icon: c?.icon ?? ShoppingBag };
+    return { name: c?.name ?? t('Other'), icon: c?.icon ?? ShoppingBag };
   }
   if (kind === 'income') {
     const c = incomeById.get(id);
-    return { name: c?.name ?? 'Income', icon: c?.icon ?? Banknote };
+    return { name: c?.name ?? t('Income'), icon: c?.icon ?? Banknote };
   }
-  return { name: goals.find((g) => g.id === id)?.name ?? 'Savings', icon: PigIcon };
+  return { name: goals.find((g) => g.id === id)?.name ?? t('Savings'), icon: PigIcon };
 }
 
-export const KIND_LABEL: Record<Kind, string> = { expense: 'Expense', income: 'Income', saving: 'Savings' };
+export const KIND_LABEL: Record<Kind, string> = {
+  get expense() { return t('Expense'); },
+  get income() { return t('Income'); },
+  get saving() { return t('Savings'); },
+};

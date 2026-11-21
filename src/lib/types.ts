@@ -1,3 +1,5 @@
+import type { Language } from './i18n';
+
 export type Theme = 'light' | 'lite-dark' | 'dark';
 export type ThemeStyle = 'classic' | 'angular' | 'aurora' | 'pop' | 'playful' | 'minimal' | 'mono';
 
@@ -138,6 +140,10 @@ export interface WidgetSettings {
 }
 
 export interface Settings {
+  /** Language of the whole interface (English or Italian). */
+  language: Language;
+  /** Hide the Needs / Wants / Savings cards on the Month page (Settings > Appearance). */
+  hideSplit: boolean;
   theme: Theme;
   themeStyle: ThemeStyle;
   monoHue: string;
@@ -175,7 +181,7 @@ export type Sheet =
   | { type: 'goal'; id?: string }
   | { type: 'account'; id?: string }
   | { type: 'giftCard'; id?: string }
-  | { type: 'widgets' }
+  | { type: 'giftCards' }
   | { type: 'categories' }
   | { type: 'budget'; categoryId: string }
   | { type: 'quick' }

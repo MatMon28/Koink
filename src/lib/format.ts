@@ -1,3 +1,4 @@
+import { localeTag } from './i18n';
 import type { CurrencyCode } from './types';
 
 export interface CurrencyInfo {
@@ -98,10 +99,10 @@ export interface MoneyOptions {
 
 export function formatMoney(amount: number, currency: CurrencyCode, { cents = false, sign = false }: MoneyOptions = {}): string {
   const digits = cents ? currencyDecimals(currency) : 0;
-  const key = `${currency}:${digits}`;
+  const key = `${localeTag()}:${currency}:${digits}`;
   let f = cache.get(key);
   if (!f) {
-    f = new Intl.NumberFormat('en-US', {
+    f = new Intl.NumberFormat(localeTag(), {
       style: 'currency',
       currency,
       minimumFractionDigits: digits,
@@ -123,10 +124,10 @@ export function formatMoney(amount: number, currency: CurrencyCode, { cents = fa
 export function formatMoneyFit(amount: number, currency: CurrencyCode, maxChars: number, sign = false): string {
   const full = formatMoney(amount, currency, { sign });
   if (full.length <= maxChars) return full;
-  const key = `${currency}:short`;
+  const key = `${localeTag()}:${currency}:short`;
   let f = cache.get(key);
   if (!f) {
-    f = new Intl.NumberFormat('en-US', { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 });
+    f = new Intl.NumberFormat(localeTag(), { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 });
     cache.set(key, f);
   }
   const text = f.format(amount);

@@ -3,6 +3,7 @@ import { Check, Trash2, type LucideIcon } from 'lucide-react';
 import { SectionLabel } from '../components/ui';
 import { CURRENCIES } from '../lib/format';
 import { ICON_CHOICES } from '../lib/icons';
+import { t } from '../lib/i18n';
 
 export interface Choice {
   id: string;
@@ -22,7 +23,7 @@ export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra
 }) {
   const cols = columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : 'grid-cols-4';
   return (
-    <div role="radiogroup" aria-label={label} className={`grid ${cols} gap-1.5`}>
+    <div role="radiogroup" aria-label={t(label)} className={`grid ${cols} gap-1.5`}>
       {choices.map((choice) => {
         const Icon = choice.icon;
         const active = choice.id === value;
@@ -51,7 +52,7 @@ export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra
           className="pressable min-w-0 flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--border)] px-1 py-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]"
         >
           <extra.icon size={17} strokeWidth={2.2} aria-hidden="true" />
-          <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{extra.label}</span>
+          <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{t(extra.label)}</span>
         </button>
       )}
     </div>
@@ -82,7 +83,7 @@ export function Banner({ tone, icon: Icon, label, value, sub }: { tone: BannerTo
       </span>
       <span className="text-right tabular-nums shrink-0">
         <span className={`block text-lg font-extrabold ${c.ink}`}>{value}</span>
-        {sub && <span className={`block text-[11px] font-bold ${c.accent}`}>{sub}</span>}
+        {sub && <span className={`block text-[11px] font-bold ${c.accent}`}>{t(sub)}</span>}
       </span>
     </div>
   );
@@ -134,7 +135,7 @@ export function SaveRow({ tone, label, disabled, onSave, onDelete, deleteLabel }
 /** Every currency as a code tile: pick the one an entry was paid in, or the journal's own. */
 export function CurrencyGrid({ value, onChange, label = 'Currency' }: { value: string; onChange: (code: string) => void; label?: string }) {
   return (
-    <div role="radiogroup" aria-label={label} className="grid grid-cols-4 min-[400px]:grid-cols-5 gap-1.5 max-h-72 overflow-y-auto overscroll-contain pr-0.5">
+    <div role="radiogroup" aria-label={t(label)} className="grid grid-cols-4 min-[400px]:grid-cols-5 gap-1.5 max-h-72 overflow-y-auto overscroll-contain pr-0.5">
       {CURRENCIES.map((currency) => {
         const active = currency.code === value;
         return (
@@ -164,8 +165,8 @@ export function CurrencyGrid({ value, onChange, label = 'Currency' }: { value: s
 export function IconPicker({ value, onChange }: { value: string; onChange: (key: string) => void }) {
   return (
     <div>
-      <SectionLabel>Icon</SectionLabel>
-      <div role="radiogroup" aria-label="Icon" className="grid grid-cols-6 min-[400px]:grid-cols-8 gap-1.5">
+      <SectionLabel>{t('Icon')}</SectionLabel>
+      <div role="radiogroup" aria-label={t('Icon')} className="grid grid-cols-6 min-[400px]:grid-cols-8 gap-1.5">
         {ICON_CHOICES.map((choice) => {
           const Icon = choice.icon;
           const active = choice.key === value;
@@ -175,8 +176,8 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (key:
               type="button"
               role="radio"
               aria-checked={active}
-              aria-label={choice.label}
-              title={choice.label}
+              aria-label={t(choice.label)}
+              title={t(choice.label)}
               onClick={() => onChange(choice.key)}
               className={`pressable aspect-square rounded-xl border flex items-center justify-center ${
                 active ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'

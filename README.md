@@ -29,15 +29,16 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **Budgets page** (category budgets, goals, recurring lists, accounts card) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx` | [features/budgets.md](docs/features/budgets.md) |
 | **Statistics page** (averages, balance trend, breakdown) | `src/pages/StatsView.tsx` | [features/statistics.md](docs/features/statistics.md) |
 | **Add / edit an entry** (number pad, title + long note, account, currency), "Log again" | `src/sheets/TxSheet.tsx`, `src/sheets/QuickSheet.tsx`, `src/sheets/shared.tsx`, `NumPad` / `AmountStepper` in `src/components/ui.tsx` | [features/entries.md](docs/features/entries.md) |
-| **Widgets** (single button, multiple buttons, expense-type buttons; Android home screen + Month-page strip) | `src/lib/widgets.ts`, `src/lib/widgetBridge.ts`, `src/lib/useWidgets.ts`, `src/sheets/WidgetsSheet.tsx`, `src/components/WidgetButtons.tsx`, `src/components/WidgetStrip.tsx`, `android/app/src/main/java/com/koink/app/KoinkWidgetProvider.java` | [features/widgets.md](docs/features/widgets.md) |
-| **Gift cards** (add a card, pay an expense with it, tracker on the Month page, optional bottom-bar button) | `src/lib/giftcards.ts`, `src/sheets/GiftCardSheet.tsx`, `src/sheets/TxSheet.tsx` (*Pay with a gift card*), `src/pages/MonthView.tsx` (tracker) | [features/gift-cards.md](docs/features/gift-cards.md) |
-| **Accounts** (balance per account) | `src/sheets/AccountSheet.tsx`, `accountBalance` in `src/lib/calc.ts`, accounts card in `src/pages/BudgetsView.tsx` | [features/accounts.md](docs/features/accounts.md) |
+| **Widgets** (single button, multiple buttons, expense-type buttons; Android home screen + Month-page strip) | `src/lib/widgets.ts`, `src/lib/widgetBridge.ts`, `src/lib/useWidgets.ts`, `src/sheets/WidgetsSettings.tsx`, `src/components/WidgetButtons.tsx`, `src/components/WidgetStrip.tsx`, `android/app/src/main/java/com/koink/app/KoinkWidgetProvider.java` | [features/widgets.md](docs/features/widgets.md) |
+| **Gift cards** (add a card, pay an expense with it, tracker on the Month page, optional bottom-bar button) | `src/lib/giftcards.ts`, `src/sheets/GiftCardPickerSheet.tsx` (what the gift card button opens), `src/sheets/GiftCardSheet.tsx`, `src/sheets/TxSheet.tsx` (*Pay with a gift card*), `src/pages/MonthView.tsx` (tracker) | [features/gift-cards.md](docs/features/gift-cards.md) |
+| **Accounts** (balance per account, edited in the Profile) | `src/sheets/ProfileAccounts.tsx`, `src/sheets/AccountSheet.tsx`, `accountBalance` in `src/lib/calc.ts`, accounts card in `src/pages/BudgetsView.tsx` | [features/accounts.md](docs/features/accounts.md) |
+| **Language** (English / Italian, `t()`, the Italian dictionary) | `src/lib/i18n.ts`, `src/lib/i18n.it.ts`, `src/sheets/SettingsSheet.tsx` | [features/language.md](docs/features/language.md) |
 | **Expense categories** (own, hide, delete) | `src/lib/categories.ts`, `src/lib/icons.ts`, `src/sheets/CategoriesSheet.tsx` | [features/categories.md](docs/features/categories.md) |
 | **Currencies and exchange rates** (per-entry currency) | `src/lib/format.ts`, `src/sheets/TxSheet.tsx`, `src/sheets/SettingsSheet.tsx` | [features/currencies.md](docs/features/currencies.md) |
 | **Recurring items** | `src/sheets/EditSheets.tsx`, `src/sheets/QuickSheet.tsx`, `src/components/RecurringRow.tsx` | [features/recurring.md](docs/features/recurring.md) |
 | **Savings goals** | `src/sheets/EditSheets.tsx` (`GoalSheet`), `src/lib/calc.ts` (`goalSaved`) | [features/savings-goals.md](docs/features/savings-goals.md) |
-| **Profile and the budget rule** (50 / 30 / 20) | `src/sheets/ProfileSheet.tsx` | [features/profile.md](docs/features/profile.md) |
-| **Settings** (currency, bottom bar, install card, gestures list) | `src/sheets/SettingsSheet.tsx`, `src/components/InstallApp.tsx` | [features/settings.md](docs/features/settings.md) |
+| **Profile and the budget rule** (50 / 30 / 20), accounts with their balances | `src/sheets/ProfileSheet.tsx`, `src/sheets/ProfileAccounts.tsx` | [features/profile.md](docs/features/profile.md) |
+| **Settings** (language, appearance, currency, bottom bar, widgets, install card) | `src/sheets/SettingsSheet.tsx`, `src/components/InstallApp.tsx` | [features/settings.md](docs/features/settings.md) |
 | **Backup, restore, sample data, delete all** | `src/lib/store.tsx`, `src/lib/platform.ts` (`saveTextFile`), `src/lib/demo.ts` | [features/backup.md](docs/features/backup.md) |
 | **Themes and style presets** | `src/lib/themes.ts`, `src/index.css`, `src/styles/presets.css` | [features/themes.md](docs/features/themes.md), [design-system.md](docs/design-system.md) |
 | **Smooth sheet drag / header scroll, logo click animation** | `src/components/Modal.tsx`, `src/components/Header.tsx`, end of `src/index.css` | [motion.md](docs/motion.md#smoothness-fixes-sheet-drag-scrolling) |
@@ -86,7 +87,16 @@ docs/                 documentation (index: docs/README.md)
 3. Every sheet is a `<Modal>`; every sheet is opened with `openSheet({ type: ... })`. The list of types is the `Sheet` union in `src/lib/types.ts`.
 4. After adding, renaming or deleting a file, update its row in `docs/file-map/` and, if it is a feature, the matching `docs/features/*.md` (rule and table in [docs/README.md](docs/README.md#keeping-the-docs-current)).
 
-## Latest round: widgets, gift cards, pig icon, visual fixes
+## Latest round: language, collapsible settings, accounts in the profile, rounder widgets
+
+- **Language:** Settings starts with an English / Italiano choice. Every visible text goes through `t()` (`src/lib/i18n.ts`), the Italian texts live in `src/lib/i18n.it.ts`; numbers and month names follow. [docs/features/language.md](docs/features/language.md)
+- **Settings:** order is Language, Appearance (now with *Hide needs, wants and savings*), Currency, Buttons in the bottom bar, Widgets (all collapsible), then notifications, install, data. No more Gestures list; *Delete all data* is as big as the other fields. [docs/features/settings.md](docs/features/settings.md)
+- **Widgets:** a collapsible section of Settings instead of a popup; smaller icons in round pastel buttons like the bottom dock; the shape follows the number of buttons (circle, pill, card); on Android the tray uses the app's theme colours. [docs/features/widgets.md](docs/features/widgets.md)
+- **Gift card button:** opens a list of the cards already added, tap one to spend it; adding a new card is one tap away. [docs/features/gift-cards.md](docs/features/gift-cards.md)
+- **Month page:** Left / Per day / Budget wear the pastel card style, Needs / Wants / Savings the small note style (they used to be the other way round). The Bills category has a paper-with-lines icon instead of a lightning bolt. [docs/features/month.md](docs/features/month.md)
+- **Profile:** several accounts, each with the money in it typed straight into a field; this replaces the old balance banner. [docs/features/accounts.md](docs/features/accounts.md)
+
+## Previous round: widgets, gift cards, pig icon, visual fixes
 
 - **Widgets:** a single button (the user picks the action), a multiple-button widget (the user picks the buttons) and an expense-type widget (one button per category, a tap opens Add expense with it chosen). Android home screen plus an optional strip on the Month page. [docs/features/widgets.md](docs/features/widgets.md)
 - **Gift cards:** add cards, mark an expense as paid with one (the amount comes off the card), a Gift cards tracker on the Month page, and an optional gift card button in the bottom bar. [docs/features/gift-cards.md](docs/features/gift-cards.md)

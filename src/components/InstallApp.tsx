@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CircleCheck, Download, Smartphone } from 'lucide-react';
 import { promptInstall, useInstallState, type InstallState } from '../lib/pwa';
+import { t } from '../lib/i18n';
 
 const COPY: Record<Exclude<InstallState, 'hidden'>, string> = {
   available: 'Put Koink on your home screen. It opens in its own window and works offline.',
@@ -24,8 +25,8 @@ export function InstallApp() {
   };
 
   return (
-    <section aria-label="Install app" className="bg-[var(--inset)] border border-[var(--border)] rounded-2xl p-3 space-y-2.5">
-      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">Install app</h3>
+    <section aria-label={t('Install app')} className="bg-[var(--inset)] border border-[var(--border)] rounded-2xl p-3 space-y-2.5">
+      <h3 className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Install app')}</h3>
       <div className="flex items-start gap-2.5">
         <span className="w-8 h-8 rounded-full bg-[#C9EFD3] text-[#174A2B] flex items-center justify-center shrink-0">
           {state === 'installed' ? <CircleCheck size={15} /> : <Smartphone size={15} />}
@@ -41,7 +42,7 @@ export function InstallApp() {
           className="kc-primary-btn pressable pressable-soft w-full py-2.5 px-3 rounded-xl bg-intake hover:brightness-95 text-intake-ink font-extrabold text-xs flex items-center justify-center gap-1.5"
         >
           <Download size={15} />
-          Install Koink
+          {t('Install Koink')}
         </button>
       )}
     </section>

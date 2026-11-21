@@ -8,13 +8,14 @@ import { giftCardBalance, giftCardEntries, giftCardExpired } from '../lib/giftca
 import { useApp, useSheet } from '../lib/store';
 import type { Sheet } from '../lib/types';
 import { Banner, SaveRow } from './shared';
+import { t } from '../lib/i18n';
 
 /** Add, edit or delete a gift card; for an existing one, also what has been spent from it. */
 export function GiftCardSheet() {
   const { isOpen, sheet, seq } = useSheet('giftCard');
   const { closeSheet } = useApp();
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? 'Edit gift card' : 'New gift card'} subtitle="A voucher you can pay expenses with" dockId={sheet?.id ? undefined : 'giftcard'} maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? t('Edit gift card') : t('New gift card')} subtitle={t('A voucher you can pay expenses with')} dockId={sheet?.id ? undefined : 'giftcard'} maxWidth="max-w-md">
       {sheet && <GiftCardForm key={seq} sheet={sheet} />}
     </Modal>
   );
@@ -41,22 +42,22 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
     if (!valid) return;
     saveGiftCard({ id: original?.id, name, initial, expires: expires || undefined, note });
     closeSheet();
-    showToast(`${name.trim()} · ${money(shownLeft, { cents: true })} left`);
+    showToast(t('{v} · {v2} left', { v: name.trim(), v2: money(shownLeft, { cents: true }) }));
   };
 
   return (
     <div className="space-y-4">
-      <Banner tone="gift" icon={Gift} label={name.trim() || 'Gift card'} value={money(shownLeft, { cents: true })} sub={original ? `of ${money(initial, { cents: true })} · ${expired ? 'expired' : 'left'}` : 'Value'} />
+      <Banner tone="gift" icon={Gift} label={name.trim() || 'Gift card'} value={money(shownLeft, { cents: true })} sub={original ? t('of {v} · {v2}', { v: money(initial, { cents: true }), v2: expired ? t('expired') : t('left') }) : t('Value')} />
 
       <div>
-        <SectionLabel htmlFor="gift-name">Name</SectionLabel>
+        <SectionLabel htmlFor="gift-name">{t('Name')}</SectionLabel>
         <input
           id="gift-name"
           type="text"
           value={name}
           autoFocus={!original}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Bookshop, Amazon, Spa voucher"
+          placeholder={t('Bookshop, Amazon, Spa voucher')}
           maxLength={40}
           autoComplete="off"
           className={`${textInput} text-sm`}
@@ -64,15 +65,15 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
       </div>
 
       <div>
-        <SectionLabel>{original ? 'Value when added' : 'Value'}</SectionLabel>
-        <AmountStepper value={initial} onChange={setInitial} unit={symbol} step={5} ariaLabel="Value of the gift card" startOpen={!original} chips={[10, 25, 50]} />
+        <SectionLabel>{original ? t('Value when added') : t('Value')}</SectionLabel>
+        <AmountStepper value={initial} onChange={setInitial} unit={symbol} step={5} ariaLabel={t('Value of the gift card')} startOpen={!original} chips={[10, 25, 50]} />
         {original && spent > 0 && (
-          <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">{money(spent, { cents: true })} has been spent from it so far; the balance above follows the value you set.</p>
+          <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">{money(spent, { cents: true })} {t('has been spent from it so far; the balance above follows the value you set.')}</p>
         )}
       </div>
 
       <div>
-        <SectionLabel htmlFor="gift-expires">Valid until <span className="normal-case tracking-normal font-bold opacity-70">· optional</span></SectionLabel>
+        <SectionLabel htmlFor="gift-expires">{t('Valid until')} <span className="normal-case tracking-normal font-bold opacity-70">{t('· optional')}</span></SectionLabel>
         <div className="flex items-center gap-1.5">
           <input
             id="gift-expires"
@@ -83,19 +84,19 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
           />
           {expires && (
             <button type="button" onClick={() => setExpires('')} className="pressable px-3 py-2.5 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-xs font-extrabold text-[var(--muted)]">
-              No limit
+              {t('No limit')}
             </button>
           )}
         </div>
       </div>
 
       <div>
-        <SectionLabel htmlFor="gift-note">Note <span className="normal-case tracking-normal font-bold opacity-70">· code, shop, anything</span></SectionLabel>
+        <SectionLabel htmlFor="gift-note">{t('Note')} <span className="normal-case tracking-normal font-bold opacity-70">{t('· code, shop, anything')}</span></SectionLabel>
         <textarea
           id="gift-note"
           value={note}
           onChange={(event) => setNote(event.target.value)}
-          placeholder="Card number, where it can be used..."
+          placeholder={t('Card number, where it can be used...')}
           maxLength={500}
           rows={2}
           className={`${textInput} text-sm font-medium resize-none leading-snug`}
@@ -104,9 +105,9 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
 
       {original && (
         <div>
-          <SectionLabel>Spent from this card</SectionLabel>
+          <SectionLabel>{t('Spent from this card')}</SectionLabel>
           {entries.length === 0 ? (
-            <p className="text-xs font-medium text-[var(--muted)]">Nothing yet. When you add an expense, choose <b>Pay with a gift card</b> and the amount comes off this card.</p>
+            <p className="text-xs font-medium text-[var(--muted)]">{t('Nothing yet. When you add an expense, choose')} <b>{t('Pay with a gift card')}</b> {t('and the amount comes off this card.')}</p>
           ) : (
             <ul className="divide-y divide-[var(--border)] bg-[var(--inset)] border border-[var(--border)] rounded-2xl overflow-hidden">
               {entries.map((tx) => (
@@ -129,7 +130,7 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
               className="pressable mt-2 w-full py-2.5 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-xs font-extrabold text-[var(--text)] inline-flex items-center justify-center gap-1.5"
             >
               <Receipt size={14} aria-hidden="true" />
-              Spend from this card
+              {t('Spend from this card')}
             </button>
           )}
         </div>
@@ -139,15 +140,15 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
         tone="gift"
         disabled={!valid}
         onSave={save}
-        label={original ? 'Save changes' : 'Add gift card'}
+        label={original ? t('Save changes') : t('Add gift card')}
         onDelete={original ? () => setConfirm(true) : undefined}
-        deleteLabel="Delete this gift card"
+        deleteLabel={t('Delete this gift card')}
       />
 
       <ConfirmDialog
         open={confirm}
-        title={`Delete ${original?.name ?? 'this gift card'}?`}
-        message="The entries paid with it stay in your journal; they just count as paid the normal way again."
+        title={t('Delete {v}?', { v: original?.name ?? 'this gift card' })}
+        message={t('The entries paid with it stay in your journal; they just count as paid the normal way again.')}
         onCancel={() => setConfirm(false)}
         onConfirm={() => {
           setConfirm(false);

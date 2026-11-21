@@ -7,13 +7,14 @@ import { iconFor } from '../lib/icons';
 import { useApp, useSheet } from '../lib/store';
 import type { Sheet } from '../lib/types';
 import { Banner, IconPicker, SaveRow } from './shared';
+import { t } from '../lib/i18n';
 
 /** Create, rename or delete an account, and tell the app what it holds today. */
 export function AccountSheet() {
   const { isOpen, sheet, seq } = useSheet('account');
   const { closeSheet } = useApp();
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? 'Edit account' : 'New account'} subtitle="Cash, a bank account, a card..." maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? t('Edit account') : t('New account')} subtitle={t('Cash, a bank account, a card...')} maxWidth="max-w-md">
       {sheet && <AccountForm key={seq} sheet={sheet} />}
     </Modal>
   );
@@ -45,16 +46,16 @@ function AccountForm({ sheet }: { sheet: Extract<Sheet, { type: 'account' }> }) 
 
   return (
     <div className="space-y-4">
-      <Banner tone="needs" icon={Icon} label={name.trim() || 'Account'} value={money(balance, { cents: true })} sub={original ? `${data.txs.filter((tx) => tx.accountId === original.id).length} entries` : undefined} />
+      <Banner tone="needs" icon={Icon} label={name.trim() || 'Account'} value={money(balance, { cents: true })} sub={original ? t('{length} entries', { length: data.txs.filter((tx) => tx.accountId === original.id).length }) : undefined} />
 
       <div>
-        <SectionLabel htmlFor="account-name">Account name</SectionLabel>
+        <SectionLabel htmlFor="account-name">{t('Account name')}</SectionLabel>
         <input
           id="account-name"
           type="text"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Current account, Cash, Credit card"
+          placeholder={t('Current account, Cash, Credit card')}
           maxLength={40}
           autoComplete="off"
           autoFocus={!original}
@@ -67,34 +68,34 @@ function AccountForm({ sheet }: { sheet: Extract<Sheet, { type: 'account' }> }) 
       <IconPicker value={icon} onChange={setIcon} />
 
       <div>
-        <SectionLabel>{original ? 'Balance today' : 'Opening balance'}</SectionLabel>
-        <AmountStepper value={amount} onChange={setAmount} unit={symbol} step={10} ariaLabel="Balance" startOpen={!original} chips={[50, 100, 500]} />
-        <div className="flex gap-1.5 mt-2" role="group" aria-label="Sign of the balance">
-          <button type="button" aria-pressed={!negative} onClick={() => setNegative(false)} className={seg(!negative)}>In credit</button>
-          <button type="button" aria-pressed={negative} onClick={() => setNegative(true)} className={seg(negative)}>Overdrawn</button>
+        <SectionLabel>{original ? t('Balance today') : t('Opening balance')}</SectionLabel>
+        <AmountStepper value={amount} onChange={setAmount} unit={symbol} step={10} ariaLabel={t('Balance')} startOpen={!original} chips={[50, 100, 500]} />
+        <div className="flex gap-1.5 mt-2" role="group" aria-label={t('Sign of the balance')}>
+          <button type="button" aria-pressed={!negative} onClick={() => setNegative(false)} className={seg(!negative)}>{t('In credit')}</button>
+          <button type="button" aria-pressed={negative} onClick={() => setNegative(true)} className={seg(negative)}>{t('Overdrawn')}</button>
         </div>
         <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">
-          From now on every entry you put in this account moves the balance. Entries without an account do not count here.
+          {t('From now on every entry you put in this account moves the balance. Entries without an account do not count here.')}
         </p>
       </div>
 
       {!valid && (
-        <p className="-mb-2 text-center text-[11px] font-bold text-[var(--muted)]" role="status">Give the account a name to {original ? 'save it' : 'add it'}.</p>
+        <p className="-mb-2 text-center text-[11px] font-bold text-[var(--muted)]" role="status">{t('Give the account a name to')} {original ? t('save it') : t('add it')}.</p>
       )}
 
       <SaveRow
         tone="neutral"
         disabled={!valid}
         onSave={save}
-        label={original ? 'Save changes' : 'Add account'}
+        label={original ? t('Save changes') : t('Add account')}
         onDelete={original ? () => setConfirm(true) : undefined}
-        deleteLabel="Delete this account"
+        deleteLabel={t('Delete this account')}
       />
 
       <ConfirmDialog
         open={confirm}
-        title={`Delete ${original?.name ?? 'this account'}?`}
-        message="Its entries stay in your journal; they just no longer belong to an account."
+        title={t('Delete {v}?', { v: original?.name ?? 'this account' })}
+        message={t('Its entries stay in your journal; they just no longer belong to an account.')}
         onCancel={() => setConfirm(false)}
         onConfirm={() => {
           setConfirm(false);

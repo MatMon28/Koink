@@ -13,11 +13,13 @@
 | `EditSheets.tsx` | `RecurringEditSheet`, `GoalSheet`, `BudgetSheet` | `recurringEdit`, `goal`, `budget` | Create / edit / delete a recurring item; create / edit / delete a goal; set a category budget | [../features/recurring.md](../features/recurring.md), [../features/savings-goals.md](../features/savings-goals.md), [../features/budgets.md](../features/budgets.md) |
 | `AccountSheet.tsx` | `AccountSheet` | `account` | Create / edit / delete an account and set its balance today | [../features/accounts.md](../features/accounts.md) |
 | `GiftCardSheet.tsx` | `GiftCardSheet` | `giftCard` | Add / edit / delete a gift card (name, value, valid until, note) and list the entries paid with it | [../features/gift-cards.md](../features/gift-cards.md) |
-| `WidgetsSheet.tsx` | `WidgetsSheet` | `widgets` | Settings > Widgets: preview + chip picker for the single, multiple and expense-type widgets, and the Month-page switch | [../features/widgets.md](../features/widgets.md) |
+| `WidgetsSettings.tsx` | `WidgetsSettings` | (none: a collapsible inside Settings) | Previews + chip pickers for the single, multiple and expense-type widgets, and the Month-page switch | [../features/widgets.md](../features/widgets.md) |
+| `GiftCardPickerSheet.tsx` | `GiftCardPickerSheet` | `giftCards` | What the gift card button opens: pick an added card to spend, or add a new one | [../features/gift-cards.md](../features/gift-cards.md) |
+| `ProfileAccounts.tsx` | `ProfileAccounts` | (inside `profile`) | Accounts with inline balance fields and an add form | [../features/accounts.md](../features/accounts.md) |
 | `CategoriesSheet.tsx` | `CategoriesSheet` | `categories` | Manage expense categories: create, edit, hide / show, delete | [../features/categories.md](../features/categories.md) |
 | `shared.tsx` | `ChoiceGrid`, `Banner`, `SaveRow`, `CurrencyGrid`, `IconPicker` | (helpers) | Shared pieces of the forms | |
-| `ProfileSheet.tsx` | `ProfileSheet` | `profile` | Balance banner, name, the needs / wants / savings rule | [../features/profile.md](../features/profile.md) |
-| `SettingsSheet.tsx` | `SettingsSheet` | `settings` | Currency, appearance (with the Ultra minimal switch), dock buttons, notifications, install card, gestures list, data tools, project download, delete all | [../features/settings.md](../features/settings.md) |
+| `ProfileSheet.tsx` | `ProfileSheet` | `profile` | Total-of-accounts banner, name, accounts block, the needs / wants / savings rule | [../features/profile.md](../features/profile.md) |
+| `SettingsSheet.tsx` | `SettingsSheet` | `settings` | Language, appearance (Ultra minimal, hide-split), currency, dock buttons, widgets, notifications, install card, data tools, project download, delete all | [../features/settings.md](../features/settings.md) |
 | `NotificationSettings.tsx` | `NotificationSettings` | (inside Settings) | The Notifications group: a switch row per reminder with its time (and weekday), permission banner, test button | [../notifications.md](../notifications.md) |
 | `shared.tsx` | `ChoiceGrid`, `Choice`, `Banner`, `BannerTone`, `SaveRow` | | Icon-tile picker (a radio group); pastel summary banner at the top of a sheet; the closing row with the wide save button and optional delete | |
 

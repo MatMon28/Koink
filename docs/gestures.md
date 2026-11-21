@@ -22,7 +22,7 @@
 | Scroll down / up | page | hides / shows the bottom dock; the header folds to the page pill | `ActionDock.tsx`, `Header.tsx` |
 | Tap the scrim, Escape | open sheet | closes it (or asks, see above) | `Modal.tsx` |
 
-The same list is shown to users in **Settings > Gestures** (`GESTURES` in `SettingsSheet.tsx`): keep the two in step.
+Settings no longer shows a gestures list (it was removed); this page is the only reference.
 
 ## Page swipe: the rail
 

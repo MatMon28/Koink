@@ -2,6 +2,7 @@ import { ListOrdered, Target, TrendingUp, Wallet } from 'lucide-react';
 import { useApp } from '../lib/store';
 import { TAB_ORDER } from '../lib/tabs';
 import type { ActiveTab } from '../lib/types';
+import { t } from '../lib/i18n';
 
 // Each page has its own pastel when it is the active one (the style presets replace it with theirs).
 const NAV_META: Record<ActiveTab, { label: string; icon: typeof Wallet; activeClass: string }> = {
@@ -25,7 +26,7 @@ export function Tabs() {
   return (
     <div className="flex items-center justify-center pt-1.5 pb-1.5">
       <nav
-        aria-label="Primary"
+        aria-label={t('Primary')}
         className="kc-nav-pill inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full max-w-full"
       >
         {NAV_ITEMS.map((item) => {
@@ -36,8 +37,8 @@ export function Tabs() {
               key={item.id}
               type="button"
               onClick={() => select(item.id)}
-              title={item.label}
-              aria-label={item.label}
+              title={t(item.label)}
+              aria-label={t(item.label)}
               aria-current={isActive ? 'page' : undefined}
               className={`kc-nav-tab pressable flex items-center justify-center rounded-full text-xs sm:text-sm font-bold whitespace-nowrap ${
                 isActive
@@ -48,7 +49,7 @@ export function Tabs() {
               }`}
             >
               <Icon size={16} />
-              {isActive && !ultra && <span>{item.label}</span>}
+              {isActive && !ultra && <span>{t(item.label)}</span>}
             </button>
           );
         })}

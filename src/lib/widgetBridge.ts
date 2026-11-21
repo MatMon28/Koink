@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import type { LucideIcon } from 'lucide-react';
+import { t } from './i18n';
 import { actionFor, categoryWidgetKeys, widgetLink, type WidgetAction } from './widgets';
 import type { WidgetSettings } from './types';
 
@@ -19,13 +20,21 @@ export interface NativeButton {
   uri: string;
 }
 
+/** The app's own colours, so the widget tray matches Light, Soft dark and Dark. */
+export interface NativeTheme {
+  surface: string;
+  border: string;
+  text: string;
+}
+
 export interface NativeWidgets {
+  theme: NativeTheme;
   single: NativeButton[];
   multi: NativeButton[];
   categories: NativeButton[];
 }
 
-const ICON_PX = 96;
+const ICON_PX = 72;
 const cache = new Map<string, Promise<string>>();
 
 async function iconPng(icon: LucideIcon, color: string, name: string): Promise<string> {
@@ -49,14 +58,43 @@ async function iconPng(icon: LucideIcon, color: string, name: string): Promise<s
   return job;
 }
 
+/** Any CSS colour (a var(), rgb(), oklch()...) as #rrggbb, the one form the native side parses. */
+function cssColorToHex(value: string, fallback: string): string {
+  try {
+    const probe = document.createElement('span');
+    probe.style.color = value;
+    document.body.appendChild(probe);
+    const resolved = getComputedStyle(probe).color;
+    probe.remove();
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return fallback;
+    ctx.fillStyle = resolved;
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+  } catch {
+    return fallback;
+  }
+}
+
+const readTheme = (): NativeTheme => ({
+  surface: cssColorToHex('var(--surface)', '#FBF8F2'),
+  border: cssColorToHex('var(--border)', '#E2D9C8'),
+  text: cssColorToHex('var(--text)', '#24201C'),
+});
+
 async function toNative(action: WidgetAction): Promise<NativeButton> {
-  return { label: action.label, bg: action.bg, fg: action.fg, icon: await iconPng(action.icon, action.fg, action.key), uri: widgetLink(action.key) };
+  return { label: t(action.label), bg: action.bg, fg: action.fg, icon: await iconPng(action.icon, action.fg, action.key), uri: widgetLink(action.key) };
 }
 
 /** Everything the three native widgets draw, as the JSON string `KoinkDevice.setWidgets` stores. */
 export async function buildNativeWidgets(settings: WidgetSettings): Promise<string> {
   const make = (keys: string[]) => Promise.all(keys.map((key) => toNative(actionFor(key))));
   const payload: NativeWidgets = {
+    theme: readTheme(),
     single: await make([settings.single]),
     multi: await make(settings.multi),
     categories: await make(categoryWidgetKeys(settings)),

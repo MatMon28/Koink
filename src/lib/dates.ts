@@ -1,3 +1,5 @@
+import { getLanguage, t } from './i18n';
+
 export const pad = (n: number) => String(n).padStart(2, '0');
 
 const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -41,7 +43,8 @@ export const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Au
 const MONTH_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export function formatMonth(month: string, style: 'long' | 'short' = 'long', withYear = true): string {
-  const name = (style === 'long' ? MONTH_LONG : MONTH_SHORT)[Number(month.slice(5, 7)) - 1] ?? month;
+  const raw = (style === 'long' ? MONTH_LONG : MONTH_SHORT)[Number(month.slice(5, 7)) - 1];
+  const name = raw ? t(raw) : month;
   return withYear ? `${name} ${month.slice(0, 4)}` : name;
 }
 
@@ -50,14 +53,15 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 /** "Today", "Yesterday" or "Fri 20 Nov" (the year is added when it is not the current one). */
 export function formatDay(date: string, relative = true): string {
   const today = todayStr();
-  if (relative && date === today) return 'Today';
-  if (relative && date === addDays(today, -1)) return 'Yesterday';
+  if (relative && date === today) return t('Today');
+  if (relative && date === addDays(today, -1)) return t('Yesterday');
   const d = parse(date);
-  const text = `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTH_SHORT[d.getMonth()]}`;
+  const text = `${t(WEEKDAYS[d.getDay()])} ${d.getDate()} ${t(MONTH_SHORT[d.getMonth()])}`;
   return date.slice(0, 4) === today.slice(0, 4) ? text : `${text} ${d.getFullYear()}`;
 }
 
 export const ordinal = (day: number) => {
+  if (getLanguage() === 'it') return String(day);
   const rest = day % 100;
   if (rest >= 11 && rest <= 13) return `${day}th`;
   return `${day}${['th', 'st', 'nd', 'rd'][day % 10] ?? 'th'}`;

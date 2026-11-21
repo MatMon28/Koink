@@ -7,6 +7,7 @@ import { categoryMeta } from '../lib/categories';
 import { formatMonth, todayStr } from '../lib/dates';
 import { useApp, useSheet } from '../lib/store';
 import { Banner } from './shared';
+import { t } from '../lib/i18n';
 
 /** The entries you log again and again, one tap each (they are dated today). */
 export function QuickSheet() {
@@ -15,9 +16,9 @@ export function QuickSheet() {
   const entries = useMemo(() => (isOpen ? frequentEntries(data.txs) : []), [isOpen, data.txs]);
 
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title="Log again" subtitle="Your most frequent entries, dated today" dockId="quick" maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={t('Log again')} subtitle={t('Your most frequent entries, dated today')} dockId="quick" maxWidth="max-w-md">
       {entries.length === 0 ? (
-        <p className="text-sm font-medium text-[var(--muted)]">Once you have logged the same thing twice, it shows up here for one-tap logging.</p>
+        <p className="text-sm font-medium text-[var(--muted)]">{t('Once you have logged the same thing twice, it shows up here for one-tap logging.')}</p>
       ) : (
         <div className="divide-y divide-[var(--border)] bg-[var(--inset)] border border-[var(--border)] rounded-2xl overflow-hidden">
           {entries.map((entry) => {
@@ -30,7 +31,7 @@ export function QuickSheet() {
                 type="button"
                 onClick={() => addTx({ kind: entry.kind, categoryId: entry.categoryId, note: entry.note, amount: entry.amount, date: todayStr() })}
                 className="pressable pressable-soft w-full px-3 py-2.5 flex items-center gap-2.5 text-left hover:bg-[var(--hover)]"
-                aria-label={`Log ${entry.note}, ${amount}, today`}
+                aria-label={t('Log {note}, {amount}, today', { note: entry.note, amount })}
               >
                 <span className="size-9 rounded-full flex items-center justify-center shrink-0 text-[var(--text)]">
                   <Icon size={16} strokeWidth={2.2} />
@@ -63,19 +64,19 @@ export function RecurringSheet() {
   const dueOut = due.filter((r) => r.kind === 'expense').reduce((sum, r) => sum + r.amount, 0);
 
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title="Recurring" subtitle={formatMonth(selectedMonth)} dockId="recurring" maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={t('Recurring')} subtitle={formatMonth(selectedMonth)} dockId="recurring" maxWidth="max-w-md">
       <div className="space-y-4">
         {data.recurring.length > 0 && (
           <Banner
             tone="needs"
             icon={Repeat}
-            label={due.length === 0 ? 'All logged' : `${data.recurring.length - due.length} of ${data.recurring.length} logged`}
+            label={due.length === 0 ? t('All logged') : t('{v} of {length} logged', { v: data.recurring.length - due.length, length: data.recurring.length })}
             value={money(dueOut, { cents: true })}
-            sub="still due"
+            sub={t('still due')}
           />
         )}
         {data.recurring.length === 0 ? (
-          <p className="text-sm font-medium text-[var(--muted)]">Rent, salary, subscriptions: set them up once, then log each month with one tap.</p>
+          <p className="text-sm font-medium text-[var(--muted)]">{t('Rent, salary, subscriptions: set them up once, then log each month with one tap.')}</p>
         ) : (
           <div className="divide-y divide-[var(--border)] border border-[var(--border)] rounded-2xl px-3">
             {data.recurring.map((item) => (
@@ -89,7 +90,7 @@ export function RecurringSheet() {
           className="pressable pressable-soft w-full py-3 bg-[#CFE7FE] hover:brightness-95 text-[#183B5E] font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm"
         >
           <Plus size={18} strokeWidth={2.5} />
-          New recurring item
+          {t('New recurring item')}
         </button>
       </div>
     </Modal>

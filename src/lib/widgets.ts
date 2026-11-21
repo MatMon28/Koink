@@ -89,6 +89,26 @@ export function categoryWidgetKeys(settings: WidgetSettings): string[] {
   return (picked.length ? picked : visibleExpenseCategories().map((c) => catKey(c.id))).slice(0, 8);
 }
 
+/* ---------- Shape: the widget follows its number of buttons ---------- */
+
+export type WidgetShape = 'circle' | 'pill' | 'card';
+
+/**
+ * One button is a lone circle, two to four sit in one pill-shaped row, five or more fill a rounded card of
+ * two or more rows (three per row up to six buttons, four per row after). Shared by the in-app preview and
+ * the Android widget (KoinkWidgetProvider.java mirrors it: keep the two in step).
+ */
+export const widgetShape = (count: number): WidgetShape => (count <= 1 ? 'circle' : count <= 4 ? 'pill' : 'card');
+export const widgetColumns = (count: number): number => (count <= 4 ? Math.max(1, count) : count <= 6 ? 3 : 4);
+
+/** The buttons split into the rows the widget draws. A short last row is centred, not padded. */
+export function widgetRows<T>(items: T[]): T[][] {
+  const per = widgetColumns(items.length);
+  const rows: T[][] = [];
+  for (let i = 0; i < items.length; i += per) rows.push(items.slice(i, i + per));
+  return rows;
+}
+
 export const MULTI_MAX = 6;
 export const CATEGORY_MAX = 8;
 

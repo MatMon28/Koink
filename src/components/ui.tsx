@@ -4,6 +4,7 @@ import { round2 } from '../lib/format';
 import { iconFor } from '../lib/icons';
 import { useApp, useToast } from '../lib/store';
 import { Modal } from './Modal';
+import { t } from '../lib/i18n';
 
 /** Segmented choice (theme, currency, kind): the selected one is a solid block of the text colour. */
 // eslint-disable-next-line react-refresh/only-export-components
@@ -131,11 +132,11 @@ export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, conf
   );
 
   return (
-    <div className="space-y-2" role="group" aria-label="Number pad">
+    <div className="space-y-2" role="group" aria-label={t('Number pad')}>
       <div className="grid grid-cols-3 gap-1.5">
         {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(digit)}
         {decimal ? (
-          <button type="button" className={PAD_KEY} onClick={() => onPress('.')} aria-label="Decimal point">.</button>
+          <button type="button" className={PAD_KEY} onClick={() => onPress('.')} aria-label={t('Decimal point')}>.</button>
         ) : (
           <span aria-hidden="true" />
         )}
@@ -143,7 +144,7 @@ export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, conf
         <button
           type="button"
           className={PAD_KEY}
-          aria-label="Delete the last digit (hold to clear)"
+          aria-label={t('Delete the last digit (hold to clear)')}
           onPointerDown={() => {
             cleared.current = false;
             if (holdTimer.current) window.clearTimeout(holdTimer.current);
@@ -263,7 +264,7 @@ export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, a
           onPointerCancel={stopHold}
           onClick={() => click(-step)}
           className={button}
-          aria-label={`Minus ${step}`}
+          aria-label={t('Minus {step}', { step })}
         >
           <Minus size={19} />
         </button>
@@ -274,7 +275,7 @@ export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, a
           aria-label={`${ariaLabel}: ${text || 0} ${unit}. ${open ? 'Close the number pad' : 'Open the number pad'}`}
           className={`pressable flex-1 min-w-0 h-12 rounded-xl bg-[var(--inset)] border text-lg tabular-nums ${open ? 'border-[var(--muted)]' : 'border-[var(--border)]'} flex items-center justify-center`}
         >
-          <AmountDisplay text={text} unit={unit} className="text-lg" />
+          <AmountDisplay text={t(text)} unit={unit} className="text-lg" />
         </button>
         <button
           type="button"
@@ -285,12 +286,12 @@ export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, a
           onPointerCancel={stopHold}
           onClick={() => click(step)}
           className={button}
-          aria-label={`Plus ${step}`}
+          aria-label={t('Plus {step}', { step })}
         >
           <Plus size={19} />
         </button>
       </div>
-      {open && <NumPad onPress={press} onConfirm={done} confirmLabel="Done" decimal={decimals > 0} />}
+      {open && <NumPad onPress={press} onConfirm={done} confirmLabel={t('Done')} decimal={decimals > 0} />}
       {chips && (
         <div className="flex gap-1.5">
           {chips.map((delta) => (
@@ -339,7 +340,7 @@ export function Collapsible({ title, children, defaultOpen = false }: { title: s
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left"
       >
-        <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--text)]">{title}</span>
+        <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--text)]">{t(title)}</span>
         <ChevronDown
           size={18}
           aria-hidden="true"
@@ -367,16 +368,16 @@ interface ConfirmDialogProps {
 /** Small "Are you sure?" sheet shown before anything that cannot be undone. */
 export function ConfirmDialog({ open, title = 'Are you sure?', message, confirmLabel = 'Delete', onConfirm, onCancel }: ConfirmDialogProps) {
   return (
-    <Modal isOpen={open} onClose={onCancel} title={title} maxWidth="max-w-sm">
+    <Modal isOpen={open} onClose={onCancel} title={t(title)} maxWidth="max-w-sm">
       <div className="space-y-4">
-        <p className="text-sm font-medium text-[var(--text)]">{message}</p>
+        <p className="text-sm font-medium text-[var(--text)]">{t(message)}</p>
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={onCancel}
             className="pressable py-2.5 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold"
           >
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             type="button"
@@ -410,15 +411,15 @@ interface SaveBeforeCloseDialogProps {
 export function SaveBeforeCloseDialog({ open, canSave, onSave, onDiscard, onKeep }: SaveBeforeCloseDialogProps) {
   const quiet = 'pressable py-2.5 rounded-2xl text-sm font-extrabold';
   return (
-    <Modal isOpen={open} onClose={onKeep} title="Save this entry?" maxWidth="max-w-sm">
+    <Modal isOpen={open} onClose={onKeep} title={t('Save this entry?')} maxWidth="max-w-sm">
       <div className="space-y-4">
         <p className="text-sm font-medium text-[var(--text)]">
-          {canSave ? 'You have not saved what you entered.' : 'What you entered has no amount yet, so it cannot be saved.'}
+          {canSave ? t('You have not saved what you entered.') : t('What you entered has no amount yet, so it cannot be saved.')}
         </p>
         <div className="space-y-2">
           {canSave && (
             <button type="button" onClick={onSave} className={`kc-primary-btn pressable pressable-soft w-full py-3 rounded-2xl bg-intake hover:brightness-95 text-intake-ink text-sm font-extrabold`}>
-              Save
+              {t('Save')}
             </button>
           )}
           <div className="grid grid-cols-2 gap-2">
@@ -426,7 +427,7 @@ export function SaveBeforeCloseDialog({ open, canSave, onSave, onDiscard, onKeep
               Don&rsquo;t save
             </button>
             <button type="button" onClick={onKeep} className={`${quiet} bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)]`}>
-              Keep editing
+              {t('Keep editing')}
             </button>
           </div>
         </div>
@@ -461,7 +462,7 @@ export function ToastHost() {
         role="status"
         className="anim-toast pointer-events-auto max-w-full inline-flex items-center gap-3 rounded-full bg-[var(--text)] text-[var(--on-text)] pl-4 pr-1.5 py-1.5 shadow-lg shadow-black/20"
       >
-        <span className="min-w-0 truncate text-xs font-bold tabular-nums py-1">{toast.message}</span>
+        <span className="min-w-0 truncate text-xs font-bold tabular-nums py-1">{t(toast.message)}</span>
         {toast.onAction ? (
           <button
             type="button"

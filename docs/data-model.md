@@ -16,7 +16,7 @@
 | `Goal` | Savings goal: `id`, `name`, `target` (0 = open-ended). |
 | `Recurring` | Monthly item: `id`, `name`, `amount`, `kind` (`expense` / `income`), `categoryId`, `day` (1-28). |
 | `Profile` | `name`, `rule` (`needs` / `wants` / `savings` percentages), `budgets` (category id -> monthly amount). |
-| `Settings` | `theme`, `themeStyle`, `monoHue`, `ultraMinimal`, `currency` (any code of `CURRENCIES`), `hiddenCategories`, `rates` + `ratesDate` ([features/currencies.md](features/currencies.md)), `quickAdd` (which dock buttons show), `notifications`, `sampleData`. |
+| `Settings` | `language` (`en` / `it`, first launch: the browser's), `hideSplit`, `theme`, `themeStyle`, `monoHue`, `ultraMinimal`, `currency` (any code of `CURRENCIES`), `hiddenCategories`, `rates` + `ratesDate` ([features/currencies.md](features/currencies.md)), `quickAdd` (which dock buttons show), `notifications`, `sampleData`. |
 | `NotificationSettings` | The four reminders: `logDay`, `recurring`, `monthStart` (`{ enabled, time }`, time as `HH:MM`) and `weeklyReview` (the same plus `weekday`, 1 = Sunday ... 7 = Saturday). [notifications.md](notifications.md) |
 | `OpenTarget` | What can be opened from outside: `expense`, `income`, `recurring`, `stats`, `budgets` (reminders, shortcuts, `?open=`). |
 | `AppData` | `{ txs, goals, recurring, accounts, categories, profile, settings }`: the whole journal. |

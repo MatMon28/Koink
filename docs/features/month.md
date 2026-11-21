@@ -66,6 +66,10 @@ Remembered in `localStorage`: `koink_month_layout`, `koink_month_open`, `koink_m
 ## Changes in this version
 
 - **Order of the hero block**: the yellow cards (**Left**, **Per day**, **Budget**) now sit directly under Income / Spent; the **Needs / Wants / Savings** split comes after them.
-- **Hide the split**: a *Hide* button above the split tucks it away; a slim *Show needs, wants and savings* pill brings it back. Remembered as `koink_month_split_hidden`. Ultra minimal hides the label row and the pill.
+- **Hide the split**: Settings > Appearance > *Hide needs, wants and savings* (`settings.hideSplit`). The old *Hide* button and *Show...* pill on this page are gone. Ultra minimal hides the label row. A journal that had the old localStorage choice (`koink_month_split_hidden`) is migrated on first load.
 - **Category pills** are neutral grey with an icon and, outside Compact, a word: *receipt* `3 entries`, *pie* `42% of spending`, *wallet* `€40 left` (red `over` when the budget is exceeded). They used to be blue, orange and purple, the colours of Needs / Wants / Savings, which made them look related. Only the red "over budget" pill keeps a colour. (`Pills` / `PillItem` in `cards.tsx`.)
 - **Category cards** come from the live list (`categories.ts`): hidden categories only show while they have entries this month, and entries of a *deleted* custom category are gathered in an **Other** card so the cards still add up. See [categories.md](categories.md).
+
+## Card styles swapped
+
+`NoteCard` (Left, Per day, Budget; also Days left / Safe per day / Unplanned on Budgets and Saved / Kept / Per day on Statistics) now wears the pastel, tall card the shares used to have (`kc-macro-*` colours, `tone` prop: `needs` blue, `wants` amber, `savings` purple). `ShareCard` (Needs, Wants, Savings) now wears the small yellow note card (`bg-nutrient`) with its share line under the amount. Both live in `src/components/cards.tsx`; the status icons (target reached / over) stay on the share cards.

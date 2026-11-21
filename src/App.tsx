@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { Banknote, Gift, Receipt, Repeat, Zap } from 'lucide-react';
+import { t } from './lib/i18n';
 import { PigIcon } from './lib/pig';
 import { ActionDock, type DockAction } from './components/ActionDock';
 import { Header } from './components/Header';
@@ -21,7 +22,7 @@ import { TransactionsView } from './pages/TransactionsView';
 import { AccountSheet } from './sheets/AccountSheet';
 import { CategoriesSheet } from './sheets/CategoriesSheet';
 import { GiftCardSheet } from './sheets/GiftCardSheet';
-import { WidgetsSheet } from './sheets/WidgetsSheet';
+import { GiftCardPickerSheet } from './sheets/GiftCardPickerSheet';
 import { BudgetSheet, GoalSheet, RecurringEditSheet } from './sheets/EditSheets';
 import { ProfileSheet } from './sheets/ProfileSheet';
 import { QuickSheet, RecurringSheet } from './sheets/QuickSheet';
@@ -57,8 +58,8 @@ function QuickAddBar() {
     });
   }
   // The gift card button is opt-in (Settings > Buttons in the bottom bar).
-  if (quick.giftcard) actions.push({ id: 'giftcard', icon: <Gift />, tone: 'bg-[#FFD9E8] text-[#7A1F4B]', label: 'New gift card', onClick: () => openSheet({ type: 'giftCard' }) });
-  return <ActionDock label="Quick add" actions={actions} />;
+  if (quick.giftcard) actions.push({ id: 'giftcard', icon: <Gift />, tone: 'bg-[#FFD9E8] text-[#7A1F4B]', label: 'Gift cards', onClick: () => openSheet({ type: 'giftCards' }) });
+  return <ActionDock label={t('Quick add')} actions={actions} />;
 }
 
 function Shell() {
@@ -78,7 +79,7 @@ function Shell() {
       closeSheet();
       setActiveTab(target);
     } else if (target === 'giftcard') {
-      openSheet({ type: 'giftCard' });
+      openSheet({ type: 'giftCards' });
     } else if (target === 'recurring') {
       setSelectedMonth(currentMonth()); // "due today" is about this month, whatever was being browsed
       openSheet({ type: 'recurring' });
@@ -104,7 +105,7 @@ function Shell() {
 
       <main className="flex-1 min-w-0 overflow-x-clip">
         <div className={`w-full max-w-4xl mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 ${hasDock ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : 'pb-8'}`}>
-          <h1 className="sr-only">Koink: {PAGE_TITLES[activeTab]}</h1>
+          <h1 className="sr-only">{t('Koink:')} {PAGE_TITLES[activeTab]}</h1>
           <PageSwiper renderPage={renderPage} />
         </div>
       </main>
@@ -119,7 +120,7 @@ function Shell() {
       <BudgetSheet />
       <AccountSheet />
       <GiftCardSheet />
-      <WidgetsSheet />
+      <GiftCardPickerSheet />
       <CategoriesSheet />
       <ProfileSheet />
       <SettingsSheet />

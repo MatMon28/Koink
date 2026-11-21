@@ -5,6 +5,7 @@ import { pushBackLayer } from '../lib/back';
 import { getDockTarget } from '../lib/dock';
 import { SPRING } from '../lib/spring';
 import { releaseSpeed, trackSample, type Sample } from '../lib/velocity';
+import { t } from '../lib/i18n';
 
 interface ModalProps {
   isOpen: boolean;
@@ -406,14 +407,14 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
         <div className="px-5 py-3.5 sm:py-4 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0 touch-none" {...dragHandlers}>
           <div className="min-w-0">
             <h2 id={titleId} className="text-base sm:text-lg font-extrabold text-[var(--text)] tracking-tight break-words">
-              {title}
+              {t(title)}
             </h2>
-            {subtitle && <p id={`${titleId}-description`} className="text-xs font-medium text-[var(--muted)] mt-0.5">{subtitle}</p>}
+            {subtitle && <p id={`${titleId}-description`} className="text-xs font-medium text-[var(--muted)] mt-0.5">{t(subtitle)}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('Close')}
             className="pressable w-10 h-10 shrink-0 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] hover:text-[var(--text)] flex items-center justify-center"
           >
             <X size={18} />

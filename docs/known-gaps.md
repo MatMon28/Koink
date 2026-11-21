@@ -59,3 +59,8 @@
 - Exchange rates are approximate until **Update exchange rates** is used (online, one free public API); a foreign entry keeps the rate it was saved with.
 - Custom category and account names use the phone keyboard (text cannot come from a number pad).
 - Not run on a device: the sheet-drag and header-scroll smoothness was checked in headless Chromium only (no frame-time measurement on a phone).
+
+## Language and the new widgets (latest round)
+
+- The Italian texts were written without a native review. Reminder notifications, the sample journal and the Android widget picker names stay English.
+- The new widget look (round buttons, circle / pill / card trays, theme colours) was written without an Android SDK, like the rest of `android/`: the RemoteViews layouts, `setViewPadding` / `setColorFilter` calls and the tray drawables are untested on a device. The in-app version was built and type-checked only; no browser was available to look at it.

@@ -20,7 +20,7 @@ export function useRunWidgetAction(): (key: string) => void {
       case 'expense': return openSheet({ type: 'tx', kind: 'expense' });
       case 'income': return openSheet({ type: 'tx', kind: 'income' });
       case 'recurring': return openSheet({ type: 'recurring' });
-      case 'giftcard': return openSheet({ type: 'giftCard' });
+      case 'giftcard': return openSheet({ type: 'giftCards' });
       default:
         closeSheet();
         return setActiveTab(intent.target);
@@ -43,7 +43,7 @@ export function useWidgetSync(): void {
     latest.current = run;
   });
 
-  const { widgets, hiddenCategories } = data.settings;
+  const { widgets, hiddenCategories, theme, themeStyle, monoHue, language } = data.settings;
   const categories = data.categories;
   useEffect(() => {
     if (!isNativeApp()) return;
@@ -58,7 +58,7 @@ export function useWidgetSync(): void {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [widgets, hiddenCategories, categories]);
+  }, [widgets, hiddenCategories, categories, theme, themeStyle, monoHue, language]);
 
   useEffect(() => {
     if (!isNativeApp()) return;

@@ -3,6 +3,7 @@ import { Calendar, ChevronDown, ChevronLeft, ChevronRight, CornerUpLeft } from '
 import { useBackLayer } from '../lib/back';
 import { addMonths, currentMonth, formatMonth, MONTH_SHORT, monthOf, pad } from '../lib/dates';
 import { useApp } from '../lib/store';
+import { t } from '../lib/i18n';
 
 /** Month changer: previous / next arrows, a pill that opens a year grid, and a way back to this month. */
 export function MonthNavigator() {
@@ -76,7 +77,7 @@ export function MonthNavigator() {
 
   return (
     <div className="relative flex items-center justify-center gap-1.5 flex-wrap touch-pan-y select-none" data-no-swipe {...swipeHandlers}>
-      <button type="button" onClick={() => shift(-1)} className={arrow} aria-label="Previous month">
+      <button type="button" onClick={() => shift(-1)} className={arrow} aria-label={t('Previous month')}>
         <ChevronLeft size={17} />
       </button>
 
@@ -87,7 +88,7 @@ export function MonthNavigator() {
           setOpen((v) => !v);
         }}
         aria-expanded={open}
-        aria-label={`Month: ${label}`}
+        aria-label={t('Month: {label}', { label })}
         className={`pressable flex items-center gap-1.5 bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-full font-bold text-[var(--text)] ${
           ultra ? (isCurrent ? 'w-9 h-9 p-0 justify-center' : 'h-9 px-2.5 justify-center text-xs') : 'px-4 py-2 text-sm'
         }`}
@@ -95,23 +96,23 @@ export function MonthNavigator() {
         <Calendar size={15} className="text-[var(--muted)] shrink-0" />
         {/* Ultra minimal: just the icon for this month, MM/YY for any other. */}
         {ultra ? (
-          isCurrent ? <span className="sr-only">{label}</span> : <span className="tabular-nums">{`${selectedMonth.slice(5, 7)}/${selectedMonth.slice(2, 4)}`}</span>
+          isCurrent ? <span className="sr-only">{t(label)}</span> : <span className="tabular-nums">{`${selectedMonth.slice(5, 7)}/${selectedMonth.slice(2, 4)}`}</span>
         ) : (
           <>
-            <span className="tabular-nums">{label}</span>
+            <span className="tabular-nums">{t(label)}</span>
             <ChevronDown size={14} className={`text-[var(--muted)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
           </>
         )}
       </button>
 
-      <button type="button" onClick={() => shift(1)} className={arrow} aria-label="Next month">
+      <button type="button" onClick={() => shift(1)} className={arrow} aria-label={t('Next month')}>
         <ChevronRight size={17} />
       </button>
 
       {!isCurrent && (
-        <button type="button" onClick={() => setSelectedMonth(thisMonth)} title="Back to this month" aria-label="Back to this month" className={`${backToNow} h-9 ${ultra ? 'w-9 px-0' : 'px-3.5'}`}>
+        <button type="button" onClick={() => setSelectedMonth(thisMonth)} title={t('Back to this month')} aria-label={t('Back to this month')} className={`${backToNow} h-9 ${ultra ? 'w-9 px-0' : 'px-3.5'}`}>
           <CornerUpLeft size={14} strokeWidth={2.6} />
-          <span className="um-sr">Now</span>
+          <span className="um-sr">{t('Now')}</span>
         </button>
       )}
 
@@ -124,7 +125,7 @@ export function MonthNavigator() {
                 type="button"
                 onClick={() => setViewYear((y) => y - 1)}
                 className="pressable w-8 h-8 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] hover:text-[var(--text)] flex items-center justify-center"
-                aria-label="Previous year"
+                aria-label={t('Previous year')}
               >
                 <ChevronLeft size={16} />
               </button>
@@ -133,7 +134,7 @@ export function MonthNavigator() {
                 type="button"
                 onClick={() => setViewYear((y) => y + 1)}
                 className="pressable w-8 h-8 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] hover:text-[var(--text)] flex items-center justify-center"
-                aria-label="Next year"
+                aria-label={t('Next year')}
               >
                 <ChevronRight size={16} />
               </button>
@@ -162,7 +163,7 @@ export function MonthNavigator() {
                           : 'text-[var(--text)] hover:bg-[var(--inset)]'
                     }`}
                   >
-                    {name}
+                    {t(name)}
                     {monthsWithData.has(key) && (
                       <span
                         className={`absolute bottom-1 w-1 h-1 rounded-full ${
@@ -185,7 +186,7 @@ export function MonthNavigator() {
                 className={`${backToNow} mt-3 w-full py-2`}
               >
                 <CornerUpLeft size={13} strokeWidth={2.6} />
-                This month
+                {t('This month')}
               </button>
             )}
           </div>

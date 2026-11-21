@@ -2,7 +2,7 @@
 
 > **Scope:** gift cards and vouchers: adding one, paying an expense with one (the amount comes off the card), and the Month-page field that tracks all of them.
 >
-> **Read when:** you change `src/lib/giftcards.ts`, `src/sheets/GiftCardSheet.tsx`, the *Pay with a gift card* block of `src/sheets/TxSheet.tsx` or the Gift cards tracker in `src/pages/MonthView.tsx`.
+> **Read when:** you change `src/lib/giftcards.ts`, `src/sheets/GiftCardPickerSheet.tsx`, `src/sheets/GiftCardSheet.tsx`, the *Pay with a gift card* block of `src/sheets/TxSheet.tsx` or the Gift cards tracker in `src/pages/MonthView.tsx`.
 >
 > **Related:** [entries.md](entries.md), [accounts.md](accounts.md), [month.md](month.md), [widgets.md](widgets.md), [../data-model.md](../data-model.md)
 
@@ -25,6 +25,7 @@ Deleting a gift card keeps the entries; they lose the link and count as paid the
 | Place | What |
 | --- | --- |
 | **Gift cards** tracker (Month page, under Recurring) | Total left on usable cards, one row per card with a bar and the date it is valid until, a receipt button (*Spend from this card* opens Add expense with the card chosen), `+` for a new card. Shown once a card exists or the gift card button is on |
+| `GiftCardPickerSheet` | **What the gift card button opens** (dock button, widget button, launch target `giftcard`): the cards already added with what is left on each; tapping one opens *Add expense* with that card chosen to pay (`{ type: 'tx', kind: 'expense', giftCardId }`). *Add a new gift card* is the button under the list; used-up or expired cards are listed below, tapping one edits it. With no card yet it explains and offers the same button |
 | `GiftCardSheet` | name, value, optional *Valid until*, note; for an existing card the list of entries paid with it |
 | **Gift card button** (bottom bar) | Opt-in: Settings > Buttons in the bottom bar > **Gift card** (off by default). Opens the new-gift-card sheet |
 | Widgets | `giftcard` is one of the widget actions ([widgets.md](widgets.md)) |
@@ -32,3 +33,7 @@ Deleting a gift card keeps the entries; they lose the link and count as paid the
 ## Files
 
 `src/lib/giftcards.ts` (maths, no JSX), `src/sheets/GiftCardSheet.tsx`, `store.tsx` (`saveGiftCard`, `removeGiftCard`, sanitising of `giftCards` and `Tx.giftCard`), `TxSheet.tsx`, `MonthView.tsx`, `App.tsx` (dock button).
+
+## The button (changed)
+
+The dock button (label **Gift cards**) and the widget button used to open *New gift card*. They now open the picker above (`openSheet({ type: 'giftCards' })`); the sheet type `giftCard` (add / edit) is reached from the picker, from the *+* of the Gift cards tracker and from a card's row on the Month page.

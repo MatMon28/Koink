@@ -2,7 +2,7 @@
 
 > **Scope:** the sheet behind the person icon: name, all-time balance, and the needs / wants / savings rule.
 >
-> **Read when:** you change `src/sheets/ProfileSheet.tsx` or how `profile.rule` is used.
+> **Read when:** you change `src/sheets/ProfileSheet.tsx`, `src/sheets/ProfileAccounts.tsx` or how `profile.rule` is used.
 >
 > **Related:** [month.md](month.md), [statistics.md](statistics.md), [../data-model.md](../data-model.md)
 
@@ -20,3 +20,5 @@ The rule is the target shown after the slash on the Needs / Wants / Savings card
 Which bucket a category belongs to is fixed in `src/lib/categories.ts`. The rule does **not** create budgets: category budgets are set separately on the Budgets page.
 
 Stored in `profile.name` and `profile.rule`, saved with `updateProfile()`.
+
+> **Changed:** the banner shows the total of the accounts (not the all-time balance of the entries) and the **Accounts** block sits between the name and the budget rule. Several accounts, each with the money in it: see [accounts.md](accounts.md#in-the-profile-changed).

@@ -2,10 +2,12 @@ import { useMemo, useState } from 'react';
 import { Minus, Plus, RotateCcw, Wallet } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { SectionLabel, textInput } from '../components/ui';
-import { formatMonth, monthOf } from '../lib/dates';
+import { accountBalance } from '../lib/calc';
+import { t } from '../lib/i18n';
 import { round2 } from '../lib/format';
 import { useApp, useSheet } from '../lib/store';
 import type { BudgetRule } from '../lib/types';
+import { ProfileAccounts } from './ProfileAccounts';
 import { Banner, SaveRow } from './shared';
 
 const RULE_ROWS: { key: keyof BudgetRule; label: string; hint: string; tone: string }[] = [
@@ -18,7 +20,7 @@ export function ProfileSheet() {
   const { isOpen, seq } = useSheet('profile');
   const { closeSheet } = useApp();
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title="Profile" maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={t('Profile')} maxWidth="max-w-md">
       <ProfileForm key={seq} />
     </Modal>
   );
@@ -29,15 +31,8 @@ function ProfileForm() {
   const [name, setName] = useState(data.profile.name);
   const [rule, setRule] = useState<BudgetRule>(data.profile.rule);
 
-  const life = useMemo(() => {
-    let balance = 0;
-    for (const tx of data.txs) {
-      if (tx.kind === 'income') balance += tx.amount;
-      else if (tx.kind === 'expense') balance -= tx.amount;
-    }
-    const first = data.txs.length ? monthOf(data.txs[data.txs.length - 1].date) : null;
-    return { balance: round2(balance), first, count: data.txs.length };
-  }, [data.txs]);
+  // What is in all the accounts together: the profile's headline now that balances live in accounts.
+  const totalInAccounts = useMemo(() => round2(data.accounts.reduce((sum, account) => sum + accountBalance(data.txs, account), 0)), [data.accounts, data.txs]);
 
   const total = rule.needs + rule.wants + rule.savings;
   const isDefault = rule.needs === 50 && rule.wants === 30 && rule.savings === 20;
@@ -52,28 +47,30 @@ function ProfileForm() {
       <Banner
         tone="saving"
         icon={Wallet}
-        label={name.trim() ? `${name.trim()}'s balance` : 'Balance'}
-        value={money(life.balance)}
-        sub={life.first ? `${life.count} entries since ${formatMonth(life.first, 'short')}` : 'No entries yet'}
+        label={name.trim() ? t("{name}'s money", { name: name.trim() }) : t('Money in accounts')}
+        value={money(totalInAccounts)}
+        sub={data.accounts.length ? t(data.accounts.length === 1 ? '{n} account' : '{n} accounts', { n: data.accounts.length }) : t('No accounts yet')}
       />
 
       <div>
-        <SectionLabel htmlFor="profile-name">Name</SectionLabel>
+        <SectionLabel htmlFor="profile-name">{t('Name')}</SectionLabel>
         <input
           id="profile-name"
           type="text"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Optional"
+          placeholder={t('Optional')}
           maxLength={30}
           autoComplete="given-name"
           className={`${textInput} text-sm`}
         />
       </div>
 
+      <ProfileAccounts />
+
       <div>
         <div className="flex items-center justify-between gap-2 mb-2">
-          <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">Budget rule</span>
+          <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Budget rule')}</span>
           <button
             type="button"
             onClick={() => setRule({ needs: 50, wants: 30, savings: 20 })}
@@ -89,22 +86,20 @@ function ProfileForm() {
             <div key={row.key} className="flex items-center gap-2.5 rounded-2xl bg-[var(--inset)] border border-[var(--border)] px-3 py-2.5">
               <span className={`shrink-0 w-12 py-1.5 rounded-lg text-center text-xs font-extrabold tabular-nums ${row.tone}`}>{rule[row.key]}%</span>
               <span className="min-w-0 flex-1">
-                <span className="block text-xs font-extrabold text-[var(--text)]">{row.label}</span>
-                <span className="block text-[11px] font-medium text-[var(--muted)] truncate">{row.hint}</span>
+                <span className="block text-xs font-extrabold text-[var(--text)]">{t(row.label)}</span>
+                <span className="block text-[11px] font-medium text-[var(--muted)] truncate">{t(row.hint)}</span>
               </span>
-              <button type="button" onClick={() => step(row.key, -5)} disabled={rule[row.key] <= 0} className={stepButton} aria-label={`${row.label}: minus 5 points`}>
+              <button type="button" onClick={() => step(row.key, -5)} disabled={rule[row.key] <= 0} className={stepButton} aria-label={t('{label}: minus 5 points', { label: row.label })}>
                 <Minus size={15} />
               </button>
-              <button type="button" onClick={() => step(row.key, 5)} disabled={rule[row.key] >= 100} className={stepButton} aria-label={`${row.label}: plus 5 points`}>
+              <button type="button" onClick={() => step(row.key, 5)} disabled={rule[row.key] >= 100} className={stepButton} aria-label={t('{label}: plus 5 points', { label: row.label })}>
                 <Plus size={15} />
               </button>
             </div>
           ))}
         </div>
         <p className={`mt-2 text-[11px] font-bold tabular-nums ${total === 100 ? 'text-[var(--muted)]' : 'text-[var(--text-warn)]'}`} aria-live="polite">
-          {total === 100
-            ? 'Shares of your income. They add up to 100%.'
-            : `The three shares add up to ${total}%. ${total < 100 ? `Add ${100 - total}` : `Take off ${total - 100}`} points to reach 100%.`}
+          {total === 100 ? t('Shares of your income. They add up to 100%.') : t('The three shares add up to {total}%. {v} points to reach 100%.', { total, v: total < 100 ? t('Add {v}', { v: 100 - total }) : t('Take off {v}', { v: total - 100 }) })}
         </p>
       </div>
 
@@ -115,7 +110,7 @@ function ProfileForm() {
           updateProfile({ name: name.trim(), rule });
           closeSheet();
         }}
-        label="Save profile"
+        label={t('Save profile')}
       />
     </div>
   );

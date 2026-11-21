@@ -35,7 +35,8 @@
 | Widgets (single button, multiple buttons, expense-type buttons) | [features/widgets.md](features/widgets.md) |
 | Gift cards (add, pay an expense with one, tracker) | [features/gift-cards.md](features/gift-cards.md) |
 | Profile and the budget rule | [features/profile.md](features/profile.md) |
-| Settings: currency, bottom bar, install card, gestures list | [features/settings.md](features/settings.md) |
+| Settings: language, appearance, currency, bottom bar, widgets, install card | [features/settings.md](features/settings.md) |
+| Language (English / Italian) | [features/language.md](features/language.md) |
 | Themes and the six style presets | [features/themes.md](features/themes.md) |
 | Ultra minimal mode | [features/ultra-minimal.md](features/ultra-minimal.md) |
 | Reminder notifications | [notifications.md](notifications.md) |

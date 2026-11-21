@@ -6,11 +6,12 @@ import { isNativeApp } from '../lib/platform';
 import { WEEKDAYS } from '../lib/reminders';
 import { useApp } from '../lib/store';
 import type { NotificationSettings as NotificationSettingsData } from '../lib/types';
+import { t } from '../lib/i18n';
 
 function TimeField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <label className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">
-      <span>{label}</span>
+      <span>{t(label)}</span>
       <input
         type="time"
         value={value}
@@ -42,7 +43,7 @@ function Row({ icon, tone, title, desc, on, onToggle, disabled, children }: RowP
         type="button"
         role="switch"
         aria-checked={on}
-        aria-label={title}
+        aria-label={t(title)}
         disabled={disabled}
         onClick={onToggle}
         className="w-full min-h-[52px] flex items-center justify-between gap-3 px-3 py-2.5 text-left rounded-2xl hover:bg-[var(--hover)] transition-colors disabled:opacity-50"
@@ -50,7 +51,7 @@ function Row({ icon, tone, title, desc, on, onToggle, disabled, children }: RowP
         <span className="flex items-center gap-2.5 min-w-0">
           <span className={`size-8 rounded-full flex items-center justify-center shrink-0 ${tone}`}>{icon}</span>
           <span className="min-w-0">
-            <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{title}</span>
+            <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{t(title)}</span>
             <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{desc}</span>
           </span>
         </span>
@@ -99,24 +100,22 @@ export function NotificationSettings() {
   const test = async () => {
     const sent = await sendTestNotification().catch(() => false);
     refresh();
-    showToast(sent ? 'Test notification sent' : 'Notifications are not allowed here');
+    showToast(sent ? t('Test notification sent') : t('Notifications are not allowed here'));
   };
 
   return (
-    <Collapsible title="Notifications">
+    <Collapsible title={t('Notifications')}>
       <p className="text-xs font-medium text-[var(--muted)]">
-        {isNativeApp()
-          ? 'Reminders come from your phone, even when Koink is closed. Pick the ones you want.'
-          : 'Pick the reminders you want. In a browser they only arrive while Koink is open; the Android app delivers them in the background.'}
+        {isNativeApp() ? t('Reminders come from your phone, even when Koink is closed. Pick the ones you want.') : t('Pick the reminders you want. In a browser they only arrive while Koink is open; the Android app delivers them in the background.')}
       </p>
 
       {permission === 'denied' && (
         <p role="alert" className="text-[11px] font-bold rounded-xl px-3 py-2 bg-[#FAE0B4] text-[#7D4E14]">
-          Notifications are blocked for Koink. Allow them in your {isNativeApp() ? 'phone' : 'browser'} settings to receive reminders.
+          {t('Notifications are blocked for Koink. Allow them in your')} {isNativeApp() ? t('phone') : t('browser')} {t('settings to receive reminders.')}
         </p>
       )}
       {permission === 'unsupported' && (
-        <p className="text-[11px] font-bold rounded-xl px-3 py-2 bg-[var(--inset)] border border-[var(--border)] text-[var(--muted)]">Notifications are not available here.</p>
+        <p className="text-[11px] font-bold rounded-xl px-3 py-2 bg-[var(--inset)] border border-[var(--border)] text-[var(--muted)]">{t('Notifications are not available here.')}</p>
       )}
       {permission === 'prompt' && anyOn && (
         <button
@@ -124,7 +123,7 @@ export function NotificationSettings() {
           onClick={() => void ensurePermission()}
           className="pressable pressable-soft w-full rounded-xl px-3 py-2.5 text-xs font-extrabold bg-[var(--text)] text-[var(--on-text)]"
         >
-          Allow notifications
+          {t('Allow notifications')}
         </button>
       )}
 
@@ -132,38 +131,38 @@ export function NotificationSettings() {
         <Row
           icon={<Receipt size={15} />}
           tone="bg-activity text-activity-ink"
-          title="Daily reminder"
+          title={t('Daily reminder')}
           desc="Log the day's spending while you remember it"
           on={n.logDay.enabled}
           onToggle={() => toggle('logDay')}
         >
-          <TimeField label="At" value={n.logDay.time} onChange={(time) => patch('logDay', { time })} />
+          <TimeField label={t('At')} value={n.logDay.time} onChange={(time) => patch('logDay', { time })} />
         </Row>
 
         <Row
           icon={<Repeat size={15} />}
           tone="bg-[#CFE7FE] text-[#183F66]"
-          title="Recurring items"
+          title={t('Recurring items')}
           desc={data.recurring.length === 0 ? 'Set up a recurring item first.' : 'On the day each one is due'}
           on={n.recurring.enabled}
           disabled={data.recurring.length === 0 && !n.recurring.enabled}
           onToggle={() => toggle('recurring')}
         >
-          <TimeField label="At" value={n.recurring.time} onChange={(time) => patch('recurring', { time })} />
+          <TimeField label={t('At')} value={n.recurring.time} onChange={(time) => patch('recurring', { time })} />
           <p className="text-[11px] font-medium text-[var(--muted)] tabular-nums">
-            {recurringDays === 1 ? '1 reminder a month' : `${recurringDays} reminders a month`}, one for each day something is due.
+            {recurringDays === 1 ? t('1 reminder a month') : t('{recurringDays} reminders a month', { recurringDays })}{t(', one for each day something is due.')}
           </p>
         </Row>
 
         <Row
           icon={<TrendingUp size={15} />}
           tone="bg-weight text-weight-ink"
-          title="Weekly review"
+          title={t('Weekly review')}
           desc="A look at where the week's money went"
           on={n.weeklyReview.enabled}
           onToggle={() => toggle('weeklyReview')}
         >
-          <div className="grid grid-cols-7 gap-1" role="group" aria-label="Day of the week">
+          <div className="grid grid-cols-7 gap-1" role="group" aria-label={t('Day of the week')}>
             {WEEKDAYS.map((day) => {
               const active = n.weeklyReview.weekday === day.id;
               return (
@@ -184,18 +183,18 @@ export function NotificationSettings() {
               );
             })}
           </div>
-          <TimeField label="At" value={n.weeklyReview.time} onChange={(time) => patch('weeklyReview', { time })} />
+          <TimeField label={t('At')} value={n.weeklyReview.time} onChange={(time) => patch('weeklyReview', { time })} />
         </Row>
 
         <Row
           icon={<CalendarDays size={15} />}
           tone="bg-nutrient text-nutrient-ink"
-          title="New month"
+          title={t('New month')}
           desc="On the 1st: check budgets, log what repeats"
           on={n.monthStart.enabled}
           onToggle={() => toggle('monthStart')}
         >
-          <TimeField label="At" value={n.monthStart.time} onChange={(time) => patch('monthStart', { time })} />
+          <TimeField label={t('At')} value={n.monthStart.time} onChange={(time) => patch('monthStart', { time })} />
         </Row>
       </div>
 
@@ -206,7 +205,7 @@ export function NotificationSettings() {
         className="pressable pressable-soft w-full py-2.5 px-3 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] text-xs font-extrabold inline-flex items-center justify-center gap-1.5 disabled:opacity-40"
       >
         <BellRing size={14} />
-        Send a test notification
+        {t('Send a test notification')}
       </button>
     </Collapsible>
   );

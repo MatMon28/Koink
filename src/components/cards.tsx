@@ -5,6 +5,7 @@ import { formatDay } from '../lib/dates';
 import { formatMoney } from '../lib/format';
 import { useApp } from '../lib/store';
 import type { Tx } from '../lib/types';
+import { t } from '../lib/i18n';
 
 /* ---------- The two big cards: money in (green) and money out (pink) ---------- */
 
@@ -54,7 +55,7 @@ export function HeroCard({ tone, label, amount, pct, pill, pillTitle, average = 
         <div className="flex items-center justify-between gap-1 mb-1 min-h-[22px]">
           <span className={`inline-flex min-w-0 items-center gap-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider ${c.label}`}>
             <Icon size={16} className="um-only shrink-0" aria-hidden="true" />
-            <span className="um-sr truncate">{label}</span>
+            <span className="um-sr truncate">{t(label)}</span>
           </span>
           {pill && (
             <span title={pillTitle} className={`${c.pill} shrink-0 px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums`}>
@@ -64,9 +65,9 @@ export function HeroCard({ tone, label, amount, pct, pill, pillTitle, average = 
         </div>
         <div className="um-center flex items-baseline gap-1 my-1">
           <span key={amount} className={`anim-value text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight ${c.number}`}>
-            {text}
+            {t(text)}
           </span>
-          {average && <span className={`text-xs font-semibold ${c.label}`}>/ month</span>}
+          {average && <span className={`text-xs font-semibold ${c.label}`}>{t('/ month')}</span>}
         </div>
       </div>
       <div className={`kc-hero-track w-full h-2.5 rounded-full overflow-hidden mt-3 ${c.track}`}>
@@ -141,46 +142,51 @@ interface ShareCardProps {
   shareTitle: string;
 }
 
+/*
+ * Two card styles share the Month page. The pastel, tall one (rounded-3xl, one colour per card) is now worn by
+ * Left / Per day / Budget; the small yellow note card is worn by Needs / Wants / Savings. They used to be the
+ * other way round.
+ */
+
 export function ShareCard({ tone, label, amount, share, target, status, shareTitle }: ShareCardProps) {
   const { moneyFit } = useApp();
   const c = SHARE[tone];
   const text = moneyFit(amount, 7);
   return (
-    <div role="group" aria-label={`${label}: ${text}, ${share}% ${shareTitle}`} className={`${c.card} rounded-3xl p-3 sm:p-4 relative text-center min-w-0`}>
-      {status === 'ok' && (
-        <CircleCheck size={15} strokeWidth={2.6} className={`absolute top-1.5 right-1.5 ${c.label}`} aria-label="Target reached" />
-      )}
-      {status === 'over' && (
-        <TriangleAlert size={15} strokeWidth={2.6} className="absolute top-1.5 right-1.5 text-[#A3312F]" aria-label="Over the target" />
-      )}
-      <c.icon size={16} className={`um-only mx-auto ${c.label}`} aria-hidden="true" />
-      <span className={`um-sr text-[11px] font-bold uppercase tracking-wider ${c.label} block truncate`}>{label}</span>
-      <div className="mt-1">
-        <span className={`text-lg min-[400px]:text-xl sm:text-2xl font-extrabold tabular-nums ${c.number} tracking-tight`}>{text}</span>
-      </div>
-      <span title={shareTitle} className={`text-xs font-bold tabular-nums ${c.label} block mt-0.5 whitespace-nowrap`}>
+    <div
+      data-nutrient="fiber"
+      role="group"
+      aria-label={`${label}: ${text}, ${share}% ${shareTitle}`}
+      className="bg-nutrient text-nutrient-ink rounded-2xl relative flex flex-col items-center justify-center gap-0.5 text-center px-2 py-3 sm:px-3 min-w-0"
+    >
+      {status === 'ok' && <CircleCheck size={14} strokeWidth={2.6} className="absolute top-1.5 right-1.5" aria-label={t('Target reached')} />}
+      {status === 'over' && <TriangleAlert size={14} strokeWidth={2.6} className="absolute top-1.5 right-1.5 text-[#A3312F]" aria-label={t('Over the target')} />}
+      <c.icon size={16} className="um-only" aria-hidden="true" />
+      <span className="um-sr block max-w-full truncate text-[11px] font-bold uppercase leading-tight tracking-wider">{t(label)}</span>
+      <span className="whitespace-nowrap text-base sm:text-lg font-extrabold leading-tight tabular-nums">{t(text)}</span>
+      <span title={shareTitle} className="text-xs font-bold tabular-nums block whitespace-nowrap opacity-80">
         {share}%{target !== undefined && <span className="um-hide opacity-70"> / {target}%</span>}
       </span>
     </div>
   );
 }
 
-/** One of the small yellow cards under the shares. `icon` replaces the label in Ultra minimal. */
-export function NoteCard({ label, value, unit, title, icon: Icon }: { label: string; value: string; unit?: string; title?: string; icon: LucideIcon }) {
+/** One of the pastel cards under the two big ones. `icon` replaces the label in Ultra minimal. */
+export function NoteCard({ label, value, unit, title, icon: Icon, tone }: { label: string; value: string; unit?: string; title?: string; icon: LucideIcon; tone: keyof typeof SHARE }) {
+  const c = SHARE[tone];
   return (
     <div
-      data-nutrient="fiber"
       role="group"
       title={title ?? label}
       aria-label={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
-      className="bg-nutrient text-nutrient-ink rounded-2xl flex flex-col items-center justify-center gap-0.5 text-center px-2 py-3 sm:px-3 min-w-0"
+      className={`${c.card} rounded-3xl p-3 sm:p-4 relative text-center min-w-0`}
     >
-      <Icon size={16} className="um-only" aria-hidden="true" />
-      <span className="um-sr block max-w-full truncate text-[11px] font-bold uppercase leading-tight tracking-wider">{label}</span>
-      <span className="whitespace-nowrap text-base sm:text-lg font-extrabold leading-tight tabular-nums">
-        {value}
-        {unit && <small className="ml-0.5 text-xs font-semibold">{unit}</small>}
-      </span>
+      <Icon size={16} className={`um-only mx-auto ${c.label}`} aria-hidden="true" />
+      <span className={`um-sr text-[11px] font-bold uppercase tracking-wider ${c.label} block truncate`}>{t(label)}</span>
+      <div className="mt-1">
+        <span className={`text-lg min-[400px]:text-xl sm:text-2xl font-extrabold tabular-nums ${c.number} tracking-tight whitespace-nowrap`}>{value}</span>
+        {unit && <small className={`ml-0.5 text-xs font-semibold ${c.label}`}>{unit}</small>}
+      </div>
     </div>
   );
 }
@@ -216,13 +222,13 @@ export function Pills({ items, stretch = false, labels = false }: { items: PillI
           <span
             key={index}
             role="img"
-            aria-label={item.title}
-            title={item.title}
+            aria-label={t(item.title)}
+            title={t(item.title)}
             className={`${PILL_TONES[item.tone]} ${stretch ? 'flex-auto max-w-full justify-center' : 'min-w-8'} inline-flex items-center gap-1 rounded-lg px-1.5 py-1.5 text-[11px] font-extrabold tabular-nums leading-none whitespace-nowrap`}
           >
             <Icon size={11} strokeWidth={2.6} aria-hidden="true" className="shrink-0 opacity-70" />
-            <span className={stretch ? 'whitespace-nowrap' : 'truncate'}>{item.text}</span>
-            {labels && item.label && <span className="font-semibold opacity-70 truncate">{item.label}</span>}
+            <span className={stretch ? 'whitespace-nowrap' : 'truncate'}>{t(item.text)}</span>
+            {labels && item.label && <span className="font-semibold opacity-70 truncate">{t(item.label)}</span>}
           </span>
         );
       })}
@@ -289,7 +295,7 @@ export function FoldCard({ variant, id, palette, icon, title, headline, summary,
     <button
       type="button"
       aria-expanded={open}
-      aria-label={`${open ? 'Hide' : 'Show'} ${title} entries`}
+      aria-label={open ? t('Hide {title} entries', { title }) : t('Show {title} entries', { title })}
       onClick={(event) => {
         event.stopPropagation();
         onToggle();
@@ -326,7 +332,7 @@ export function FoldCard({ variant, id, palette, icon, title, headline, summary,
           <>
             <div className="flex items-center gap-2.5 w-full">
               {badge}
-              <h3 className="min-w-0 flex-1 text-sm font-extrabold text-[var(--text)] truncate">{title}</h3>
+              <h3 className="min-w-0 flex-1 text-sm font-extrabold text-[var(--text)] truncate">{t(title)}</h3>
               {addButton}
               {chevron}
             </div>
@@ -357,8 +363,8 @@ export function Headline({ text, compact, unit }: { text: string; compact?: bool
         ? 'text-sm max-[374px]:text-[13px] tracking-tight'
         : 'text-xs tracking-tight';
   return (
-    <span className="inline-flex shrink-0 items-baseline gap-1 tabular-nums whitespace-nowrap" title={unit ? `${text} ${unit}` : text}>
-      <span className={`font-extrabold text-[var(--text)] ${size}`}>{text}</span>
+    <span className="inline-flex shrink-0 items-baseline gap-1 tabular-nums whitespace-nowrap" title={unit ? `${text} ${unit}` : t(text)}>
+      <span className={`font-extrabold text-[var(--text)] ${size}`}>{t(text)}</span>
       {unit && !compact && <span className="text-[11px] font-semibold text-[var(--muted)]">{unit}</span>}
     </span>
   );
@@ -372,10 +378,10 @@ export function EmptyRow({ text, action, onAdd }: { text: string; action: string
       onClick={onAdd}
       className="w-full py-3 flex items-center justify-between gap-2 text-xs font-medium text-[var(--muted)] hover:text-[var(--text)] transition-colors text-left"
     >
-      <span>{text}</span>
+      <span>{t(text)}</span>
       <span className="font-bold inline-flex items-center gap-1 shrink-0">
         <Plus size={13} />
-        {action}
+        {t(action)}
       </span>
     </button>
   );
@@ -391,8 +397,8 @@ export function TxRow({ tx, compact = false, sub }: { tx: Tx; compact?: boolean;
       <button type="button" onClick={edit} className="min-w-0 flex-1 text-left group">
         <span className="text-xs sm:text-sm font-bold text-[var(--text)] group-hover:opacity-80 truncate block">{tx.note || 'Entry'}</span>
         <span className="text-[11px] font-medium tabular-nums text-[var(--muted)] flex items-center gap-1">
-          {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label="Recurring" />}
-          {tx.details && <StickyNote size={10} strokeWidth={2.6} aria-label="Has a note" />}
+          {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label={t('Recurring')} />}
+          {tx.details && <StickyNote size={10} strokeWidth={2.6} aria-label={t('Has a note')} />}
           <span className="truncate">{sub ?? formatDay(tx.date)}</span>
         </span>
       </button>
@@ -408,8 +414,8 @@ export function TxRow({ tx, compact = false, sub }: { tx: Tx; compact?: boolean;
             type="button"
             onClick={edit}
             className="pressable w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted)] hover:bg-[var(--inset)] hover:text-[var(--text)]"
-            title="Edit"
-            aria-label={`Edit ${tx.note || 'entry'}`}
+            title={t('Edit')}
+            aria-label={t('Edit {name}', { name: tx.note || t('entry') })}
           >
             <Edit2 size={13} />
           </button>
@@ -418,8 +424,8 @@ export function TxRow({ tx, compact = false, sub }: { tx: Tx; compact?: boolean;
           type="button"
           onClick={() => removeTx(tx.id)}
           className="pressable w-8 h-8 rounded-full text-[var(--muted)] hover:text-[#8C2D32] hover:bg-[#F6D0D0] flex items-center justify-center"
-          title="Delete"
-          aria-label={`Delete ${tx.note || 'entry'}`}
+          title={t('Delete')}
+          aria-label={t('Delete {name}', { name: tx.note || t('entry') })}
         >
           <Trash2 size={13} />
         </button>

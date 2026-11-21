@@ -12,6 +12,7 @@ import { iconFor } from '../lib/icons';
 import { useApp, useSheet } from '../lib/store';
 import type { Bucket, Kind, Sheet } from '../lib/types';
 import { Banner, ChoiceGrid, CurrencyGrid, IconPicker, SaveRow, type Choice } from './shared';
+import { t } from '../lib/i18n';
 
 const TITLES: Record<Kind, { add: string; edit: string; save: string }> = {
   expense: { add: 'Add expense', edit: 'Edit expense', save: 'Add expense' },
@@ -229,14 +230,14 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
   if (kind === 'saving' && choices.length === 0) {
     return (
       <div className="space-y-4">
-        <p className="text-sm font-medium text-[var(--text)]">Savings go towards a goal. Create one first, then move money to it.</p>
+        <p className="text-sm font-medium text-[var(--text)]">{t('Savings go towards a goal. Create one first, then move money to it.')}</p>
         <button
           type="button"
           onClick={() => openSheet({ type: 'goal' })}
           className="pressable pressable-soft w-full py-3 bg-weight hover:brightness-95 text-weight-ink font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm"
         >
           <Plus size={18} strokeWidth={2.5} />
-          New savings goal
+          {t('New savings goal')}
         </button>
       </div>
     );
@@ -305,7 +306,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
           : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)]'
       }`}
     >
-      {label}
+      {t(label)}
     </button>
   );
   const sectionName = kind === 'expense' ? 'Category' : kind === 'income' ? 'Source' : 'Goal';
@@ -313,22 +314,22 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
 
   return (
     <div className="space-y-4">
-      <Banner tone={kind} icon={meta.icon} label={banner.label} value={banner.value} sub={banner.sub} />
+      <Banner tone={kind} icon={meta.icon} label={t(banner.label)} value={banner.value} sub={banner.sub ? t(banner.sub) : undefined} />
 
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--inset)] p-1.5">
         <button
           type="button"
           onClick={() => setStep('amount')}
           className="pressable w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-left hover:bg-[var(--hover)]"
-          aria-label="Change the amount"
+          aria-label={t('Change the amount')}
         >
           <span className="min-w-0">
-            <span className="block text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">Amount</span>
+            <span className="block text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Amount')}</span>
             <AmountDisplay text={amount ? amount.toFixed(currencyDecimals(currency)) : ''} unit={currencySymbol(currency)} className="text-2xl" />
           </span>
           <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[var(--muted)] shrink-0">
             {currency}
-            <span className="rounded-full bg-[var(--surface)] border border-[var(--border)] px-2 py-0.5 text-[11px]">Change</span>
+            <span className="rounded-full bg-[var(--surface)] border border-[var(--border)] px-2 py-0.5 text-[11px]">{t('Change')}</span>
           </span>
         </button>
         {foreign && (
@@ -336,10 +337,10 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
             type="button"
             onClick={() => setStep('rate')}
             className="pressable w-full flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold text-[var(--muted)] hover:bg-[var(--hover)] tabular-nums"
-            aria-label="Change the exchange rate"
+            aria-label={t('Change the exchange rate')}
           >
             <span className="min-w-0 truncate">
-              = <span className="text-[var(--text)] font-extrabold">{money(converted, { cents: true })}</span> at 1 {currency} = {formatRate(rate)} {mainCurrency}
+              = <span className="text-[var(--text)] font-extrabold">{money(converted, { cents: true })}</span> {t('at 1')} {currency} = {formatRate(rate)} {mainCurrency}
             </span>
             <RefreshCw size={13} aria-hidden="true" className="shrink-0" />
           </button>
@@ -360,10 +361,10 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
 
       {data.accounts.length > 0 && (
         <div>
-          <SectionLabel>Account</SectionLabel>
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Account">
+          <SectionLabel>{t('Account')}</SectionLabel>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('Account')}>
             <button type="button" role="radio" aria-checked={accountId === ''} onClick={() => setAccountId('')} className={`${pill} ${accountId === '' ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)]'}`}>
-              None
+              {t('None')}
             </button>
             {data.accounts.map((a) => {
               const Icon = iconFor(a.icon);
@@ -385,7 +386,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
           </div>
           {account && converted > 0 && (
             <p className="mt-1.5 text-[11px] font-bold text-[var(--muted)] tabular-nums">
-              {account.name} afterwards: <span className={accountAfter < 0 ? 'text-[#A3312F]' : 'text-[var(--text)]'}>{money(accountAfter, { cents: true })}</span>
+              {account.name} {t('afterwards:')} <span className={accountAfter < 0 ? 'text-[#A3312F]' : 'text-[var(--text)]'}>{money(accountAfter, { cents: true })}</span>
             </p>
           )}
         </div>
@@ -393,10 +394,10 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
 
       {cardOptions.length > 0 && (
         <div>
-          <SectionLabel>Pay with a gift card</SectionLabel>
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Gift card">
+          <SectionLabel>{t('Pay with a gift card')}</SectionLabel>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('Gift card')}>
             <button type="button" role="radio" aria-checked={giftCardId === ''} onClick={() => setGiftCardId('')} className={`${pill} ${giftCardId === '' ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)]'}`}>
-              No
+              {t('No')}
             </button>
             {cardOptions.map(({ card, left }) => {
               const active = card.id === giftCardId;
@@ -420,11 +421,11 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
             <p className="mt-1.5 text-[11px] font-bold text-[var(--muted)] tabular-nums">
               {converted > 0 ? (
                 <>
-                  The card pays <span className="text-[var(--text)]">{money(cardCover, { cents: true })}</span>, {money(round2(chosenCard.left - cardCover), { cents: true })} left on it
-                  {converted - cardCover > 0 && <> · the other <span className="text-[var(--text)]">{money(round2(converted - cardCover), { cents: true })}</span> is paid the normal way</>}.
+                  {t('The card pays')} <span className="text-[var(--text)]">{money(cardCover, { cents: true })}</span>, {money(round2(chosenCard.left - cardCover), { cents: true })} {t('left on it')}
+                  {converted - cardCover > 0 && <> {t('· the other')} <span className="text-[var(--text)]">{money(round2(converted - cardCover), { cents: true })}</span> {t('is paid the normal way')}</>}.
                 </>
               ) : (
-                <>{money(chosenCard.left, { cents: true })} left on {chosenCard.card.name}.</>
+                <>{money(chosenCard.left, { cents: true })} {t('left on')} {chosenCard.card.name}.</>
               )}
             </p>
           )}
@@ -432,13 +433,13 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
       )}
 
       <div>
-        <SectionLabel htmlFor="tx-title">Title</SectionLabel>
+        <SectionLabel htmlFor="tx-title">{t('Title')}</SectionLabel>
         <input
           id="tx-title"
           type="text"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder={`A few words, e.g. ${meta.name}`}
+          placeholder={t('A few words, e.g. {name}', { name: meta.name })}
           maxLength={60}
           autoComplete="off"
           enterKeyHint="next"
@@ -452,9 +453,9 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
                 type="button"
                 onClick={() => setTitle(text)}
                 className="pressable max-w-full truncate px-2.5 py-1.5 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[11px] font-bold text-[var(--muted)] hover:text-[var(--text)] tabular-nums"
-                title={`${text}, last time ${money(lastAmount, { cents: true })}`}
+                title={t('{text}, last time {v}', { text, v: money(lastAmount, { cents: true }) })}
               >
-                {text} <span className="opacity-70">{money(lastAmount, { cents: true })}</span>
+                {t(text)} <span className="opacity-70">{money(lastAmount, { cents: true })}</span>
               </button>
             ))}
           </div>
@@ -462,12 +463,12 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
       </div>
 
       <div>
-        <SectionLabel htmlFor="tx-details">Note <span className="normal-case tracking-normal font-bold opacity-70">· optional, as long as you like</span></SectionLabel>
+        <SectionLabel htmlFor="tx-details">{t('Note')} <span className="normal-case tracking-normal font-bold opacity-70">{t('· optional, as long as you like')}</span></SectionLabel>
         <textarea
           id="tx-details"
           value={details}
           onChange={(event) => setDetails(event.target.value)}
-          placeholder="Why, with whom, what exactly..."
+          placeholder={t('Why, with whom, what exactly...')}
           maxLength={1000}
           rows={3}
           className={`${textInput} text-sm font-medium resize-none leading-snug`}
@@ -475,7 +476,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
       </div>
 
       <div>
-        <SectionLabel htmlFor="tx-date">Date</SectionLabel>
+        <SectionLabel htmlFor="tx-date">{t('Date')}</SectionLabel>
         <div className="flex flex-wrap items-center gap-1.5">
           {dateChip(today, 'Today')}
           {dateChip(yesterday, 'Yesterday')}
@@ -484,7 +485,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
             type="date"
             value={date}
             onChange={(event) => setDate(event.target.value || date)}
-            aria-label={`Date: ${formatDay(date, false)}`}
+            aria-label={t('Date: {v}', { v: formatDay(date, false) })}
             className="min-w-0 flex-1 bg-[var(--inset)] border border-[var(--border)] rounded-xl px-2.5 py-[0.4375rem] text-xs font-bold text-[var(--text)] tabular-nums focus:outline-none focus:border-[var(--muted)]"
           />
         </div>
@@ -494,12 +495,12 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
         tone={kind}
         disabled={!valid}
         onSave={save}
-        label={<>{original ? 'Save changes' : TITLES[kind].save}{converted > 0 && ` · ${money(converted, { cents: true })}`}</>}
+        label={<>{original ? t('Save changes') : TITLES[kind].save}{converted > 0 && ` · ${money(converted, { cents: true })}`}</>}
         onDelete={original ? () => {
           closeSheet();
           removeTx(original.id);
         } : undefined}
-        deleteLabel="Delete this entry"
+        deleteLabel={t('Delete this entry')}
       />
     </div>
   );
@@ -525,13 +526,13 @@ function AmountStep({ kind, amount, onAmount, currency, picking, onPicking, onCu
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">How much?</span>
+        <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('How much?')}</span>
         <button
           type="button"
           onClick={() => onPicking(!picking)}
           aria-expanded={picking}
           className="pressable inline-flex items-center gap-1.5 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] pl-3 pr-2.5 py-1.5 text-xs font-extrabold text-[var(--text)]"
-          title="Pay in another currency"
+          title={t('Pay in another currency')}
         >
           {currency}
           <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${picking ? 'rotate-180' : ''}`} />
@@ -539,21 +540,21 @@ function AmountStep({ kind, amount, onAmount, currency, picking, onPicking, onCu
       </div>
 
       <div className="rounded-3xl bg-[var(--inset)] border border-[var(--border)] px-4 py-5 text-center min-h-[7.25rem] flex flex-col items-center justify-center gap-1">
-        <AmountDisplay text={text} unit={currencySymbol(currency)} className="text-5xl max-w-full overflow-hidden" />
+        <AmountDisplay text={t(text)} unit={currencySymbol(currency)} className="text-5xl max-w-full overflow-hidden" />
         <span className="text-xs font-bold text-[var(--muted)] tabular-nums min-h-4">
-          {foreign && amount > 0 ? `≈ ${money(converted, { cents: true })} · 1 ${currency} = ${formatRate(rate)} ${mainCurrency}` : foreign ? `Paid in ${currency}, counted in ${mainCurrency}` : ''}
+          {foreign && amount > 0 ? `≈ ${money(converted, { cents: true })} · 1 ${currency} = ${formatRate(rate)} ${mainCurrency}` : foreign ? t('Paid in {currency}, counted in {mainCurrency}', { currency, mainCurrency }) : ''}
         </span>
       </div>
 
       {picking ? (
-        <CurrencyGrid value={currency} onChange={onCurrency} label="Currency of this entry" />
+        <CurrencyGrid value={currency} onChange={onCurrency} label={t('Currency of this entry')} />
       ) : (
         <NumPad
           onPress={press}
           onConfirm={onConfirm}
           confirmDisabled={converted <= 0}
           confirmClass={CONFIRM_TONE[kind]}
-          confirmLabel="Confirm amount"
+          confirmLabel={t('Confirm amount')}
           decimal={currencyDecimals(currency) > 0}
         />
       )}
@@ -576,11 +577,11 @@ function RateStep({ currency, mainCurrency, rate, amount, onRate, onReset, onDon
   const { text, press } = useAmountBuffer(rate, onRate, { decimals: 8 });
   return (
     <div className="space-y-3">
-      <p className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">Exchange rate</p>
+      <p className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Exchange rate')}</p>
       <div className="rounded-3xl bg-[var(--inset)] border border-[var(--border)] px-4 py-4 text-center space-y-1">
         <span className="block text-xs font-bold text-[var(--muted)]">1 {currency} =</span>
-        <AmountDisplay text={text} unit={mainCurrency} className="text-4xl max-w-full overflow-hidden" />
-        <span className="block text-xs font-bold text-[var(--muted)] tabular-nums">{money(round2(amount * rate), { cents: true })} for {amount} {currency}</span>
+        <AmountDisplay text={t(text)} unit={mainCurrency} className="text-4xl max-w-full overflow-hidden" />
+        <span className="block text-xs font-bold text-[var(--muted)] tabular-nums">{money(round2(amount * rate), { cents: true })} {t('for')} {amount} {currency}</span>
       </div>
       <button
         type="button"
@@ -588,9 +589,9 @@ function RateStep({ currency, mainCurrency, rate, amount, onRate, onReset, onDon
         className="pressable inline-flex items-center gap-1.5 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] px-3 py-1.5 text-xs font-extrabold text-[var(--muted)] hover:text-[var(--text)]"
       >
         <RefreshCw size={13} aria-hidden="true" />
-        Use the current rate
+        {t('Use the current rate')}
       </button>
-      <NumPad onPress={press} onConfirm={onDone} confirmDisabled={rate <= 0} confirmLabel="Use this rate" />
+      <NumPad onPress={press} onConfirm={onDone} confirmDisabled={rate <= 0} confirmLabel={t('Use this rate')} />
     </div>
   );
 }
@@ -605,7 +606,7 @@ function NewCategoryStep({ onCancel, onCreate }: { onCancel: () => void; onCreat
   return (
     <div className="space-y-4">
       <div>
-        <SectionLabel htmlFor="new-category-name">New category</SectionLabel>
+        <SectionLabel htmlFor="new-category-name">{t('New category')}</SectionLabel>
         <input
           id="new-category-name"
           type="text"
@@ -615,7 +616,7 @@ function NewCategoryStep({ onCancel, onCreate }: { onCancel: () => void; onCreat
           onKeyDown={(event) => {
             if (event.key === 'Enter' && valid) onCreate(name, icon, bucket);
           }}
-          placeholder="Pets, Gym, Gifts..."
+          placeholder={t('Pets, Gym, Gifts...')}
           maxLength={30}
           autoComplete="off"
           className={`${textInput} text-sm`}
@@ -623,21 +624,21 @@ function NewCategoryStep({ onCancel, onCreate }: { onCancel: () => void; onCreat
       </div>
       <IconPicker value={icon} onChange={setIcon} />
       <div>
-        <SectionLabel>Counts as</SectionLabel>
-        <div className="flex gap-1.5" role="group" aria-label="Needs or wants">
-          <button type="button" aria-pressed={bucket === 'needs'} onClick={() => setBucket('needs')} className={seg(bucket === 'needs')}>Need</button>
-          <button type="button" aria-pressed={bucket === 'wants'} onClick={() => setBucket('wants')} className={seg(bucket === 'wants')}>Want</button>
+        <SectionLabel>{t('Counts as')}</SectionLabel>
+        <div className="flex gap-1.5" role="group" aria-label={t('Needs or wants')}>
+          <button type="button" aria-pressed={bucket === 'needs'} onClick={() => setBucket('needs')} className={seg(bucket === 'needs')}>{t('Need')}</button>
+          <button type="button" aria-pressed={bucket === 'wants'} onClick={() => setBucket('wants')} className={seg(bucket === 'wants')}>{t('Want')}</button>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" onClick={onCancel} className="pressable py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold">Back</button>
+        <button type="button" onClick={onCancel} className="pressable py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold">{t('Back')}</button>
         <button
           type="button"
           disabled={!valid}
           onClick={() => onCreate(name, icon, bucket)}
           className="kc-primary-btn pressable py-3 rounded-2xl bg-activity text-activity-ink font-extrabold text-sm disabled:opacity-40"
         >
-          Add category
+          {t('Add category')}
         </button>
       </div>
     </div>

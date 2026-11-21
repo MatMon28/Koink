@@ -1,18 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Shared by the three Koink widgets. RemoteViews may only use framework widget classes. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  Shared by the three Koink widgets. RemoteViews may only use framework widget classes.
+  The tray (border + surface, tinted with the app's theme colours) wraps its buttons and sits in the middle of
+  whatever size the launcher gave the widget: the widget's shape follows its content (KoinkWidgetProvider).
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="4dp"
-    android:background="@drawable/widget_surface">
+    android:padding="2dp">
 
-    <LinearLayout
-        android:id="@+id/rows"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical" />
+    <FrameLayout
+        android:id="@+id/tray"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <ImageView
+            android:id="@+id/tray_border"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/widget_tray_card" />
+
+        <ImageView
+            android:id="@+id/tray_fill"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"
+            android:contentDescription="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/widget_tray_card" />
+
+        <LinearLayout
+            android:id="@+id/rows"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingBottom="6dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="6dp" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/empty"
@@ -24,4 +55,4 @@
         android:textColor="#24201C"
         android:textSize="12sp"
         android:visibility="gone" />
-</LinearLayout>
+</FrameLayout>

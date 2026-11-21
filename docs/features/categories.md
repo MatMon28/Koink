@@ -23,3 +23,5 @@
 | Hide | never touches entries, budgets or statistics |
 
 Backups include `categories` and `settings.hiddenCategories`; older backups load with none.
+
+> **Bills icon:** a sheet of paper with lines (Lucide `FileText`) instead of a lightning bolt. Built-in names are getters that go through `t()`, so they follow the language ([language.md](language.md)).

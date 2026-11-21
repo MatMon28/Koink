@@ -3,6 +3,7 @@ import { Settings, User } from 'lucide-react';
 import { useApp } from '../lib/store';
 import { Wordmark } from './Brand';
 import { Tabs } from './Tabs';
+import { t } from '../lib/i18n';
 
 const TOP_HIDE_SCROLL_PX = 48;
 const TABS_DELTA_PX = 68;
@@ -128,7 +129,7 @@ export function Header() {
             style={{ height: `${TOP_ROW_HEIGHT_PX}px` }}
           >
             <div className="flex items-center">
-              <button type="button" onClick={() => openSheet({ type: 'profile' })} className={iconButton} title="Profile" aria-label="Profile">
+              <button type="button" onClick={() => openSheet({ type: 'profile' })} className={iconButton} title={t('Profile')} aria-label={t('Profile')}>
                 <User size={21} />
               </button>
             </div>
@@ -137,15 +138,15 @@ export function Header() {
               ref={logoRef}
               type="button"
               onClick={onTitle}
-              aria-label="Koink: go to the Month page"
-              title="Koink"
+              aria-label={t('Koink: go to the Month page')}
+              title={t('Koink')}
               className="kc-logo-btn flex justify-self-center rounded-md transition-opacity hover:opacity-80"
             >
               <Wordmark className="h-10 sm:h-11" />
             </button>
 
             <div className="flex items-center justify-end">
-              <button type="button" onClick={() => openSheet({ type: 'settings' })} className={iconButton} title="Settings" aria-label="Settings">
+              <button type="button" onClick={() => openSheet({ type: 'settings' })} className={iconButton} title={t('Settings')} aria-label={t('Settings')}>
                 <Settings size={22} />
               </button>
             </div>

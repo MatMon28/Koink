@@ -1,43 +1,62 @@
-import { actionFor } from '../lib/widgets';
+import { t } from '../lib/i18n';
+import { actionFor, widgetRows, widgetShape } from '../lib/widgets';
 
-/** One widget button: a rounded tile in the action's own colours, with its icon and name. */
+/*
+ * A widget button follows the bottom dock of the app: a round pastel button with a small icon (the dock's
+ * buttons are circles too), the name under it in the app's text colour. The tray behind a group of buttons
+ * is the dock's own surface: border, soft shadow, fully rounded for a single row, rounded card for several.
+ * Sizes are in px on purpose: they are the dp of the Android widget (res/layout/widget_button.xml).
+ */
+
+/** One widget button. `size="lg"` is the lone circle of a single-button widget (no name). */
 export function WidgetTile({ actionKey, onPress, size = 'md' }: { actionKey: string; onPress?: (key: string) => void; size?: 'md' | 'lg' }) {
   const action = actionFor(actionKey);
   const Icon = action.icon;
-  const box = size === 'lg' ? 'size-[4.5rem]' : 'h-16 min-w-[4.25rem] flex-1';
-  const content = (
-    <>
-      <Icon size={size === 'lg' ? 26 : 21} strokeWidth={2.2} aria-hidden="true" />
-      <span className="max-w-full truncate px-1 text-[10px] font-extrabold leading-none">{action.label}</span>
-    </>
+  const label = t(action.label);
+  const circle = (
+    <span
+      style={{ backgroundColor: action.bg, color: action.fg }}
+      className={`${size === 'lg' ? 'size-14' : 'size-10'} shrink-0 rounded-full flex items-center justify-center border border-black/5`}
+    >
+      <Icon size={size === 'lg' ? 22 : 17} strokeWidth={2.2} aria-hidden="true" />
+    </span>
   );
-  const style = { backgroundColor: action.bg, color: action.fg };
-  const cls = `${box} shrink-0 rounded-2xl flex flex-col items-center justify-center gap-1.5 border border-black/5`;
+  const content =
+    size === 'lg' ? (
+      circle
+    ) : (
+      <>
+        {circle}
+        <span className="mt-1 block w-full truncate text-center text-[10px] font-bold leading-tight text-[var(--text)]">{t(label)}</span>
+      </>
+    );
+  const cls = size === 'lg' ? 'shrink-0' : 'flex w-[58px] shrink-0 flex-col items-center';
   return onPress ? (
-    <button type="button" onClick={() => onPress(action.key)} style={style} className={`pressable ${cls} hover:brightness-95`} aria-label={action.label}>
+    <button type="button" onClick={() => onPress(action.key)} className={`pressable ${cls} hover:brightness-95`} aria-label={t(label)} title={t(label)}>
       {content}
     </button>
   ) : (
-    <span style={style} className={cls} aria-hidden="true">{content}</span>
+    <span className={cls} aria-hidden="true">{content}</span>
   );
 }
 
 /**
- * A widget as it looks on the home screen, in the app: `single` is one tile, `multi` a row (two rows from
- * five buttons), `categories` a grid of four per row. Pass `onPress` to make the tiles real buttons.
+ * A widget as it looks on the home screen, in the app. The shape follows the number of buttons (`widgetShape`):
+ * a lone circle, a pill with one row, a card with several rows. Pass `onPress` to make the tiles real buttons.
  */
-export function WidgetFace({ kind, keys, onPress }: { kind: 'single' | 'multi' | 'categories'; keys: string[]; onPress?: (key: string) => void }) {
-  if (keys.length === 0) return <p className="text-xs font-medium text-[var(--muted)]">No buttons chosen.</p>;
-  if (kind === 'single') return <WidgetTile actionKey={keys[0]} onPress={onPress} size="lg" />;
-  const perRow = kind === 'categories' ? 4 : keys.length > 4 ? Math.ceil(keys.length / 2) : keys.length;
-  const rows: string[][] = [];
-  for (let i = 0; i < keys.length; i += perRow) rows.push(keys.slice(i, i + perRow));
+export function WidgetFace({ keys, onPress }: { kind?: 'single' | 'multi' | 'categories'; keys: string[]; onPress?: (key: string) => void }) {
+  if (keys.length === 0) return <p className="text-xs font-medium text-[var(--muted)]">{t('No buttons chosen.')}</p>;
+  const shape = widgetShape(keys.length);
+  if (shape === 'circle') return <WidgetTile actionKey={keys[0]} onPress={onPress} size="lg" />;
   return (
-    <div className="inline-flex max-w-full flex-col gap-1.5 rounded-3xl bg-[var(--surface)] border border-[var(--border)] p-2 shadow-sm shadow-black/5">
-      {rows.map((row, index) => (
-        <div key={index} className="flex gap-1.5">
+    <div
+      className={`inline-flex max-w-full flex-col items-center gap-1.5 border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-lg shadow-black/10 ${
+        shape === 'pill' ? 'rounded-full px-2.5' : 'rounded-[1.75rem] px-2.5 py-2'
+      }`}
+    >
+      {widgetRows(keys).map((row, index) => (
+        <div key={index} className="flex justify-center gap-1">
           {row.map((key) => <WidgetTile key={key} actionKey={key} onPress={onPress} />)}
-          {kind === 'categories' && row.length < perRow && Array.from({ length: perRow - row.length }, (_, i) => <span key={`pad${i}`} className="h-16 min-w-[4.25rem] flex-1" aria-hidden="true" />)}
         </div>
       ))}
     </div>

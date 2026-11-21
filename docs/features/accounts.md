@@ -2,7 +2,7 @@
 
 > **Scope:** tracking how much money is in each place (current account, cash, card...).
 >
-> **Read when:** you change `src/sheets/AccountSheet.tsx`, the Accounts card in `src/pages/BudgetsView.tsx`, `accountBalance` in `src/lib/calc.ts`, or the account row of `TxSheet.tsx`.
+> **Read when:** you change `src/sheets/ProfileAccounts.tsx`, `src/sheets/AccountSheet.tsx`, the Accounts card in `src/pages/BudgetsView.tsx`, `accountBalance` in `src/lib/calc.ts`, or the account row of `TxSheet.tsx`.
 >
 > **Related:** [entries.md](entries.md), [budgets.md](budgets.md), [../data-model.md](../data-model.md)
 
@@ -24,3 +24,7 @@
 - Sample data comes with three accounts (starting balances only).
 
 Known limit: there are no transfers between accounts. Fix a balance by editing the account, or log the move as income / expense in the two accounts.
+
+## In the profile (changed)
+
+The Profile sheet no longer shows the all-time balance banner. Its place is taken by **Accounts** (`ProfileAccounts.tsx`): every account is a row with its icon, name and a **balance field**. Type what is really in the account and leave the field (or press Enter): the opening balance is recomputed (`opening = typed - what the entries add up to`, the same rule as `AccountSheet`), so later entries keep moving it. The pencil opens `AccountSheet` to rename, change the icon or delete. *Add account* opens an inline form (name + money in it now). The banner at the top now shows the **total of all accounts**. Edits to accounts apply at once; *Save profile* still saves the name and the budget rule.

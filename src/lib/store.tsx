@@ -9,11 +9,15 @@ import { normalizeNotificationSettings } from './reminders';
 import { syncLaunchBackground, syncSystemBars } from './platform';
 import { STORAGE_KEY } from './storage';
 import { applyThemeAttributes, applyUltraMinimal, DEFAULT_MONO_HUE, normalizeMonoHue, normalizeTheme, normalizeThemeStyle } from './themes';
+import { detectLanguage, normalizeLanguage, setLanguage } from './i18n';
 import { normalizeWidgets } from './widgets';
 import type { Account, ActiveTab, AppData, CurrencyCode, CustomCategory, GiftCard, Goal, Profile, Recurring, Settings, Sheet, Tx } from './types';
+import { t } from './i18n';
 
 
 const defaultSettings = (): Settings => ({
+  language: detectLanguage(),
+  hideSplit: false,
   theme: 'light',
   themeStyle: 'classic',
   monoHue: DEFAULT_MONO_HUE,
@@ -27,6 +31,14 @@ const defaultSettings = (): Settings => ({
   notifications: normalizeNotificationSettings(undefined),
   sampleData: false,
 });
+
+function legacySplitHidden(): boolean {
+  try {
+    return localStorage.getItem('koink_month_split_hidden') === 'true';
+  } catch {
+    return false;
+  }
+}
 
 const emptyProfile = (): Profile => ({ name: '', rule: { needs: 50, wants: 30, savings: 20 }, budgets: {} });
 
@@ -135,6 +147,9 @@ function sanitize(raw: unknown): AppData | null {
   const s = (src.settings ?? {}) as Partial<Settings>;
   const base = defaultSettings();
   const settings: Settings = {
+    language: s.language === undefined ? base.language : normalizeLanguage(s.language),
+    // Before this setting existed the choice lived in localStorage ('koink_month_split_hidden').
+    hideSplit: s.hideSplit === undefined ? legacySplitHidden() : s.hideSplit === true,
     theme: normalizeTheme(s.theme),
     themeStyle: normalizeThemeStyle(s.themeStyle),
     monoHue: normalizeMonoHue(s.monoHue),
@@ -270,7 +285,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Everything below reads the category list through categories.ts: bring it up to date first.
   useMemo(() => syncCategories(data.categories, data.settings.hiddenCategories), [data.categories, data.settings.hiddenCategories]);
 
-  const { theme, themeStyle, monoHue, currency, ultraMinimal } = data.settings;
+  const { theme, themeStyle, monoHue, currency, ultraMinimal, language } = data.settings;
+  // Set during render (like the category list above) so every `t()` below already speaks the new language.
+  setLanguage(language);
   useEffect(() => {
     const background = applyThemeAttributes(theme, themeStyle, monoHue);
     syncSystemBars(theme);
@@ -348,8 +365,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const removed = data.txs.find((tx) => tx.id === id);
     if (!removed) return;
     removeById(id);
-    showToast(`Deleted ${removed.note || 'entry'}`, {
-      label: 'Undo',
+    showToast(t('Deleted {name}', { name: removed.note || t('entry') }), {
+      label: t('Undo'),
       run: () => setData((prev) => (prev.txs.some((tx) => tx.id === removed.id) ? prev : { ...prev, txs: sortTxs([removed, ...prev.txs]) })),
     });
   }, [data.txs, removeById, showToast]);

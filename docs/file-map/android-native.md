@@ -16,8 +16,8 @@ The project was created by `npx cap add android` (Capacitor 8.5.3). Paths below 
 | `app/src/main/java/com/koink/app/LaunchBackground.java` | Stores the app's background colour (SharedPreferences `launch_background`), applies it to window and WebView, and on Android 13+ switches the launch-screen style to `Splash_<hex>` |
 | `app/src/main/java/com/koink/app/KoinkDevicePlugin.java` | Capacitor plugin `KoinkDevice` with two methods: `setLaunchBackground({ color })` and `setWidgets({ json })` |
 | `app/src/main/java/com/koink/app/KoinkWidgetProvider.java` | The three home-screen widgets (`Single`, `Multi`, `Categories`): draw the buttons the web app stored with `setWidgets`, a tap starts the app with `koink://widget?a=<action>` |
-| `app/src/main/res/layout/widget_buttons.xml`, `widget_row.xml`, `widget_button.xml`, `widget_button_pad.xml` | RemoteViews layouts: tray, row, tile (tinted plate + icon + name), empty cell |
-| `app/src/main/res/drawable/widget_surface.xml`, `widget_tile_bg.xml` | Tray and tile shapes (the tile is white and tinted at run time) |
+| `app/src/main/res/layout/widget_buttons.xml`, `widget_row.xml`, `widget_button.xml`, `widget_button_single.xml` | RemoteViews layouts: centred tray, row, round button (small icon + name), the lone circle of the single-button widget, empty state |
+| `app/src/main/res/drawable/widget_tray_pill.xml`, `widget_tray_card.xml`, `widget_tile_bg.xml` | Tray shapes (one row = pill, several rows = card) and the round button; all white and tinted at run time with the app's theme / the button's colour |
 | `app/src/main/res/xml/widget_single_info.xml`, `widget_multi_info.xml`, `widget_categories_info.xml` | `appwidget-provider` definitions (1x1, 4x1, 4x2) |
 | `app/src/main/res/values/splash_themes.xml` | **Generated** by `npm run android:splash`: 48 `Splash_<hex>` styles, one per app background. Do not edit |
 | `app/src/main/res/drawable/splash_blank.xml` | Transparent launch-screen icon, so the launch screen is a colour only |

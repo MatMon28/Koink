@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { t } from '../lib/i18n';
 
 export interface DockAction {
   id: string;
@@ -67,7 +68,7 @@ export function ActionDock({ label, actions }: { label: string; actions: DockAct
     >
       <div
         role="group"
-        aria-label={label}
+        aria-label={t(label)}
         data-dock
         className="kc-dock anim-dock pointer-events-auto bg-[var(--surface)] border border-[var(--border)] shadow-lg shadow-black/10 rounded-full p-1.5 flex items-center gap-1 sm:gap-1.5 max-w-full overflow-x-auto no-scrollbar"
       >
@@ -77,8 +78,8 @@ export function ActionDock({ label, actions }: { label: string; actions: DockAct
             type="button"
             data-dock-action={action.id}
             onClick={action.onClick}
-            title={action.label}
-            aria-label={action.label}
+            title={t(action.label)}
+            aria-label={t(action.label)}
             tabIndex={hidden ? -1 : undefined}
             className={`kc-dock-btn pressable size-12 min-[390px]:size-[3.25rem] shrink-0 rounded-full flex items-center justify-center [&_svg]:size-[22px] hover:brightness-95 ${action.tone}`}
           >

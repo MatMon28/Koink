@@ -6,6 +6,7 @@ import { allExpenseCategories, BUCKET_LABEL, isBuiltInCategory, isCategoryHidden
 import { useApp, useSheet } from '../lib/store';
 import type { Bucket } from '../lib/types';
 import { IconPicker } from './shared';
+import { t } from '../lib/i18n';
 
 /**
  * The expense categories: make your own, hide the ones you never use (housing, groceries...) and
@@ -15,7 +16,7 @@ export function CategoriesSheet() {
   const { isOpen } = useSheet('categories');
   const { closeSheet } = useApp();
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title="Expense categories" subtitle="Make your own, hide the ones you do not use" maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={t('Expense categories')} subtitle={t('Make your own, hide the ones you do not use')} maxWidth="max-w-md">
       {isOpen && <CategoriesBody />}
     </Modal>
   );
@@ -53,7 +54,7 @@ function CategoriesBody() {
   const submit = () => {
     if (!name.trim()) return;
     saveCategory({ id: editing || undefined, name, icon, bucket });
-    showToast(editing ? `Saved ${name.trim()}` : `Added ${name.trim()}`);
+    showToast(editing ? t('Saved {v}', { v: name.trim() }) : t('Added {v}', { v: name.trim() }));
     setEditing(null);
   };
 
@@ -69,11 +70,11 @@ function CategoriesBody() {
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-extrabold text-[var(--text)]">{category.name}</span>
           <span className="block text-[11px] font-medium text-[var(--muted)]">
-            {own ? 'Yours' : 'Built in'} · {count} {count === 1 ? 'entry' : 'entries'}{hidden ? ' · hidden' : ''}
+            {own ? t('Yours') : t('Built in')} · {count} {count === 1 ? t('entry') : t('entries')}{hidden ? t(' · hidden') : ''}
           </span>
         </span>
         {own && (
-          <button type="button" className={iconButton} onClick={() => startEdit(id)} aria-label={`Edit ${category.name}`} title="Edit">
+          <button type="button" className={iconButton} onClick={() => startEdit(id)} aria-label={t('Edit {name}', { name: category.name })} title={t('Edit')}>
             <Pencil size={15} />
           </button>
         )}
@@ -83,7 +84,7 @@ function CategoriesBody() {
           onClick={() => setCategoryHidden(id, !hidden)}
           disabled={!hidden && visibleCount <= 1}
           aria-label={`${hidden ? 'Show' : 'Hide'} ${category.name}`}
-          title={hidden ? 'Show again' : 'Hide from the lists'}
+          title={hidden ? t('Show again') : t('Hide from the lists')}
         >
           {hidden ? <Eye size={16} /> : <EyeOff size={16} />}
         </button>
@@ -92,8 +93,8 @@ function CategoriesBody() {
             type="button"
             className={`${iconButton} hover:!text-[#8C2D32] hover:!bg-[#F6D0D0]`}
             onClick={() => setDeleting(id)}
-            aria-label={`Delete ${category.name}`}
-            title="Delete"
+            aria-label={t('Delete {name}', { name: category.name })}
+            title={t('Delete')}
           >
             <Trash2 size={15} />
           </button>
@@ -121,12 +122,12 @@ function CategoriesBody() {
           className="pressable pressable-soft w-full py-3 rounded-2xl bg-[var(--text)] text-[var(--on-text)] font-extrabold text-sm flex items-center justify-center gap-2"
         >
           <Plus size={17} strokeWidth={2.5} />
-          New category
+          {t('New category')}
         </button>
       ) : (
         <div className="space-y-4 rounded-3xl border border-[var(--border)] p-3.5">
           <div>
-            <SectionLabel htmlFor="category-name">{editing ? 'Edit category' : 'New category'}</SectionLabel>
+            <SectionLabel htmlFor="category-name">{editing ? t('Edit category') : t('New category')}</SectionLabel>
             <input
               id="category-name"
               type="text"
@@ -136,7 +137,7 @@ function CategoriesBody() {
               onKeyDown={(event) => {
                 if (event.key === 'Enter') submit();
               }}
-              placeholder="Pets, Gym, Gifts..."
+              placeholder={t('Pets, Gym, Gifts...')}
               maxLength={30}
               autoComplete="off"
               className={`${textInput} text-sm`}
@@ -144,16 +145,16 @@ function CategoriesBody() {
           </div>
           <IconPicker value={icon} onChange={setIcon} />
           <div>
-            <SectionLabel>Counts as</SectionLabel>
-            <div className="flex gap-1.5" role="group" aria-label="Needs or wants">
-              <button type="button" aria-pressed={bucket === 'needs'} onClick={() => setBucket('needs')} className={seg(bucket === 'needs')}>Need</button>
-              <button type="button" aria-pressed={bucket === 'wants'} onClick={() => setBucket('wants')} className={seg(bucket === 'wants')}>Want</button>
+            <SectionLabel>{t('Counts as')}</SectionLabel>
+            <div className="flex gap-1.5" role="group" aria-label={t('Needs or wants')}>
+              <button type="button" aria-pressed={bucket === 'needs'} onClick={() => setBucket('needs')} className={seg(bucket === 'needs')}>{t('Need')}</button>
+              <button type="button" aria-pressed={bucket === 'wants'} onClick={() => setBucket('wants')} className={seg(bucket === 'wants')}>{t('Want')}</button>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => setEditing(null)} className="pressable py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold">Cancel</button>
+            <button type="button" onClick={() => setEditing(null)} className="pressable py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold">{t('Cancel')}</button>
             <button type="button" disabled={!name.trim()} onClick={submit} className="kc-primary-btn pressable py-3 rounded-2xl bg-activity text-activity-ink font-extrabold text-sm disabled:opacity-40">
-              {editing ? 'Save' : 'Add category'}
+              {editing ? t('Save') : t('Add category')}
             </button>
           </div>
         </div>
@@ -161,11 +162,9 @@ function CategoriesBody() {
 
       <ConfirmDialog
         open={deleting !== null}
-        title={`Delete ${deletingCategory?.name ?? 'this category'}?`}
+        title={t('Delete {v}?', { v: deletingCategory?.name ?? 'this category' })}
         message={
-          deletingUses > 0
-            ? `${deletingUses} ${deletingUses === 1 ? 'entry uses' : 'entries use'} it. They stay in your journal and are listed under "Other".`
-            : 'Nothing uses it yet.'
+          deletingUses > 0 ? t('{deletingUses} {v} it. They stay in your journal and are listed under "Other".', { deletingUses, v: deletingUses === 1 ? t('entry uses') : t('entries use') }) : t('Nothing uses it yet.')
         }
         onCancel={() => setDeleting(null)}
         onConfirm={() => {

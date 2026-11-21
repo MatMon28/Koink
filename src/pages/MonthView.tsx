@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Banknote, CalendarDays, Gift, ChartPie, Columns2, Eye, EyeOff, LayoutList, ListTree, PenLine, Plus, Receipt, Repeat, Sparkles, Tag, Target, Wallet, X, type LucideIcon } from 'lucide-react';
+import { Banknote, CalendarDays, Gift, ChartPie, Columns2, LayoutList, ListTree, PenLine, Plus, Receipt, Repeat, Sparkles, Tag, Target, Wallet, X, type LucideIcon } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { EmptyRow, FoldCard, Headline, HeroPair, NoteCard, Pills, ShareCard, TxRow, type PillItem } from '../components/cards';
 import { MonthNavigator } from '../components/MonthNavigator';
@@ -11,6 +11,7 @@ import { allExpenseCategories, categoryMeta, isCategoryHidden } from '../lib/cat
 import { elapsedDays, formatDay, todayStr } from '../lib/dates';
 import { giftCardBalance, giftCardExpired } from '../lib/giftcards';
 import { percent, round2 } from '../lib/format';
+import { t } from '../lib/i18n';
 import { useApp } from '../lib/store';
 import type { Bucket } from '../lib/types';
 import { usePersistentState } from '../lib/usePersistentState';
@@ -56,8 +57,8 @@ export function MonthView() {
   // The Gift cards tracker appears once there is a card, or when its button is switched on (Settings).
   const showGiftCards = data.giftCards.length > 0 || data.settings.quickAdd.giftcard;
 
-  // The needs / wants / savings split can be tucked away; the choice is remembered.
-  const [splitHidden, setSplitHidden] = usePersistentState<boolean>('koink_month_split_hidden', false);
+  // The needs / wants / savings split can be tucked away in Settings > Appearance.
+  const hideSplit = data.settings.hideSplit;
 
   // Card expansion and the chosen layout are remembered independently.
   const [chosenLayout, setLayout] = usePersistentState<Layout>('koink_month_layout', 'normal');
@@ -122,7 +123,7 @@ export function MonthView() {
   const perDay = days > 0 ? totals.spent / days : 0;
   const gridClass = `grid items-start ${compact ? 'grid-cols-2 gap-2.5 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 gap-3.5'}`;
   const cellClass = (open: boolean) => (compact && open ? 'col-span-2 md:col-span-1' : undefined);
-  const muted = (text: string, empty = false) => <span className={`text-xs font-medium text-[var(--muted)] truncate ${empty ? 'um-hide' : ''}`}>{text}</span>;
+  const muted = (text: string, empty = false) => <span className={`text-xs font-medium text-[var(--muted)] truncate ${empty ? 'um-hide' : ''}`}>{t(text)}</span>;
 
   /* ---------- Expense categories ---------- */
   const categoryCards = cards.map((category) => {
@@ -158,7 +159,7 @@ export function MonthView() {
           headline={<Headline text={moneyFit(total, compact ? 7 : 11)} compact={compact} />}
           summary={count > 0 ? <Pills items={pills} stretch labels={!compact} /> : muted('Nothing yet', true)}
           onAdd={add}
-          addLabel={`Add expense: ${category.name}`}
+          addLabel={t('Add expense: {name}', { name: category.name })}
           open={open}
           onToggle={() => toggleSlot(category.id)}
           compact={compact}
@@ -168,11 +169,11 @@ export function MonthView() {
               type="button"
               onClick={() => openSheet({ type: 'budget', categoryId: category.id })}
               className="w-full py-2.5 text-left space-y-1.5 group"
-              aria-label={`Budget for ${category.name}: ${money(total)} of ${money(limit)}. Change`}
+              aria-label={t('Budget for {name}: {v} of {v2}. Change', { name: category.name, v: money(total), v2: money(limit) })}
             >
               <span className="flex items-center justify-between gap-2 text-[11px] tabular-nums">
-                <span className="font-bold text-[var(--muted)] group-hover:text-[var(--text)]">Budget</span>
-                <span className="font-extrabold text-[var(--text)]">{money(total)} <span className="font-semibold text-[var(--muted)]">of {money(limit)}</span></span>
+                <span className="font-bold text-[var(--muted)] group-hover:text-[var(--text)]">{t('Budget')}</span>
+                <span className="font-extrabold text-[var(--text)]">{money(total)} <span className="font-semibold text-[var(--muted)]">{t('of')} {money(limit)}</span></span>
               </span>
               <Bar
                 value={total}
@@ -183,7 +184,7 @@ export function MonthView() {
             </button>
           )}
           {items.length === 0
-            ? <EmptyRow text="Nothing yet" action="Add" onAdd={add} />
+            ? <EmptyRow text={t('Nothing yet')} action={t('Add')} onAdd={add} />
             : items.map((tx) => <TxRow key={tx.id} tx={tx} compact={compact} />)}
         </FoldCard>
       </div>
@@ -208,14 +209,14 @@ export function MonthView() {
         <FoldCard
           {...shared}
           icon={<Banknote size={compact ? 15 : 16} strokeWidth={2.2} />}
-          title="Income"
+          title={t('Income')}
           headline={<Headline text={moneyFit(totals.income, compact ? 7 : 11)} compact={compact} />}
           summary={muted(incomeItems.length ? sources.join(' · ') : 'Nothing yet', incomeItems.length === 0)}
           onAdd={add}
-          addLabel="Add income"
+          addLabel={t('Add income')}
         >
           {incomeItems.length === 0
-            ? <EmptyRow text="Nothing yet" action="Add" onAdd={add} />
+            ? <EmptyRow text={t('Nothing yet')} action={t('Add')} onAdd={add} />
             : incomeItems.map((tx) => <TxRow key={tx.id} tx={tx} compact={compact} />)}
         </FoldCard>
       );
@@ -227,23 +228,23 @@ export function MonthView() {
         <FoldCard
           {...shared}
           icon={<PigIcon size={compact ? 15 : 16} strokeWidth={2.2} />}
-          title="Savings"
+          title={t('Savings')}
           headline={<Headline text={moneyFit(totals.saved, compact ? 7 : 11)} compact={compact} />}
           summary={muted(data.goals.length ? `${data.goals.length} ${data.goals.length === 1 ? 'goal' : 'goals'}` : 'No goals yet')}
           onAdd={add}
-          addLabel={data.goals.length ? 'Move money to savings' : 'New savings goal'}
+          addLabel={data.goals.length ? t('Move money to savings') : t('New savings goal')}
         >
-          {data.goals.length === 0 && <EmptyRow text="No goals yet" action="New goal" onAdd={add} />}
+          {data.goals.length === 0 && <EmptyRow text={t('No goals yet')} action={t('New goal')} onAdd={add} />}
           {data.goals.map((goal) => {
             const saved = goalSaved(data.txs, goal);
             return (
               <div key={goal.id} className="py-2.5 flex items-center gap-2">
-                <button type="button" onClick={() => openSheet({ type: 'goal', id: goal.id })} className="min-w-0 flex-1 text-left space-y-1.5 group" aria-label={`Edit goal ${goal.name}`}>
+                <button type="button" onClick={() => openSheet({ type: 'goal', id: goal.id })} className="min-w-0 flex-1 text-left space-y-1.5 group" aria-label={t('Edit goal {name}', { name: goal.name })}>
                   <span className="flex items-center justify-between gap-2 text-xs tabular-nums">
                     <span className="font-bold text-[var(--text)] truncate group-hover:opacity-80">{goal.name}</span>
                     <span className="font-extrabold text-[var(--text)] shrink-0">
                       {money(saved)}
-                      {goal.target > 0 && <span className="font-semibold text-[var(--muted)]"> of {money(goal.target)}</span>}
+                      {goal.target > 0 && <span className="font-semibold text-[var(--muted)]"> {t('of')} {money(goal.target)}</span>}
                     </span>
                   </span>
                   <Bar value={saved} max={goal.target || saved || 1} track="kc-water-track bg-[var(--inset)]" fill="kc-water-fill bg-[var(--muted)]" />
@@ -252,8 +253,8 @@ export function MonthView() {
                   type="button"
                   onClick={() => openSheet({ type: 'tx', kind: 'saving', categoryId: goal.id })}
                   className="pressable w-8 h-8 shrink-0 rounded-full text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
-                  aria-label={`Add to ${goal.name}`}
-                  title={`Add to ${goal.name}`}
+                  aria-label={t('Add to {name}', { name: goal.name })}
+                  title={t('Add to {name}', { name: goal.name })}
                 >
                   <Plus size={15} strokeWidth={2.5} />
                 </button>
@@ -277,26 +278,26 @@ export function MonthView() {
         <FoldCard
           {...shared}
           icon={<Gift size={compact ? 15 : 16} strokeWidth={2.2} />}
-          title="Gift cards"
+          title={t('Gift cards')}
           headline={<Headline text={moneyFit(totalLeft, compact ? 7 : 11)} compact={compact} />}
           summary={muted(rows.length === 0 ? 'None yet' : `${usable.length} ${usable.length === 1 ? 'card' : 'cards'} left to use`, rows.length === 0)}
           onAdd={add}
-          addLabel="New gift card"
+          addLabel={t('New gift card')}
         >
-          {rows.length === 0 && <EmptyRow text="Vouchers and gift cards" action="New" onAdd={add} />}
+          {rows.length === 0 && <EmptyRow text={t('Vouchers and gift cards')} action={t('New')} onAdd={add} />}
           {rows.map(({ card, left, expired }) => (
             <div key={card.id} className="py-2.5 flex items-center gap-2">
-              <button type="button" onClick={() => openSheet({ type: 'giftCard', id: card.id })} className="min-w-0 flex-1 text-left space-y-1.5 group" aria-label={`Edit gift card ${card.name}`}>
+              <button type="button" onClick={() => openSheet({ type: 'giftCard', id: card.id })} className="min-w-0 flex-1 text-left space-y-1.5 group" aria-label={t('Edit gift card {name}', { name: card.name })}>
                 <span className="flex items-center justify-between gap-2 text-xs tabular-nums">
                   <span className="font-bold text-[var(--text)] truncate group-hover:opacity-80">{card.name}</span>
                   <span className="font-extrabold text-[var(--text)] shrink-0">
                     {money(left, { cents: true })}
-                    <span className="font-semibold text-[var(--muted)]"> of {money(card.initial, { cents: true })}</span>
+                    <span className="font-semibold text-[var(--muted)]"> {t('of')} {money(card.initial, { cents: true })}</span>
                   </span>
                 </span>
                 <Bar value={left} max={card.initial || 1} track="kc-water-track bg-[var(--inset)]" fill="kc-water-fill bg-[var(--muted)]" />
                 {(expired || card.expires) && (
-                  <span className="block text-[11px] font-semibold text-[var(--muted)]">{expired ? 'Expired' : 'Valid until'} {card.expires && formatDay(card.expires)}</span>
+                  <span className="block text-[11px] font-semibold text-[var(--muted)]">{expired ? t('Expired') : t('Valid until')} {card.expires && formatDay(card.expires)}</span>
                 )}
               </button>
               {left > 0 && !expired && (
@@ -304,8 +305,8 @@ export function MonthView() {
                   type="button"
                   onClick={() => openSheet({ type: 'tx', kind: 'expense', giftCardId: card.id })}
                   className="pressable w-8 h-8 shrink-0 rounded-full text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
-                  aria-label={`Spend from ${card.name}`}
-                  title={`Spend from ${card.name}`}
+                  aria-label={t('Spend from {name}', { name: card.name })}
+                  title={t('Spend from {name}', { name: card.name })}
                 >
                   <Receipt size={15} strokeWidth={2.4} />
                 </button>
@@ -321,15 +322,15 @@ export function MonthView() {
       <FoldCard
         {...shared}
         icon={<Repeat size={compact ? 15 : 16} strokeWidth={2.2} />}
-        title="Recurring"
-        headline={<Headline text={`${logged.length}/${data.recurring.length}`} compact={compact} unit="logged" />}
+        title={t('Recurring')}
+        headline={<Headline text={`${logged.length}/${data.recurring.length}`} compact={compact} unit={t('logged')} />}
         summary={muted(
           data.recurring.length === 0 ? 'Nothing set up' : due.length === 0 ? 'All done' : dueTotal > 0 ? `${money(dueTotal)} still due` : `${due.length} to come`,
         )}
         onAdd={add}
-        addLabel="New recurring item"
+        addLabel={t('New recurring item')}
       >
-        {data.recurring.length === 0 && <EmptyRow text="Rent, salary, subscriptions" action="New" onAdd={add} />}
+        {data.recurring.length === 0 && <EmptyRow text={t('Rent, salary, subscriptions')} action={t('New')} onAdd={add} />}
         {data.recurring.map((item) => (
           <RecurringRow key={item.id} item={item} month={selectedMonth} monthItems={totals.items} />
         ))}
@@ -343,21 +344,21 @@ export function MonthView() {
         <div className="flex items-center gap-2.5 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]/60 pl-3.5 pr-1.5 py-1.5">
           <Sparkles size={15} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
           <p className="min-w-0 flex-1 text-xs font-medium text-[var(--muted)]">
-            <span className="font-extrabold text-[var(--text)]">Sample data.</span><span className="max-[374px]:hidden"> Look around.</span>
+            <span className="font-extrabold text-[var(--text)]">{t('Sample data.')}</span><span className="max-[374px]:hidden"> {t('Look around.')}</span>
           </p>
           <button
             type="button"
             onClick={() => setConfirmFresh(true)}
             className="pressable shrink-0 rounded-full bg-[var(--text)] text-[var(--on-text)] px-3 py-1.5 text-[11px] font-extrabold"
           >
-            Start fresh
+            {t('Start fresh')}
           </button>
           <button
             type="button"
             onClick={() => updateSettings({ sampleData: false })}
             className="pressable shrink-0 size-8 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
-            aria-label="Keep the sample data and hide this note"
-            title="Keep the sample data"
+            aria-label={t('Keep the sample data and hide this note')}
+            title={t('Keep the sample data')}
           >
             <X size={15} />
           </button>
@@ -368,7 +369,7 @@ export function MonthView() {
         <div className="flex items-center gap-2.5 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]/60 px-3.5 py-2.5">
           <PenLine size={15} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
           <p className="min-w-0 flex-1 text-xs font-medium text-[var(--muted)]">
-            <span className="font-extrabold text-[var(--text)]">An empty journal.</span> Log your first income or expense with the bar at the bottom.
+            <span className="font-extrabold text-[var(--text)]">{t('An empty journal.')}</span> {t('Log your first income or expense with the bar at the bottom.')}
           </p>
         </div>
       )}
@@ -378,72 +379,53 @@ export function MonthView() {
       <WidgetStrip />
 
       <div ref={panel} className="um-stack space-y-3.5">
-        <HeroPair inLabel="Income" outLabel="Spent" inAmount={totals.income} outAmount={totals.spent} pillTitle="Income minus spending" />
+        <HeroPair inLabel={t('Income')} outLabel={t('Spent')} inAmount={totals.income} outAmount={totals.spent} pillTitle={t('Income minus spending')} />
 
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
-            <NoteCard icon={Wallet} label="Left" value={moneyFit(totals.left, 7)} title="Income minus spending and savings" />
-            <NoteCard icon={CalendarDays} label="Per day" value={moneyFit(perDay, 7)} title={`Average spending per day (${days} ${days === 1 ? 'day' : 'days'})`} />
+            <NoteCard tone="needs" icon={Wallet} label={t('Left')} value={moneyFit(totals.left, 7)} title={t('Income minus spending and savings')} />
+            <NoteCard tone="wants" icon={CalendarDays} label={t('Per day')} value={moneyFit(perDay, 7)} title={t('Average spending per day ({days} {v})', { days, v: days === 1 ? t('day') : t('days') })} />
             <NoteCard
+              tone="savings"
               icon={Target}
-              label="Budget"
+              label={t('Budget')}
               value={budget.budget > 0 ? `${percent(budget.spent, budget.budget)}%` : '–'}
-              unit={budget.budget > 0 ? 'used' : undefined}
-              title={budget.budget > 0 ? `${money(budget.spent)} of ${money(budget.budget)} budgeted` : 'No budgets set'}
+              unit={budget.budget > 0 ? t('used') : undefined}
+              title={budget.budget > 0 ? t('{v} of {v2} budgeted', { v: money(budget.spent), v2: money(budget.budget) }) : t('No budgets set')}
             />
           </div>
-          {splitHidden ? (
-            <div className="um-hide flex justify-center">
-              <button
-                type="button"
-                onClick={() => setSplitHidden(false)}
-                className="pressable inline-flex items-center gap-1.5 rounded-full bg-[var(--surface)] hover:bg-[var(--inset)] border border-[var(--border)] px-3 py-1.5 text-[11px] font-extrabold text-[var(--muted)] hover:text-[var(--text)]"
-              >
-                <Eye size={13} aria-hidden="true" />
-                Show needs, wants and savings
-              </button>
-            </div>
-          ) : (
+          {!hideSplit && (
             <div className="space-y-1.5">
-              <div className="um-hide flex items-center justify-between gap-2 px-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">Needs · Wants · Savings</span>
-                <button
-                  type="button"
-                  onClick={() => setSplitHidden(true)}
-                  className="pressable inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-extrabold text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]"
-                  aria-label="Hide needs, wants and savings"
-                >
-                  <EyeOff size={13} aria-hidden="true" />
-                  Hide
-                </button>
+              <div className="um-hide px-1">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Needs · Wants · Savings')}</span>
               </div>
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
               <ShareCard
                 tone="needs"
-                label="Needs"
+                label={t('Needs')}
                 amount={totals.needs}
                 share={shares.needs}
                 target={shares.ofIncome ? rule.needs : undefined}
                 status={shares.ofIncome && shares.needs > rule.needs ? 'over' : undefined}
-                shareTitle={shares.ofIncome ? 'of income' : 'of what went out'}
+                shareTitle={shares.ofIncome ? t('of income') : t('of what went out')}
               />
               <ShareCard
                 tone="wants"
-                label="Wants"
+                label={t('Wants')}
                 amount={totals.wants}
                 share={shares.wants}
                 target={shares.ofIncome ? rule.wants : undefined}
                 status={shares.ofIncome && shares.wants > rule.wants ? 'over' : undefined}
-                shareTitle={shares.ofIncome ? 'of income' : 'of what went out'}
+                shareTitle={shares.ofIncome ? t('of income') : t('of what went out')}
               />
               <ShareCard
                 tone="savings"
-                label="Savings"
+                label={t('Savings')}
                 amount={totals.saved}
                 share={shares.savings}
                 target={shares.ofIncome ? rule.savings : undefined}
                 status={shares.ofIncome && totals.saved > 0 && shares.savings >= rule.savings ? 'ok' : undefined}
-                shareTitle={shares.ofIncome ? 'of income' : 'of what went out'}
+                shareTitle={shares.ofIncome ? t('of income') : t('of what went out')}
               />
             </div>
             </div>
@@ -451,7 +433,7 @@ export function MonthView() {
         </div>
 
         <div className="um-hide flex flex-wrap items-center justify-center gap-2 px-1">
-          <div role="group" aria-label="Card layout" className="inline-flex items-center gap-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] p-1">
+          <div role="group" aria-label={t('Card layout')} className="inline-flex items-center gap-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] p-1">
             {layouts.map((item) => (
               <button
                 key={item.id}
@@ -465,7 +447,7 @@ export function MonthView() {
                 }`}
               >
                 {item.icon}
-                <span>{item.label}</span>
+                <span>{t(item.label)}</span>
               </button>
             ))}
           </div>
@@ -484,9 +466,9 @@ export function MonthView() {
 
       <ConfirmDialog
         open={confirmFresh}
-        title="Start with an empty journal?"
-        message="The sample entries, goals, budgets and recurring items are removed. Your theme and currency stay."
-        confirmLabel="Start fresh"
+        title={t('Start with an empty journal?')}
+        message={t('The sample entries, goals, budgets and recurring items are removed. Your theme and currency stay.')}
+        confirmLabel={t('Start fresh')}
         onCancel={() => setConfirmFresh(false)}
         onConfirm={() => {
           setConfirmFresh(false);

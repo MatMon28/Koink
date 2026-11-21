@@ -9,6 +9,7 @@ import { currentMonth, elapsedDays, formatMonth, monthOf } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
 import { useApp } from '../lib/store';
 import { usePersistentState } from '../lib/usePersistentState';
+import { t } from '../lib/i18n';
 
 type RangeKey = '3' | '6' | '12';
 const RANGES: { id: RangeKey; label: string }[] = [
@@ -101,7 +102,7 @@ export function StatsView() {
   return (
     <div className="um-stack space-y-4">
       <div className="flex justify-center">
-        <div role="group" aria-label="Period" className="inline-flex w-fit max-w-full items-center justify-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
+        <div role="group" aria-label={t('Period')} className="inline-flex w-fit max-w-full items-center justify-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
           {RANGES.map((item) => (
             <button
               key={item.id}
@@ -117,28 +118,28 @@ export function StatsView() {
                   : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
               }`}
             >
-              {item.label}
+              {t(item.label)}
             </button>
           ))}
         </div>
       </div>
 
       <p className="um-hide px-1 text-center text-xs font-bold tabular-nums text-[var(--muted)]">
-        {formatMonth(months[0], 'short')} – {formatMonth(months[months.length - 1], 'short')} · {period.activeCount}/{months.length} months with entries
+        {formatMonth(months[0], 'short')} – {formatMonth(months[months.length - 1], 'short')} · {period.activeCount}/{months.length} {t('months with entries')}
       </p>
 
-      <HeroPair inLabel="Income" outLabel="Spent" inAmount={Math.round(period.avgIncome)} outAmount={Math.round(period.avgSpent)} average pillTitle="Average income minus average spending, per month" />
+      <HeroPair inLabel={t('Income')} outLabel={t('Spent')} inAmount={Math.round(period.avgIncome)} outAmount={Math.round(period.avgSpent)} average pillTitle={t('Average income minus average spending, per month')} />
 
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
-        <ShareCard tone="needs" label="Needs" amount={period.avgNeeds} share={shares.needs} target={shares.ofIncome ? data.profile.rule.needs : undefined} shareTitle={shareTitle} />
-        <ShareCard tone="wants" label="Wants" amount={period.avgWants} share={shares.wants} target={shares.ofIncome ? data.profile.rule.wants : undefined} shareTitle={shareTitle} />
-        <ShareCard tone="savings" label="Savings" amount={period.avgSaved} share={shares.savings} target={shares.ofIncome ? data.profile.rule.savings : undefined} shareTitle={shareTitle} />
+        <ShareCard tone="needs" label={t('Needs')} amount={period.avgNeeds} share={shares.needs} target={shares.ofIncome ? data.profile.rule.needs : undefined} shareTitle={shareTitle} />
+        <ShareCard tone="wants" label={t('Wants')} amount={period.avgWants} share={shares.wants} target={shares.ofIncome ? data.profile.rule.wants : undefined} shareTitle={shareTitle} />
+        <ShareCard tone="savings" label={t('Savings')} amount={period.avgSaved} share={shares.savings} target={shares.ofIncome ? data.profile.rule.savings : undefined} shareTitle={shareTitle} />
       </div>
 
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
-        <NoteCard icon={PigIcon} label="Saved" value={moneyFit(period.saved, 7)} title="Moved to savings in this period" />
-        <NoteCard icon={HandCoins} label="Kept" value={`${percent(period.income - period.spent, period.income)}%`} title="Share of income that was not spent" />
-        <NoteCard icon={CalendarDays} label="Per day" value={moneyFit(period.perDay, 7)} title="Average spending per day" />
+        <NoteCard tone="needs" icon={PigIcon} label={t('Saved')} value={moneyFit(period.saved, 7)} title={t('Moved to savings in this period')} />
+        <NoteCard tone="wants" icon={HandCoins} label={t('Kept')} value={`${percent(period.income - period.spent, period.income)}%`} title={t('Share of income that was not spent')} />
+        <NoteCard tone="savings" icon={CalendarDays} label={t('Per day')} value={moneyFit(period.perDay, 7)} title={t('Average spending per day')} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
@@ -149,7 +150,7 @@ export function StatsView() {
               <span className="w-7 h-7 rounded-full bg-transparent text-[var(--weight-on-surface)] flex items-center justify-center shrink-0">
                 <LineChart size={16} />
               </span>
-              <span className="um-sr">Balance trend</span>
+              <span className="um-sr">{t('Balance trend')}</span>
             </span>
             <span className="flex items-center gap-2 tabular-nums">
               {trend.length > 1 && (
@@ -161,14 +162,14 @@ export function StatsView() {
           <div className="accordion-grid" data-open={trendOpen} inert={!trendOpen}>
             <div className="accordion-inner">
               {trend.length === 0 ? (
-                <p className="kc-section-empty pt-3 text-xs font-medium text-[var(--muted)]">Your balance over time appears here once you have logged something.</p>
+                <p className="kc-section-empty pt-3 text-xs font-medium text-[var(--muted)]">{t('Your balance over time appears here once you have logged something.')}</p>
               ) : (
                 <div className="pt-3 space-y-2">
                   <div className="flex items-center justify-between gap-2 text-xs font-bold tabular-nums px-1" aria-live="polite">
-                    <span className="text-[var(--muted)]">End of {formatMonth(activePoint.month)}</span>
+                    <span className="text-[var(--muted)]">{t('End of')} {formatMonth(activePoint.month)}</span>
                     <span className="text-[var(--weight-on-surface)] font-extrabold">{money(activePoint.value)}</span>
                   </div>
-                  <svg viewBox={`0 0 ${W_SVG} ${H_SVG}`} className="w-full h-32 overflow-visible" role="group" aria-label="Balance at the end of each month">
+                  <svg viewBox={`0 0 ${W_SVG} ${H_SVG}`} className="w-full h-32 overflow-visible" role="group" aria-label={t('Balance at the end of each month')}>
                     {[22, 98].map((y) => (
                       <line key={y} x1={8} x2={W_SVG - 8} y1={y} y2={y} stroke="var(--border)" strokeWidth="1" strokeDasharray="3 3" />
                     ))}
@@ -219,12 +220,12 @@ export function StatsView() {
           <div className="flex items-center justify-between gap-2">
             <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
               <ChartPie size={16} className="um-only text-[var(--muted)]" aria-hidden="true" />
-              <span className="um-sr">Where it went</span>
+              <span className="um-sr">{t('Where it went')}</span>
             </h3>
             <span className="text-xs font-bold tabular-nums text-[var(--muted)]">{money(period.spent)}</span>
           </div>
           {period.byCategory.length === 0 ? (
-            <p className="kc-section-empty pt-3 text-xs font-medium text-[var(--muted)]">No spending in this period.</p>
+            <p className="kc-section-empty pt-3 text-xs font-medium text-[var(--muted)]">{t('No spending in this period.')}</p>
           ) : (
             <div className="pt-3 space-y-3">
               {period.byCategory.map(({ category, total }) => {
@@ -252,8 +253,8 @@ export function StatsView() {
                 );
               })}
               <p className="flex items-center gap-3 pt-0.5 text-[11px] font-bold text-[var(--muted)]">
-                <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-c-text,#1A4670)]" />Needs</span>
-                <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-p-text,#7D4E14)]" />Wants</span>
+                <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-c-text,#1A4670)]" />{t('Needs')}</span>
+                <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-p-text,#7D4E14)]" />{t('Wants')}</span>
               </p>
             </div>
           )}
@@ -265,17 +266,17 @@ export function StatsView() {
         <button type="button" onClick={() => setMonthsOpen(!monthsOpen)} aria-expanded={monthsOpen} className="w-full flex items-center justify-between gap-2 text-left">
           <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
             <CalendarRange size={16} className="um-only text-[var(--muted)]" aria-hidden="true" />
-            <span className="um-sr">Month by month</span>
+            <span className="um-sr">{t('Month by month')}</span>
           </h3>
           <span className="flex items-center gap-2">
-            <span className="um-hide hidden sm:inline text-[11px] font-medium text-[var(--muted)]">Tap a month to open it</span>
+            <span className="um-hide hidden sm:inline text-[11px] font-medium text-[var(--muted)]">{t('Tap a month to open it')}</span>
             <ChevronDown size={16} className={`text-[var(--muted)] transition-transform duration-200 ${monthsOpen ? 'rotate-180' : ''}`} />
           </span>
         </button>
         <div className="accordion-grid" data-open={monthsOpen} inert={!monthsOpen}>
           <div className="accordion-inner">
             {period.activeCount === 0 && (
-              <p className="kc-section-empty pt-3 text-xs font-medium text-[var(--muted)]">No entries in this period.</p>
+              <p className="kc-section-empty pt-3 text-xs font-medium text-[var(--muted)]">{t('No entries in this period.')}</p>
             )}
             <div className={period.activeCount === 0 ? 'hidden' : 'pt-3 grid grid-cols-1 md:grid-cols-2 gap-2.5'}>
               {[...list].reverse().filter((m) => m.count > 0).map((m) => (
@@ -297,14 +298,14 @@ export function StatsView() {
                   <div className="grid grid-cols-2 gap-3 pt-0.5 tabular-nums">
                     <div>
                       <div className="flex items-center justify-between text-[11px] mb-1">
-                        <span className="font-bold text-[var(--intake-on-surface)]">Income</span>
+                        <span className="font-bold text-[var(--intake-on-surface)]">{t('Income')}</span>
                         <span className="font-extrabold text-[var(--text)]">{money(m.income)}</span>
                       </div>
                       <Bar value={m.income} max={maxMonth} track="bg-intake" fill="bg-intake-accent" />
                     </div>
                     <div>
                       <div className="flex items-center justify-between text-[11px] mb-1">
-                        <span className="font-bold text-[var(--activity-on-surface)]">Spent</span>
+                        <span className="font-bold text-[var(--activity-on-surface)]">{t('Spent')}</span>
                         <span className="font-extrabold text-[var(--text)]">{money(m.spent)}</span>
                       </div>
                       <Bar value={m.spent} max={maxMonth} track="bg-activity" fill="bg-activity-accent" />

@@ -10,6 +10,7 @@ import { percent, round2 } from '../lib/format';
 import { useApp, useSheet } from '../lib/store';
 import type { Sheet } from '../lib/types';
 import { Banner, ChoiceGrid, SaveRow } from './shared';
+import { t } from '../lib/i18n';
 
 /* ---------- Recurring item ---------- */
 
@@ -17,7 +18,7 @@ export function RecurringEditSheet() {
   const { isOpen, sheet, seq } = useSheet('recurringEdit');
   const { closeSheet } = useApp();
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? 'Edit recurring item' : 'New recurring item'} maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? t('Edit recurring item') : t('New recurring item')} maxWidth="max-w-md">
       {sheet && <RecurringForm key={seq} sheet={sheet} />}
     </Modal>
   );
@@ -43,24 +44,24 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
     if (!valid) return;
     saveRecurring({ id: original?.id, kind, name, amount, categoryId: category, day: safeDay });
     closeSheet();
-    showToast(`${name.trim()} · every month on the ${ordinal(safeDay)}`);
+    showToast(t('{v} · every month on the {v2}', { v: name.trim(), v2: ordinal(safeDay) }));
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-1.5" role="group" aria-label="Kind">
-        <button type="button" aria-pressed={kind === 'expense'} onClick={() => setKind('expense')} className={seg(kind === 'expense')}>Expense</button>
-        <button type="button" aria-pressed={kind === 'income'} onClick={() => setKind('income')} className={seg(kind === 'income')}>Income</button>
+      <div className="flex gap-1.5" role="group" aria-label={t('Kind')}>
+        <button type="button" aria-pressed={kind === 'expense'} onClick={() => setKind('expense')} className={seg(kind === 'expense')}>{t('Expense')}</button>
+        <button type="button" aria-pressed={kind === 'income'} onClick={() => setKind('income')} className={seg(kind === 'income')}>{t('Income')}</button>
       </div>
 
       <div>
-        <SectionLabel htmlFor="rec-name">Name</SectionLabel>
+        <SectionLabel htmlFor="rec-name">{t('Name')}</SectionLabel>
         <input
           id="rec-name"
           type="text"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder={kind === 'expense' ? 'Rent, gym, phone plan' : 'Salary, pension'}
+          placeholder={kind === 'expense' ? t('Rent, gym, phone plan') : t('Salary, pension')}
           maxLength={40}
           autoComplete="off"
           className={`${textInput} text-sm`}
@@ -68,34 +69,34 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
       </div>
 
       <div>
-        <SectionLabel>Amount each month</SectionLabel>
-        <AmountStepper value={amount} onChange={setAmount} unit={symbol} ariaLabel="Amount each month" startOpen={!original} chips={kind === 'expense' ? [5, 10, 50, 100] : [100, 500, 1000]} />
+        <SectionLabel>{t('Amount each month')}</SectionLabel>
+        <AmountStepper value={amount} onChange={setAmount} unit={symbol} ariaLabel={t('Amount each month')} startOpen={!original} chips={kind === 'expense' ? [5, 10, 50, 100] : [100, 500, 1000]} />
       </div>
 
       <div>
-        <SectionLabel>{kind === 'expense' ? 'Category' : 'Source'}</SectionLabel>
-        <ChoiceGrid choices={choices} value={category} onChange={setCategoryId} label={kind === 'expense' ? 'Category' : 'Source'} />
+        <SectionLabel>{kind === 'expense' ? t('Category') : t('Source')}</SectionLabel>
+        <ChoiceGrid choices={choices} value={category} onChange={setCategoryId} label={kind === 'expense' ? t('Category') : t('Source')} />
       </div>
 
       <div>
-        <SectionLabel>Day of the month</SectionLabel>
-        <AmountStepper value={day} onChange={setDay} unit="day" min={1} max={28} decimals={0} ariaLabel="Day of the month" />
-        <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">Days stop at the 28th so every month has one.</p>
+        <SectionLabel>{t('Day of the month')}</SectionLabel>
+        <AmountStepper value={day} onChange={setDay} unit={t('day')} min={1} max={28} decimals={0} ariaLabel={t('Day of the month')} />
+        <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">{t('Days stop at the 28th so every month has one.')}</p>
       </div>
 
       <SaveRow
         tone={kind}
         disabled={!valid}
         onSave={save}
-        label={<>{original ? 'Save changes' : 'Add recurring item'}{amount > 0 && ` · ${money(amount, { cents: true })}`}</>}
+        label={<>{original ? t('Save changes') : t('Add recurring item')}{amount > 0 && ` · ${money(amount, { cents: true })}`}</>}
         onDelete={original ? () => setConfirm(true) : undefined}
-        deleteLabel="Delete this recurring item"
+        deleteLabel={t('Delete this recurring item')}
       />
 
       <ConfirmDialog
         open={confirm}
-        title={`Delete ${original?.name ?? 'this item'}?`}
-        message="It will no longer be offered each month. Entries you already logged stay in your journal."
+        title={t('Delete {v}?', { v: original?.name ?? 'this item' })}
+        message={t('It will no longer be offered each month. Entries you already logged stay in your journal.')}
         onCancel={() => setConfirm(false)}
         onConfirm={() => {
           setConfirm(false);
@@ -113,7 +114,7 @@ export function GoalSheet() {
   const { isOpen, sheet, seq } = useSheet('goal');
   const { closeSheet } = useApp();
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? 'Edit savings goal' : 'New savings goal'} maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={sheet?.id ? t('Edit savings goal') : t('New savings goal')} maxWidth="max-w-md">
       {sheet && <GoalForm key={seq} sheet={sheet} />}
     </Modal>
   );
@@ -140,20 +141,20 @@ function GoalForm({ sheet }: { sheet: Extract<Sheet, { type: 'goal' }> }) {
         <Banner
           tone="saving"
           icon={PigIcon}
-          label="Saved so far"
+          label={t('Saved so far')}
           value={money(saved, { cents: true })}
-          sub={target > 0 ? (saved >= target ? 'Goal reached' : `${percent(saved, target)}% · ${money(target - saved)} to go`) : undefined}
+          sub={target > 0 ? saved >= target ? t('Goal reached') : t('{v}% · {v2} to go', { v: percent(saved, target), v2: money(target - saved) }) : undefined}
         />
       )}
 
       <div>
-        <SectionLabel htmlFor="goal-name">Name</SectionLabel>
+        <SectionLabel htmlFor="goal-name">{t('Name')}</SectionLabel>
         <input
           id="goal-name"
           type="text"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Emergency fund, trip, new bike"
+          placeholder={t('Emergency fund, trip, new bike')}
           maxLength={40}
           autoComplete="off"
           className={`${textInput} text-sm`}
@@ -161,9 +162,9 @@ function GoalForm({ sheet }: { sheet: Extract<Sheet, { type: 'goal' }> }) {
       </div>
 
       <div>
-        <SectionLabel>Target</SectionLabel>
-        <AmountStepper value={target} onChange={setTarget} unit={symbol} step={50} ariaLabel="Target amount" startOpen chips={[100, 500, 1000]} />
-        <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">Leave it at 0 for an open-ended pot.</p>
+        <SectionLabel>{t('Target')}</SectionLabel>
+        <AmountStepper value={target} onChange={setTarget} unit={symbol} step={50} ariaLabel={t('Target amount')} startOpen chips={[100, 500, 1000]} />
+        <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">{t('Leave it at 0 for an open-ended pot.')}</p>
       </div>
 
       {original && (
@@ -172,7 +173,7 @@ function GoalForm({ sheet }: { sheet: Extract<Sheet, { type: 'goal' }> }) {
           onClick={() => openSheet({ type: 'tx', kind: 'saving', categoryId: original.id })}
           className="pressable pressable-soft w-full py-2.5 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] text-sm font-extrabold"
         >
-          Move money to this goal
+          {t('Move money to this goal')}
         </button>
       )}
 
@@ -180,15 +181,15 @@ function GoalForm({ sheet }: { sheet: Extract<Sheet, { type: 'goal' }> }) {
         tone="saving"
         disabled={!valid}
         onSave={save}
-        label={original ? 'Save changes' : 'Create goal'}
+        label={original ? t('Save changes') : t('Create goal')}
         onDelete={original ? () => setConfirm(true) : undefined}
-        deleteLabel="Delete this goal"
+        deleteLabel={t('Delete this goal')}
       />
 
       <ConfirmDialog
         open={confirm}
-        title={`Delete ${original?.name ?? 'this goal'}?`}
-        message="The goal is removed. Money you already moved to it stays in your journal as savings."
+        title={t('Delete {v}?', { v: original?.name ?? 'this goal' })}
+        message={t('The goal is removed. Money you already moved to it stays in your journal as savings.')}
         onCancel={() => setConfirm(false)}
         onConfirm={() => {
           setConfirm(false);
@@ -207,7 +208,7 @@ export function BudgetSheet() {
   const { closeSheet } = useApp();
   const category = sheet ? expenseCategory(sheet.categoryId) : undefined;
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={`${category?.name ?? 'Category'} budget`} subtitle="Per month" maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={t('{v} budget', { v: category?.name ?? 'Category' })} subtitle={t('Per month')} maxWidth="max-w-md">
       {sheet && <BudgetForm key={seq} sheet={sheet} />}
     </Modal>
   );
@@ -235,12 +236,12 @@ function BudgetForm({ sheet }: { sheet: Extract<Sheet, { type: 'budget' }> }) {
       <Banner
         tone={category.bucket}
         icon={category.icon}
-        label={`Spent in ${formatMonth(selectedMonth, 'long', false)}`}
+        label={t('Spent in {v}', { v: formatMonth(selectedMonth, 'long', false) })}
         value={money(spent, { cents: true })}
-        sub={amount > 0 ? (left >= 0 ? `${money(left)} left` : `${money(-left)} over`) : 'No budget'}
+        sub={amount > 0 ? left >= 0 ? t('{v} left', { v: money(left) }) : t('{v} over', { v: money(-left) }) : t('No budget')}
       />
 
-      <AmountStepper value={amount} onChange={setAmount} unit={symbol} step={10} ariaLabel="Monthly budget" startOpen chips={[10, 50, 100]} />
+      <AmountStepper value={amount} onChange={setAmount} unit={symbol} step={10} ariaLabel={t('Monthly budget')} startOpen chips={[10, 50, 100]} />
 
       <div className="flex flex-wrap gap-1.5">
         {average > 0 && (
@@ -249,7 +250,7 @@ function BudgetForm({ sheet }: { sheet: Extract<Sheet, { type: 'budget' }> }) {
             onClick={() => setAmount(Math.ceil(average / 10) * 10)}
             className="pressable px-3 py-2 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-xs font-extrabold text-[var(--muted)] hover:text-[var(--text)] tabular-nums"
           >
-            Use recent average · {money(Math.ceil(average / 10) * 10)}
+            {t('Use recent average ·')} {money(Math.ceil(average / 10) * 10)}
           </button>
         )}
         {amount > 0 && (
@@ -258,7 +259,7 @@ function BudgetForm({ sheet }: { sheet: Extract<Sheet, { type: 'budget' }> }) {
             onClick={() => setAmount(0)}
             className="pressable px-3 py-2 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-xs font-extrabold text-[var(--muted)] hover:text-[var(--text)]"
           >
-            No budget
+            {t('No budget')}
           </button>
         )}
       </div>
@@ -269,7 +270,7 @@ function BudgetForm({ sheet }: { sheet: Extract<Sheet, { type: 'budget' }> }) {
           setBudget(category.id, amount);
           closeSheet();
         }}
-        label={amount > 0 ? `Save · ${money(amount)} a month` : 'Save without a budget'}
+        label={amount > 0 ? t('Save · {v} a month', { v: money(amount) }) : t('Save without a budget')}
       />
     </div>
   );

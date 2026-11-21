@@ -1,4 +1,5 @@
 import { ICON_SIZE, logoMarkup, TILE_RADIUS, WORDMARK_BOX, wordmarkMarkup } from '../brand/art.js';
+import { t } from '../lib/i18n';
 
 interface BrandProps {
   className?: string;
@@ -25,7 +26,7 @@ export function Wordmark({ className = '' }: BrandProps) {
   return (
     <span
       role="img"
-      aria-label="Koink"
+      aria-label={t('Koink')}
       className={`koink-wordmark inline-flex items-center text-[var(--text)] [&>svg]:block [&>svg]:h-full [&>svg]:w-auto ${className}`}
       dangerouslySetInnerHTML={{ __html: WORDMARK_SVG }}
     />

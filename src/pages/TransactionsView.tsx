@@ -7,6 +7,7 @@ import { KeyIcon } from '../components/ui';
 import { useApp } from '../lib/store';
 import type { Kind, Tx } from '../lib/types';
 import { usePersistentState } from '../lib/usePersistentState';
+import { t } from '../lib/i18n';
 
 type Filter = 'all' | Kind;
 const FILTERS: { id: Filter; label: string }[] = [
@@ -49,11 +50,11 @@ function EntryRow({ tx }: { tx: Tx }) {
         </span>
         <span className="min-w-0 flex-1">
           <span className="text-xs sm:text-sm font-bold text-[var(--text)] truncate flex items-center gap-1">
-            <span className="truncate">{title}</span>
-            {tx.details && <StickyNote size={11} strokeWidth={2.4} className="shrink-0 text-[var(--muted)]" aria-label="Has a note" />}
+            <span className="truncate">{t(title)}</span>
+            {tx.details && <StickyNote size={11} strokeWidth={2.4} className="shrink-0 text-[var(--muted)]" aria-label={t('Has a note')} />}
           </span>
           <span className="um-hide text-[11px] font-medium text-[var(--muted)] flex items-center gap-1 min-w-0">
-            {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label="Recurring" className="shrink-0" />}
+            {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label={t('Recurring')} className="shrink-0" />}
             <span className="truncate">{meta.name}</span>
             {account && (
               <>
@@ -82,8 +83,8 @@ function EntryRow({ tx }: { tx: Tx }) {
         type="button"
         onClick={() => removeTx(tx.id)}
         className="pressable mr-1 size-9 shrink-0 rounded-full text-[var(--muted)] hover:text-[#8C2D32] hover:bg-[#F6D0D0] flex items-center justify-center"
-        title="Delete"
-        aria-label={`Delete ${title}`}
+        title={t('Delete')}
+        aria-label={t('Delete {title}', { title })}
       >
         <Trash2 size={15} />
       </button>
@@ -170,8 +171,8 @@ export function TransactionsView() {
             setQuery(event.target.value);
             setLimit(PAGE);
           }}
-          placeholder="Search titles, notes, categories, amounts"
-          aria-label="Search entries"
+          placeholder={t('Search titles, notes, categories, amounts')}
+          aria-label={t('Search entries')}
           enterKeyHint="search"
           className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-full pl-11 pr-11 py-2.5 text-sm font-bold text-[var(--text)] placeholder:text-[var(--muted)]/70 placeholder:font-medium focus:outline-none focus:border-[var(--muted)] transition-colors [&::-webkit-search-cancel-button]:hidden"
         />
@@ -179,7 +180,7 @@ export function TransactionsView() {
           <button
             type="button"
             onClick={() => setQuery('')}
-            aria-label="Clear search"
+            aria-label={t('Clear search')}
             className="pressable absolute right-1.5 top-1/2 -translate-y-1/2 size-8 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
           >
             <X size={15} />
@@ -188,7 +189,7 @@ export function TransactionsView() {
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2">
-        <div role="group" aria-label="Show" className="inline-flex w-fit max-w-full items-center justify-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
+        <div role="group" aria-label={t('Show')} className="inline-flex w-fit max-w-full items-center justify-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
           {FILTERS.map((item) => (
             <button
               key={item.id}
@@ -204,11 +205,11 @@ export function TransactionsView() {
                   : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
               }`}
             >
-              {item.label}
+              {t(item.label)}
             </button>
           ))}
         </div>
-        <div role="group" aria-label="Layout" className="um-hide inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
+        <div role="group" aria-label={t('Layout')} className="um-hide inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
           {VIEWS.map((item) => {
             const Icon = item.icon;
             return (
@@ -217,7 +218,7 @@ export function TransactionsView() {
                 type="button"
                 aria-pressed={view === item.id}
                 onClick={() => setView(item.id)}
-                title={item.id === 'list' ? 'One list, newest first' : 'Each day in its own card, side by side'}
+                title={item.id === 'list' ? t('One list, newest first') : t('Each day in its own card, side by side')}
                 className={`pressable inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap ${
                   view === item.id
                     ? 'bg-[var(--text)] text-[var(--on-text)]'
@@ -225,7 +226,7 @@ export function TransactionsView() {
                 }`}
               >
                 <Icon size={14} aria-hidden="true" />
-                {item.label}
+                {t(item.label)}
               </button>
             );
           })}
@@ -233,16 +234,16 @@ export function TransactionsView() {
       </div>
 
       <p className="px-1 text-center text-xs font-bold tabular-nums text-[var(--muted)]" aria-live="polite">
-        {filtered.length} {filtered.length === 1 ? 'entry' : 'entries'}
-        {sums.in > 0 && <> · in {money(sums.in)}</>}
-        {sums.out > 0 && <> · out {money(sums.out)}</>}
+        {filtered.length} {filtered.length === 1 ? t('entry') : t('entries')}
+        {sums.in > 0 && <> {t('· in')} {money(sums.in)}</>}
+        {sums.out > 0 && <> {t('· out')} {money(sums.out)}</>}
       </p>
 
       {groups.length === 0 ? (
         <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl px-5 py-8 text-center">
-          <p className="text-sm font-extrabold text-[var(--text)]">{data.txs.length === 0 ? 'No entries yet' : 'Nothing matches'}</p>
+          <p className="text-sm font-extrabold text-[var(--text)]">{data.txs.length === 0 ? t('No entries yet') : t('Nothing matches')}</p>
           <p className="kc-section-empty mt-1 text-xs font-medium text-[var(--muted)]">
-            {data.txs.length === 0 ? 'Use the buttons at the bottom to log your first expense or income.' : 'Try another word, or show all kinds of entries.'}
+            {data.txs.length === 0 ? t('Use the buttons at the bottom to log your first expense or income.') : t('Try another word, or show all kinds of entries.')}
           </p>
           {data.txs.length > 0 && (query || filter !== 'all') && (
             <button
@@ -253,7 +254,7 @@ export function TransactionsView() {
               }}
               className="pressable mt-4 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] px-4 py-2 text-xs font-extrabold text-[var(--text)]"
             >
-              Show everything
+              {t('Show everything')}
             </button>
           )}
         </div>
@@ -278,7 +279,7 @@ export function TransactionsView() {
             ref={rail}
             data-no-swipe
             tabIndex={0}
-            aria-label="Days, side by side. Scroll sideways."
+            aria-label={t('Days, side by side. Scroll sideways.')}
             className="no-scrollbar -mx-3.5 sm:-mx-6 px-3.5 sm:px-6 flex items-start gap-3 overflow-x-auto overscroll-x-contain snap-x snap-mandatory scroll-px-3.5 sm:scroll-px-6 pb-1 focus:outline-none"
           >
             {visible.map((group) => (
@@ -302,17 +303,17 @@ export function TransactionsView() {
                   onClick={more}
                   className="pressable rounded-full bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] px-4 py-2 text-xs font-extrabold text-[var(--text)]"
                 >
-                  Older days
+                  {t('Older days')}
                 </button>
               </div>
             )}
           </div>
           {visible.length > 1 && (
             <div className="hidden md:flex items-center justify-center gap-2 mt-2.5">
-              <button type="button" onClick={() => nudge(-1)} aria-label="Scroll to newer days" className="pressable size-9 rounded-full bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center">
+              <button type="button" onClick={() => nudge(-1)} aria-label={t('Scroll to newer days')} className="pressable size-9 rounded-full bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center">
                 <ChevronLeft size={17} />
               </button>
-              <button type="button" onClick={() => nudge(1)} aria-label="Scroll to older days" className="pressable size-9 rounded-full bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center">
+              <button type="button" onClick={() => nudge(1)} aria-label={t('Scroll to older days')} className="pressable size-9 rounded-full bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center">
                 <ChevronRight size={17} />
               </button>
             </div>
@@ -327,7 +328,7 @@ export function TransactionsView() {
             onClick={more}
             className="pressable rounded-full bg-[var(--surface)] hover:bg-[var(--hover)] border border-[var(--border)] px-4 py-2 text-xs font-extrabold text-[var(--text)]"
           >
-            Show older days
+            {t('Show older days')}
           </button>
         </div>
       )}

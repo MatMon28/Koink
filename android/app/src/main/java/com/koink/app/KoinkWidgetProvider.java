@@ -21,7 +21,7 @@ import org.json.JSONObject;
  * The three home-screen widgets: one button ({@link Single}), several buttons ({@link Multi}) and one button
  * per expense category ({@link Categories}). They draw whatever the web app last handed over through
  * {@code KoinkDevice.setWidgets} (src/lib/widgetBridge.ts): label, colours, an icon PNG and a link for each
- * button. A tap opens the app with that link ({@code koink://widget?a=<action>}), which the web app turns
+ * button, plus the app's theme colours. The widget's shape follows the number of buttons (circle, pill, card). A tap opens the app with that link ({@code koink://widget?a=<action>}), which the web app turns
  * into the matching sheet (src/lib/useWidgets.ts). Layouts use only RemoteViews-safe classes.
  */
 public abstract class KoinkWidgetProvider extends AppWidgetProvider {
@@ -50,7 +50,7 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         if (buttons == null || buttons.length() == 0) {
             // Nothing handed over yet (the app has not been opened since the widget was added).
             root.setViewVisibility(R.id.empty, android.view.View.VISIBLE);
-            root.setViewVisibility(R.id.rows, android.view.View.GONE);
+            root.setViewVisibility(R.id.tray, android.view.View.GONE);
             Intent open = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
             if (open != null) {
                 root.setOnClickPendingIntent(R.id.root, PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
@@ -59,13 +59,35 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         }
 
         root.setViewVisibility(R.id.empty, android.view.View.GONE);
-        root.setViewVisibility(R.id.rows, android.view.View.VISIBLE);
-        // The single button is just the tile; the others sit on a soft tray.
-        if (buttons.length() == 1) root.setInt(R.id.root, "setBackgroundColor", Color.TRANSPARENT);
+        root.setViewVisibility(R.id.tray, android.view.View.VISIBLE);
 
-        // Category widget: four per row. The others: one row up to four buttons, then two rows.
+        // The app's own colours (Light, Soft dark, Dark), handed over with the buttons.
+        JSONObject theme = theme(context);
+        int surface = color(theme == null ? null : theme.optString("surface"), Color.parseColor("#FBF8F2"));
+        int border = color(theme == null ? null : theme.optString("border"), Color.parseColor("#E2D9C8"));
+        int text = color(theme == null ? null : theme.optString("text"), Color.parseColor("#24201C"));
+
+        // The widget's shape follows its buttons (mirrors widgetShape / widgetColumns in src/lib/widgets.ts):
+        // one button = a lone circle, two to four = a pill with one row, five or more = a rounded card of
+        // three (up to six buttons) or four buttons per row.
         int count = buttons.length();
-        int perRow = "categories".equals(kind()) ? 4 : (count > 4 ? (count + 1) / 2 : count);
+        int perRow = count <= 4 ? Math.max(1, count) : (count <= 6 ? 3 : 4);
+
+        if (count == 1) {
+            root.setViewVisibility(R.id.tray_border, android.view.View.GONE);
+            root.setViewVisibility(R.id.tray_fill, android.view.View.GONE);
+            root.setViewPadding(R.id.rows, 0, 0, 0, 0);
+        } else {
+            int tray = count <= 4 ? R.drawable.widget_tray_pill : R.drawable.widget_tray_card;
+            root.setViewVisibility(R.id.tray_border, android.view.View.VISIBLE);
+            root.setViewVisibility(R.id.tray_fill, android.view.View.VISIBLE);
+            root.setImageViewResource(R.id.tray_border, tray);
+            root.setImageViewResource(R.id.tray_fill, tray);
+            root.setInt(R.id.tray_border, "setColorFilter", border);
+            root.setInt(R.id.tray_fill, "setColorFilter", surface);
+            float d = context.getResources().getDisplayMetrics().density;
+            root.setViewPadding(R.id.rows, (int) (8 * d), (int) (6 * d), (int) (8 * d), (int) (6 * d));
+        }
 
         RemoteViews row = null;
         for (int i = 0; i < count; i++) {
@@ -74,27 +96,20 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
                 row = new RemoteViews(context.getPackageName(), R.layout.widget_row);
             }
             JSONObject button = buttons.optJSONObject(i);
-            if (button != null && row != null) row.addView(R.id.row, tile(context, button));
+            if (button != null && row != null) row.addView(R.id.row, tile(context, button, count == 1, text));
         }
-        if (row != null) {
-            // Short last row of the category grid: pad it so the tiles keep their size.
-            if ("categories".equals(kind())) {
-                for (int pad = count % perRow; pad != 0 && pad < perRow; pad++) {
-                    row.addView(R.id.row, new RemoteViews(context.getPackageName(), R.layout.widget_button_pad));
-                }
-            }
-            root.addView(R.id.rows, row);
-        }
+        if (row != null) root.addView(R.id.rows, row);
         return root;
     }
 
-    private RemoteViews tile(Context context, JSONObject button) {
-        RemoteViews tile = new RemoteViews(context.getPackageName(), R.layout.widget_button);
+    private RemoteViews tile(Context context, JSONObject button, boolean lone, int textColor) {
+        RemoteViews tile = new RemoteViews(context.getPackageName(), lone ? R.layout.widget_button_single : R.layout.widget_button);
         int bg = color(button.optString("bg"), Color.parseColor("#FBF8F2"));
-        int fg = color(button.optString("fg"), Color.parseColor("#24201C"));
         tile.setInt(R.id.tile_bg, "setColorFilter", bg);
-        tile.setTextViewText(R.id.label, button.optString("label"));
-        tile.setTextColor(R.id.label, fg);
+        if (!lone) {
+            tile.setTextViewText(R.id.label, button.optString("label"));
+            tile.setTextColor(R.id.label, textColor);
+        }
         Bitmap icon = icon(button.optString("icon"));
         if (icon != null) tile.setImageViewBitmap(R.id.icon, icon);
         String uri = button.optString("uri");
@@ -108,6 +123,7 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
     }
 
     private static int color(String hex, int fallback) {
+        if (hex == null || hex.isEmpty()) return fallback;
         try {
             return Color.parseColor(hex);
         } catch (IllegalArgumentException e) {
@@ -121,6 +137,17 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
             byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
             return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
         } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /** The app's surface / border / text colours as last handed over, or null before the first hand-over. */
+    private JSONObject theme(Context context) {
+        String json = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_JSON, null);
+        if (json == null) return null;
+        try {
+            return new JSONObject(json).optJSONObject("theme");
+        } catch (org.json.JSONException e) {
             return null;
         }
     }
@@ -155,12 +182,12 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         @Override protected String kind() { return "single"; }
     }
 
-    /** The buttons the user picks (up to six, two rows from five). */
+    /** The buttons the user picks (up to six, three per row from five). */
     public static class Multi extends KoinkWidgetProvider {
         @Override protected String kind() { return "multi"; }
     }
 
-    /** One button per expense category: a tap opens Add expense with it chosen. Four per row. */
+    /** One button per expense category: a tap opens Add expense with it chosen. Four per row from seven buttons. */
     public static class Categories extends KoinkWidgetProvider {
         @Override protected String kind() { return "categories"; }
     }
