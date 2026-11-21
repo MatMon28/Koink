@@ -2,7 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type PointerEvent 
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { pushBackLayer } from '../lib/back';
-import { getDockTarget } from '../lib/dock';
+import { getDockCenterTarget, getDockTarget } from '../lib/dock';
 import { SPRING } from '../lib/spring';
 import { releaseSpeed, trackSample, type Sample } from '../lib/velocity';
 import { t } from '../lib/i18n';
@@ -16,6 +16,8 @@ interface ModalProps {
   maxWidth?: string;
   /** Id of the dock button that opens this sheet: on close the sheet is sucked into it. */
   dockId?: string;
+  /** Profile and Settings: no dock button opens them, so on close they are sucked into the middle of the whole button bar. */
+  dockCenter?: boolean;
   /**
    * Asked when a swipe down is released far enough to close. Return false when the owner will ask a
    * question instead of closing (unsaved input): the sheet then springs back at once.
@@ -100,7 +102,7 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select
  * handle or header, closes with Escape, Back or a tap on the scrim, follows the on-screen keyboard,
  * and leaves with a short animation that never blocks the page behind it.
  */
-export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = 'max-w-lg', dockId, canClose }: ModalProps) {
+export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = 'max-w-lg', dockId, dockCenter, canClose }: ModalProps) {
   const [mounted, setMounted] = useState(isOpen);
   const viewportRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -241,7 +243,7 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
       return null;
     }
     const rect = dialog.getBoundingClientRect();
-    const target = getDockTarget(dockId);
+    const target = dockCenter ? getDockCenterTarget() : getDockTarget(dockId);
     const to: Keyframe = target
       ? {
           // `rect` already includes how far the sheet was dragged, so the deltas start from there.
@@ -265,7 +267,7 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
     anim.onfinish = () => {
       if (done) return;
       target?.pulse.animate?.(
-        [{ transform: 'scale(1)' }, { transform: 'scale(1.16)' }, { transform: 'scale(1)' }],
+        [{ transform: 'scale(1)' }, { transform: `scale(${target.pulse.hasAttribute('data-dock') ? 1.05 : 1.16})` }, { transform: 'scale(1)' }], // the whole bar swells less than one button
         { duration: PULSE_MS, easing: SPRING.bounce.easing },
       );
       end();
@@ -290,7 +292,7 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
     beginExit();
     return () => exitRef.current?.cancel(); // opened again, or unmounted, while it was playing
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, mounted, dockId]);
+  }, [isOpen, mounted, dockId, dockCenter]);
 
   if (!mounted) return null;
 

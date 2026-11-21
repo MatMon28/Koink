@@ -20,7 +20,7 @@ export function ProfileSheet() {
   const { isOpen, seq } = useSheet('profile');
   const { closeSheet } = useApp();
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={t('Profile')} maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={t('Profile')} dockCenter maxWidth="max-w-md">
       <ProfileForm key={seq} />
     </Modal>
   );

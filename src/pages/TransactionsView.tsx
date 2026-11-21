@@ -287,32 +287,6 @@ export function TransactionsView() {
         </div>
       </div>
 
-      {/* View type (layout): above the search bar */}
-      <div className="um-hide flex justify-center">
-        <div role="group" aria-label={t('Layout')} className="inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
-          {VIEWS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={view === item.id}
-                onClick={() => setView(item.id)}
-                title={t(item.hint)}
-                className={`pressable inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap ${
-                  view === item.id
-                    ? 'bg-[var(--text)] text-[var(--on-text)]'
-                    : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
-                }`}
-              >
-                <Icon size={14} aria-hidden="true" />
-                {t(item.label)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Search bar with the filter button next to it */}
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
@@ -451,11 +425,36 @@ export function TransactionsView() {
         </div>
       </div>
 
-      <p className="px-1 text-center text-xs font-bold tabular-nums text-[var(--muted)]" aria-live="polite">
-        {filtered.length} {filtered.length === 1 ? t('entry') : t('entries')}
-        {sums.in > 0 && <> {t('· in')} {money(sums.in)}</>}
-        {sums.out > 0 && <> {t('· out')} {money(sums.out)}</>}
-      </p>
+      {/* Entries recap, with the layout switch (icons only) at its right end */}
+      <div className="flex items-center justify-between gap-3 px-1">
+        <p className="min-w-0 text-xs font-bold tabular-nums text-[var(--muted)]" aria-live="polite">
+          {filtered.length} {filtered.length === 1 ? t('entry') : t('entries')}
+          {sums.in > 0 && <> {t('· in')} {money(sums.in)}</>}
+          {sums.out > 0 && <> {t('· out')} {money(sums.out)}</>}
+        </p>
+        <div role="group" aria-label={t('Layout')} className="um-hide inline-flex shrink-0 items-center gap-0.5 p-0.5 bg-[var(--surface)] border border-[var(--border)] rounded-full">
+          {VIEWS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={view === item.id}
+                aria-label={t(item.label)}
+                onClick={() => setView(item.id)}
+                title={t(item.hint)}
+                className={`pressable inline-flex size-7 items-center justify-center rounded-full ${
+                  view === item.id
+                    ? 'bg-[var(--text)] text-[var(--on-text)]'
+                    : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
+                }`}
+              >
+                <Icon size={14} aria-hidden="true" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {groups.length === 0 ? (
         <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl px-5 py-8 text-center">

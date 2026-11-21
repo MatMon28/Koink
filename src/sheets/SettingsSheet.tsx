@@ -89,7 +89,7 @@ export function SettingsSheet() {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={t('Settings')} maxWidth="max-w-lg">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={t('Settings')} dockCenter maxWidth="max-w-lg">
       <div className="space-y-5">
         {/* Language: the first thing in Settings */}
         <div>

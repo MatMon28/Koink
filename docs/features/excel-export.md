@@ -8,6 +8,8 @@
 
 The `.xlsx` is **for people**: to read, filter, print or send to an accountant. It is **not a backup**: nothing can be restored from it (the JSON file from *Save backup* is the only backup), and the file says so on its first sheet.
 
+> **Status (checked):** complete. The button sits in Settings > *Your data*, in the backup block under *Save backup* / *Restore backup*, so no new code was needed. A workbook built from the sample journal (232 entries) is a valid `.xlsx` with the Summary, Transactions, Budgets, Goals and Accounts sheets.
+
 ## What is in it
 
 | Sheet | Contents |

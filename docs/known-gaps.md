@@ -84,3 +84,7 @@
 - The currency lock looks at the journal only. Restoring a backup in another currency is allowed (the preview warns about it).
 - **The Excel file is a snapshot, not a backup**, and has only been opened by reading its XML and sheet list, not in Excel, LibreOffice or Numbers. Dates are real Excel dates (UTC midnight); money uses `#,##0.00` with the currency code in the header rather than a currency format. It covers every entry; budgets are for the month open in the app. See [features/excel-export.md](features/excel-export.md).
 - The Excel library (`write-excel-file`, about 80 kB) is a separate chunk loaded on demand, but the offline worker precaches it with the rest of the build.
+
+## This round (transactions switch, page pill, sheets into the bar)
+
+- `tsc`, `eslint` and `vite build` pass, and a workbook built from the sample journal was unzipped to confirm its five sheets. The new motion (the pill moving at once after a committed swipe, Profile / Settings flying into the middle of the button bar, the icon-only layout switch beside the recap) was **not watched in a browser or on a phone**: headless Chromium could not start where this was written (missing system libraries). Check them by hand: swipe between pages and watch the pill; open and close Profile and Settings; open Transactions in List and 2 days, also with Ultra minimal on (the switch is hidden there, the recap stays).

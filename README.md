@@ -25,7 +25,7 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | Task | Source files | Document |
 | --- | --- | --- |
 | **Month page** (hero cards, needs / wants / savings, category cards, layouts) | `src/pages/MonthView.tsx`, `src/components/cards.tsx` | [features/month.md](docs/features/month.md) |
-| **Transactions page** (kind chips and the layout switch above the search, filter panel, month sections, list / 2 days, category first and title below, quick delete) | `src/pages/TransactionsView.tsx` | [features/transactions.md](docs/features/transactions.md) |
+| **Transactions page** (kind chips above the search, the layout switch at the right of the entries recap, filter panel, month sections, list / 2 days, category first and title below, quick delete) | `src/pages/TransactionsView.tsx` | [features/transactions.md](docs/features/transactions.md) |
 | **Budgets page** (collapsible cards, category budgets per type, goals, recurring list; hiding the page) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx`, `src/lib/tabs.ts`, `budgetSummary` in `src/lib/calc.ts` (what the headline figure covers, unbudgeted spending), `NoteCard` in `src/components/cards.tsx` | [features/budgets.md](docs/features/budgets.md) |
 | **Statistics page** (1 month / 3 / 6 / 12 / custom period, averages, expense chart with line, comparison and full view, balance trend, breakdown) | `src/pages/StatsView.tsx`, `src/components/ExpenseChart.tsx` (the *Expenses over time* card), `src/lib/expenseSeries.ts` | [features/statistics.md](docs/features/statistics.md) |
 | **Add / edit an entry** (number pad, title + long note, account, currency), "Log again" | `src/sheets/TxSheet.tsx`, `src/sheets/QuickSheet.tsx`, `src/sheets/shared.tsx`, `NumPad` / `AmountStepper` in `src/components/ui.tsx` | [features/entries.md](docs/features/entries.md) |
@@ -43,7 +43,7 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **Excel export** (a readable spreadsheet, not a backup) | `src/lib/excel.ts` (loaded on demand), `saveBlobFile` in `src/lib/platform.ts`, the *Export to Excel* button in `src/sheets/SettingsSheet.tsx` | [features/excel-export.md](docs/features/excel-export.md) |
 | **Themes and style presets** | `src/lib/themes.ts`, `src/index.css`, `src/styles/presets.css` | [features/themes.md](docs/features/themes.md), [design-system.md](docs/design-system.md) |
 | **Smooth sheet drag / header scroll, logo click animation** | `src/components/Modal.tsx`, `src/components/Header.tsx`, end of `src/index.css` | [motion.md](docs/motion.md#smoothness-fixes-sheet-drag-scrolling) |
-| **Swipes, Back button, drag-to-close** | `src/components/PageSwiper.tsx`, `src/lib/back.ts`, `src/components/Modal.tsx`, `src/components/MonthNavigator.tsx`, `src/lib/velocity.ts` | [gestures.md](docs/gestures.md) |
+| **Swipes, Back button, drag-to-close** | `src/components/PageSwiper.tsx`, `src/lib/pillTab.ts`, `src/lib/back.ts`, `src/components/Modal.tsx`, `src/components/MonthNavigator.tsx`, `src/lib/velocity.ts` | [gestures.md](docs/gestures.md) |
 | **Reminder notifications** | `src/lib/reminders.ts` (plan), `src/lib/notifications.ts` (delivery), `src/lib/useReminders.ts`, `src/sheets/NotificationSettings.tsx` | [notifications.md](docs/notifications.md) |
 | **Ultra minimal mode** | `um-*` classes at the end of `src/index.css`, `src/components/cards.tsx`, `Tabs.tsx`, `MonthNavigator.tsx` | [features/ultra-minimal.md](docs/features/ultra-minimal.md) |
 | **Launch animations, first paint, Android launch-screen colour** | `src/brand/art.js` (`INTRO_ANIMATIONS`), `src/lib/intro.ts`, `src/styles/intro.css`, `src/lib/earlyStart.ts`, inline script in `index.html`; Android: `LaunchBackground.java`, `values/splash_themes.xml`, `scripts/generate-splash-themes.mjs` | [launch-intro.md](docs/launch-intro.md) |
@@ -57,7 +57,7 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **State, actions, what is stored** | `src/lib/store.tsx`, `src/lib/types.ts`, `src/lib/storage.ts` | [data-model.md](docs/data-model.md) |
 | **Money maths** (totals, shares, budgets, formatting) | `src/lib/calc.ts`, `src/lib/format.ts`, `src/lib/dates.ts` | [data-model.md](docs/data-model.md) |
 | **Categories and income sources** | `src/lib/categories.ts` | [data-model.md](docs/data-model.md) |
-| **Header, page pill, bottom dock (always visible), sheets, toasts** | `src/components/Header.tsx`, `Tabs.tsx`, `ActionDock.tsx`, `Modal.tsx`, `ui.tsx` | [architecture.md](docs/architecture.md) |
+| **Header, page pill, bottom dock (always visible), sheets, toasts** | `src/components/Header.tsx`, `Tabs.tsx`, `ActionDock.tsx`, `Modal.tsx`, `ui.tsx`, `src/lib/pillTab.ts`, `src/lib/dock.ts` | [architecture.md](docs/architecture.md) |
 | **Shared inputs** (amount stepper, switch, confirm dialog) | `src/components/ui.tsx` | [file-map/components.md](docs/file-map/components.md) |
 | **How the whole thing fits together** | `src/App.tsx`, `src/main.tsx` | [architecture.md](docs/architecture.md) |
 | **Which file does X?** | | [file-map/README.md](docs/file-map/README.md) |
@@ -88,7 +88,14 @@ docs/                 documentation (index: docs/README.md)
 3. Every sheet is a `<Modal>`; every sheet is opened with `openSheet({ type: ... })`. The list of types is the `Sheet` union in `src/lib/types.ts`.
 4. After adding, renaming or deleting a file, update its row in `docs/file-map/` and, if it is a feature, the matching `docs/features/*.md` (rule and table in [docs/README.md](docs/README.md#keeping-the-docs-current)).
 
-## Newest round: data safety, budget scope, Excel export
+## Newest round: transactions switch, instant page pill, sheets sucked into the bar
+
+- **Transactions:** the **List / 2 days** switch now sits at the **right end of the entries recap** line ("12 entries · in … · out …") and shows **icons only** (no text; the names stay as tooltip and screen-reader label). [docs/features/transactions.md](docs/features/transactions.md)
+- **Page pill:** when a swipe changes the page, the coloured pill now moves **the moment the swipe is committed**; it used to wait until the page had finished sliding (about 170 ms later). New `src/lib/pillTab.ts`, used by `Tabs.tsx` and `PageSwiper.tsx`. [docs/gestures.md](docs/gestures.md), [docs/motion.md](docs/motion.md)
+- **Profile and Settings** close by being **sucked into the middle of the button bar** (the whole dock, which pulses a little), like the sheets that dock buttons open. New `getDockCenterTarget()` in `src/lib/dock.ts` and the `dockCenter` prop of `Modal`. Without a dock on screen they drop away as before. [docs/motion.md](docs/motion.md)
+- **Excel export:** checked, nothing to build: it was already complete (Settings > *Your data*, next to *Save backup* / *Restore backup*). A workbook made from the sample journal opens with its five sheets. [docs/features/excel-export.md](docs/features/excel-export.md)
+
+## Previous round: data safety, budget scope, Excel export
 
 - **Currency lock:** the journal's currency can no longer be switched once the journal holds amounts (entries, budgets, goal targets, opening balances...). Amounts are bare numbers, so a switch would have relabelled them (100 EUR shown as 100 USD) without converting. Settings explains this and how to start in another currency; `updateSettings` also refuses it as a safety net. The untouched sample journal is exempt. [docs/features/currencies.md](docs/features/currencies.md)
 - **Restore with a preview:** choosing a backup file now only validates it. A dialog shows entries, date range, currency, accounts, goals and budgets of the file next to the current journal, says *This will replace your current journal*, and offers to save a copy of the current one first. Nothing changes until *Replace journal*. [docs/features/backup.md](docs/features/backup.md)

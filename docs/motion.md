@@ -27,6 +27,7 @@ A damped spring is sampled into a CSS `linear()` easing, so CSS transitions, key
 | Page swipe | the current page and its neighbour move together under the finger; a committed swipe finishes in 90-170 ms, a cancelled one springs back with the soft curve ([gestures.md](gestures.md)) |
 | Page reached by the pill or Back | slides in 28 px from the side it lies on, soft curve |
 | Dock | enters from the side the page came from (`--kc-swipe-dir`); always visible, it no longer hides on scroll |
+| Page pill | follows a committed swipe at once (`lib/pillTab.ts`); before, it changed when the page had finished travelling |
 | Month change | the Month page's content slides in from the side of the newer month |
 | A changed total (`.anim-value`) | settles in from 7 px below |
 | Collapsible cards and settings groups | height animated with a CSS grid (`.accordion-grid`), 300 ms |
@@ -36,7 +37,7 @@ A damped spring is sampled into a CSS `linear()` easing, so CSS transitions, key
 
 - **In:** rises 28 px with the soft curve (`.anim-dialog`), the scrim fades in.
 - **Dragged:** follows the finger; a refused or short drag springs back with the soft curve.
-- **Out:** shrinks into the dock button that opened it (which answers with a small pulse), or drops 48 px and fades when there is no such button. The exit is short on purpose:
+- **Out:** shrinks into the dock button that opened it (which answers with a small pulse), or drops 48 px and fades when there is no such button. **Profile and Settings** (`dockCenter` prop) have no button of their own: they are sucked into the **middle of the whole button bar** (`getDockCenterTarget()` in `lib/dock.ts`), the bar gives a smaller pulse (x1.05 instead of x1.16), and without a bar on screen they drop away. The exit is short on purpose:
 
 | Constant | Value | Meaning |
 | --- | --- | --- |

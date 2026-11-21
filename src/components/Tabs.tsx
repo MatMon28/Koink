@@ -1,6 +1,7 @@
 import { ListOrdered, Target, TrendingUp, Wallet } from 'lucide-react';
 import { useApp } from '../lib/store';
 import { tabOrder } from '../lib/tabs';
+import { usePillTab } from '../lib/pillTab';
 import type { ActiveTab } from '../lib/types';
 import { t } from '../lib/i18n';
 
@@ -13,12 +14,13 @@ const NAV_META: Record<ActiveTab, { label: string; icon: typeof Wallet; activeCl
 };
 export function Tabs() {
   const { activeTab, setActiveTab, data } = useApp();
+  const shownTab = usePillTab() ?? activeTab; // a committed swipe moves the pill at once, not when the page has landed
   const ultra = data.settings.ultraMinimal; // only icons: the active page is a filled circle
   // The order is tabOrder(), the same one the page swipe follows (Budgets can be hidden in Settings).
   const navItems = tabOrder().map((id) => ({ id, ...NAV_META[id] }));
 
   const select = (id: ActiveTab) => {
-    if (activeTab === id) window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (shownTab === id) window.scrollTo({ top: 0, behavior: 'smooth' });
     else setActiveTab(id);
   };
 
@@ -30,7 +32,7 @@ export function Tabs() {
       >
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
+          const isActive = shownTab === item.id;
           return (
             <button
               key={item.id}

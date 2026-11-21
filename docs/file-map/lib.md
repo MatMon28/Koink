@@ -42,7 +42,8 @@
 | `widgetBridge.ts` | `buildNativeWidgets` | Android: turns the widget settings into the JSON the native widgets draw (icons as PNG) | [../features/widgets.md](../features/widgets.md) |
 | `useWidgets.ts` | `useRunWidgetAction`, `useWidgetSync` | Runs a widget action; keeps the native widgets in step and opens the screen behind a tapped one | [../features/widgets.md](../features/widgets.md) |
 | `pwa.ts` | `registerOfflineWorker`, `initInstallPrompt`, `promptInstall`, `useInstallState`, `InstallState`, `takeLaunchAction` | Offline-worker registration, install-prompt state, launch requests (`?add=`, `?open=`). See [../pwa.md](../pwa.md) |
-| `dock.ts` | `getDockTarget`, `DockTarget` | Finds the dock button a closing sheet should fly into |
+| `dock.ts` | `getDockTarget`, `getDockCenterTarget`, `DockTarget` | Finds the dock button a closing sheet should fly into, or the middle of the whole bar (Profile, Settings) |
+| `pillTab.ts` | `setPillTab`, `usePillTab` | The page the header pill already shows while a committed swipe is still travelling |
 | `usePersistentState.ts` | `usePersistentState` | `useState` mirrored to a `localStorage` key (view preferences) |
 
 ## Dependencies between them

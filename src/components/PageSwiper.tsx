@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { whenIdle } from '../lib/idle';
+import { setPillTab } from '../lib/pillTab';
 import { SPRING } from '../lib/spring';
 import { useApp } from '../lib/store';
 import { neighbourTab, tabOrder } from '../lib/tabs';
@@ -205,6 +206,7 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     // One render: the neighbour's element is kept (same key) and becomes the current page.
     const promote = () => {
       setActiveTab(next);
+      setPillTab(null); // the real page has caught up with the pill
       setPeek(null);
       setWarm((tabs) => (tabs.includes(activeTab) ? tabs : [...tabs, activeTab])); // the page just left is now a neighbour
     };
@@ -214,6 +216,7 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     }
     // The rail finishes its travel: the neighbour ends exactly where the current page was.
     leaving.current = true;
+    setPillTab(next); // the pill changes the moment the swipe is committed, not after the page has travelled
     const travel = el.offsetWidth + RAIL_GAP_PX;
     const done = Math.min(1, (distance * FOLLOW) / travel);
     const exit = el.animate(
@@ -222,6 +225,7 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     );
     exit.onfinish = promote;
     exit.oncancel = () => {
+      setPillTab(null);
       leaving.current = false;
       arrivedBySwipe.current = false;
     };

@@ -10,7 +10,7 @@
 
 | Gesture | Where | Result | Code |
 | --- | --- | --- | --- |
-| Swipe left / right | anywhere on a page | the page and its neighbour move together under the finger; release to change page (order of the header pill) | `PageSwiper.tsx` |
+| Swipe left / right | anywhere on a page | the page and its neighbour move together under the finger; release to change page (order of the header pill); the pill changes the moment the swipe is committed, not when the page has landed (`pillTab.ts`) | `PageSwiper.tsx`, `lib/pillTab.ts` |
 | Swipe left / right | the month row | next / previous month (what the arrows do) | `MonthNavigator.tsx` |
 | Drag down | a sheet's handle or title bar | closes the sheet; a sheet with unsaved input springs back at once and asks first | `Modal.tsx`, `TxSheet.tsx` |
 | Tap | the logo in the header | the pig takes its coin (and Month / scroll to top) | `Header.tsx`, `index.css` |
