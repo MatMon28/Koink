@@ -27,6 +27,8 @@ export function syncSystemBars(theme: Theme): void {
 interface KoinkDevicePlugin {
   /** Stores the app's background colour (`#rrggbb`) for the surfaces Android shows before the page paints. */
   setLaunchBackground(options: { color: string }): Promise<void>;
+  /** Stores the buttons of the three home-screen widgets (JSON, see src/lib/widgetBridge.ts) and redraws them. */
+  setWidgets(options: { json: string }): Promise<void>;
 }
 const KoinkDevice = registerPlugin<KoinkDevicePlugin>('KoinkDevice');
 
@@ -39,6 +41,12 @@ export function syncLaunchBackground(color: string): void {
   if (!isNativeApp() || !/^#[0-9a-fA-F]{6}$/.test(color)) return;
   // A native build without the plugin just rejects: nothing to do then.
   KoinkDevice.setLaunchBackground({ color }).catch(() => undefined);
+}
+
+/** Android only: hands the home-screen widgets what to draw. A build without the plugin method just rejects. */
+export function syncWidgets(json: string): void {
+  if (!isNativeApp()) return;
+  KoinkDevice.setWidgets({ json }).catch(() => undefined);
 }
 
 export type SaveResult = 'downloaded' | 'shared' | 'cancelled';

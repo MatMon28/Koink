@@ -29,6 +29,8 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **Budgets page** (category budgets, goals, recurring lists, accounts card) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx` | [features/budgets.md](docs/features/budgets.md) |
 | **Statistics page** (averages, balance trend, breakdown) | `src/pages/StatsView.tsx` | [features/statistics.md](docs/features/statistics.md) |
 | **Add / edit an entry** (number pad, title + long note, account, currency), "Log again" | `src/sheets/TxSheet.tsx`, `src/sheets/QuickSheet.tsx`, `src/sheets/shared.tsx`, `NumPad` / `AmountStepper` in `src/components/ui.tsx` | [features/entries.md](docs/features/entries.md) |
+| **Widgets** (single button, multiple buttons, expense-type buttons; Android home screen + Month-page strip) | `src/lib/widgets.ts`, `src/lib/widgetBridge.ts`, `src/lib/useWidgets.ts`, `src/sheets/WidgetsSheet.tsx`, `src/components/WidgetButtons.tsx`, `src/components/WidgetStrip.tsx`, `android/app/src/main/java/com/koink/app/KoinkWidgetProvider.java` | [features/widgets.md](docs/features/widgets.md) |
+| **Gift cards** (add a card, pay an expense with it, tracker on the Month page, optional bottom-bar button) | `src/lib/giftcards.ts`, `src/sheets/GiftCardSheet.tsx`, `src/sheets/TxSheet.tsx` (*Pay with a gift card*), `src/pages/MonthView.tsx` (tracker) | [features/gift-cards.md](docs/features/gift-cards.md) |
 | **Accounts** (balance per account) | `src/sheets/AccountSheet.tsx`, `accountBalance` in `src/lib/calc.ts`, accounts card in `src/pages/BudgetsView.tsx` | [features/accounts.md](docs/features/accounts.md) |
 | **Expense categories** (own, hide, delete) | `src/lib/categories.ts`, `src/lib/icons.ts`, `src/sheets/CategoriesSheet.tsx` | [features/categories.md](docs/features/categories.md) |
 | **Currencies and exchange rates** (per-entry currency) | `src/lib/format.ts`, `src/sheets/TxSheet.tsx`, `src/sheets/SettingsSheet.tsx` | [features/currencies.md](docs/features/currencies.md) |
@@ -49,7 +51,7 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **Android app**: Capacitor config, native project and its Java, back button, file sharing | `capacitor.config.json`, `android/` (Java in `android/app/src/main/java/com/koink/app/`), `src/lib/platform.ts`, `src/lib/back.ts`, `scripts/prepare-android.mjs` | [android.md](docs/android.md) |
 | **Build, host or release either app** | `package.json`, `scripts/` | [prepare-apps.md](docs/prepare-apps.md) |
 | **Project archive** (the "Download project" card in Settings) | `scripts/package-project.mjs`, `src/components/ProjectDownload.tsx`, `public/downloads/` | [prepare-apps.md](docs/prepare-apps.md#3-the-project-archive) |
-| **Logo, icon, wordmark** (light and dark), generated icon files, notification icon | `src/brand/art.js` (the one source), `src/components/Brand.tsx`, `scripts/render-brand.mjs`, `public/brand/` | [brand.md](docs/brand.md) |
+| **Logo, icon, wordmark** (light and dark), generated icon files, notification icon, the **pig icon** (`PigIcon`) | `src/brand/art.js` (the one source), `src/lib/pig.ts`, `src/components/Brand.tsx`, `scripts/render-brand.mjs`, `public/brand/` | [brand.md](docs/brand.md) |
 | **State, actions, what is stored** | `src/lib/store.tsx`, `src/lib/types.ts`, `src/lib/storage.ts` | [data-model.md](docs/data-model.md) |
 | **Money maths** (totals, shares, budgets, formatting) | `src/lib/calc.ts`, `src/lib/format.ts`, `src/lib/dates.ts` | [data-model.md](docs/data-model.md) |
 | **Categories and income sources** | `src/lib/categories.ts` | [data-model.md](docs/data-model.md) |
@@ -68,7 +70,7 @@ src/App.tsx           shell: header, page swiper, pages, dock, sheets
 src/pages/            the four pages
 src/sheets/           every bottom sheet (entry, accounts, categories, goals, budgets, settings...)
 src/components/       shared UI (cards, modal, header, dock, inputs)
-src/lib/              state, maths, dates, themes, platform bridges (no JSX except store.tsx)
+src/lib/              state, maths, dates, themes, platform bridges, widgets, gift cards (no JSX except store.tsx)
 src/brand/art.js      all Koink artwork: logo, wordmark, launch animations (plain JS, shared with scripts/)
 src/styles/           presets.css (the six style presets), intro.css (launch animation)
 public/               favicon, manifest, PWA icons, brand/ (brand sheet, light and dark assets), downloads/ (the project archive)
@@ -83,6 +85,13 @@ docs/                 documentation (index: docs/README.md)
 2. Colours are CSS variables (`--bg`, `--surface`, `--text`, ...) plus the Tailwind tokens `intake` (money in), `activity` (money out), `weight` (savings), `nutrient` (yellow note cards). The names are inherited from the reference app on purpose: see [design-system.md](docs/design-system.md) before renaming anything.
 3. Every sheet is a `<Modal>`; every sheet is opened with `openSheet({ type: ... })`. The list of types is the `Sheet` union in `src/lib/types.ts`.
 4. After adding, renaming or deleting a file, update its row in `docs/file-map/` and, if it is a feature, the matching `docs/features/*.md` (rule and table in [docs/README.md](docs/README.md#keeping-the-docs-current)).
+
+## Latest round: widgets, gift cards, pig icon, visual fixes
+
+- **Widgets:** a single button (the user picks the action), a multiple-button widget (the user picks the buttons) and an expense-type widget (one button per category, a tap opens Add expense with it chosen). Android home screen plus an optional strip on the Month page. [docs/features/widgets.md](docs/features/widgets.md)
+- **Gift cards:** add cards, mark an expense as paid with one (the amount comes off the card), a Gift cards tracker on the Month page, and an optional gift card button in the bottom bar. [docs/features/gift-cards.md](docs/features/gift-cards.md)
+- **Pig icon:** Savings now uses the logo's pig (`PigIcon`, `src/lib/pig.ts`) instead of Lucide's piggy bank. [docs/brand.md](docs/brand.md#the-pig-icon)
+- **Fixes and field polish:** blurred hero cards under the header, clipped pills on the category cards, clearer amount field and account fields. [docs/features/month.md](docs/features/month.md)
 
 ## What was verified
 

@@ -45,6 +45,14 @@
 20. **Standalone animation files** (`public/brand/koink-intro-*.svg`) clip at their 1024 canvas, so parts that fly in from outside (the rolling pig) enter at the edge. In the app the art overflows its box and nothing is clipped.
 21. **The name Koins** survives in two compatibility shims only (storage keys and cache names of builds from before the rename): [brand.md](brand.md#rename-koins---koink).
 
+## Added with widgets, gift cards and the pig icon
+
+- The Android widgets (`KoinkWidgetProvider.java`, layouts, manifest receivers) were written without an Android SDK and `javac`: not compiled, not run on a launcher. Check on a device: the three widgets appear in the picker, placing one shows the buttons after the app was opened once, a tap opens the right sheet (also with the app closed), resizing keeps the tiles even.
+- Widget icons are rendered by the WebView, so the home-screen widgets update only when the app has been opened after a change in Settings > Widgets (the app pushes the change within a second of the edit).
+- The blurred-hero-card fix is based on a screenshot; the cause could not be reproduced without the device (see [features/month.md](features/month.md)).
+- A gift card has no transfer or top-up: to change its value, edit it. A card's balance never goes below zero.
+- Widgets exist in the browser only as the strip on the Month page (browsers have no home-screen widgets).
+
 ## Added with accounts, categories and currencies
 
 - No transfers between accounts; entries without an account count nowhere in Accounts.

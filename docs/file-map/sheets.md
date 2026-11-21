@@ -12,6 +12,8 @@
 | `QuickSheet.tsx` | `QuickSheet`, `RecurringSheet` | `quick`, `recurring` | "Log again" list of frequent entries; this month's recurring checklist | [../features/entries.md](../features/entries.md), [../features/recurring.md](../features/recurring.md) |
 | `EditSheets.tsx` | `RecurringEditSheet`, `GoalSheet`, `BudgetSheet` | `recurringEdit`, `goal`, `budget` | Create / edit / delete a recurring item; create / edit / delete a goal; set a category budget | [../features/recurring.md](../features/recurring.md), [../features/savings-goals.md](../features/savings-goals.md), [../features/budgets.md](../features/budgets.md) |
 | `AccountSheet.tsx` | `AccountSheet` | `account` | Create / edit / delete an account and set its balance today | [../features/accounts.md](../features/accounts.md) |
+| `GiftCardSheet.tsx` | `GiftCardSheet` | `giftCard` | Add / edit / delete a gift card (name, value, valid until, note) and list the entries paid with it | [../features/gift-cards.md](../features/gift-cards.md) |
+| `WidgetsSheet.tsx` | `WidgetsSheet` | `widgets` | Settings > Widgets: preview + chip picker for the single, multiple and expense-type widgets, and the Month-page switch | [../features/widgets.md](../features/widgets.md) |
 | `CategoriesSheet.tsx` | `CategoriesSheet` | `categories` | Manage expense categories: create, edit, hide / show, delete | [../features/categories.md](../features/categories.md) |
 | `shared.tsx` | `ChoiceGrid`, `Banner`, `SaveRow`, `CurrencyGrid`, `IconPicker` | (helpers) | Shared pieces of the forms | |
 | `ProfileSheet.tsx` | `ProfileSheet` | `profile` | Balance banner, name, the needs / wants / savings rule | [../features/profile.md](../features/profile.md) |

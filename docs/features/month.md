@@ -18,7 +18,8 @@ Top to bottom:
 | Left / Per day / Budget | `NoteCard` x3 | `income - spent - saved`; spending divided by the days elapsed; share of the budgeted amount already used |
 | Layout switch | inline | Compact / Normal / Expanded |
 | Category cards | `FoldCard` (`variant="slot"`) x8 | one per expense category |
-| Tracker cards | `FoldCard` (`variant="tracker"`) x3 | Income, Savings, Recurring |
+| Widgets | `WidgetStrip` | only when *Show them on the Month page* is on ([widgets.md](widgets.md)); between the month row and the hero cards |
+| Tracker cards | `FoldCard` (`variant="tracker"`) x3, x4 with gift cards | Income, Savings, Recurring, and **Gift cards** once a card exists or its button is on ([gift-cards.md](gift-cards.md)) |
 
 ## Category card
 
@@ -46,6 +47,14 @@ In the Classic style these three keep their own pastel (green, lilac, blue); in 
 With **Ultra minimal** on, the page is always Compact, the layout switch is hidden and labels become icons ([ultra-minimal.md](ultra-minimal.md)).
 
 Remembered in `localStorage`: `koink_month_layout`, `koink_month_open`, `koink_month_trackers_open` (Recurring starts open).
+
+## Changes: gift cards, widgets, blur and pill fixes
+
+- **Gift cards tracker** (fourth tracker, pastel pink): total left, one row per card, spend and add buttons. See [gift-cards.md](gift-cards.md).
+- **Widget strip** above the cards when switched on. See [widgets.md](widgets.md).
+- **Category-card pills no longer clip** (Compact layout, narrow phones): the three pills (entries, share, budget left) used to shrink with `min-w-0` + `truncate` until a long figure such as `-€1,234` showed as `-€...` and the entry count as a cut-off glyph. In `Pills` (`cards.tsx`) with `stretch` the row now wraps (`flex-wrap`), each pill keeps its full text (`whitespace-nowrap`, `max-w-full`) and the third pill drops to a second line when it does not fit.
+- **Blurred hero cards fixed**: on Android the Income / Spent cards could appear smeared under the header. Every `backdrop-filter` in the header area is gone (the header surface, the floating page pill, and in *Aurora* the pill and header buttons); the floating pill is now 92 % solid instead of a 76 % glass; `.kc-header-surface *` and the hero cards (`.kc-crisp`) can never filter; the header's faded-out background layer is `visibility: hidden` (not just transparent) and no longer a `will-change` layer. Reproduced only from the screenshot, not on a device: if it ever returns, look first for a `backdrop-filter` / `filter` / `will-change` on anything that overlaps the hero cards.
+- **Savings uses the Koink pig** (`PigIcon`, [../brand.md](../brand.md#the-pig-icon)).
 
 ## Behaviour notes
 

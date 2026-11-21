@@ -64,6 +64,7 @@ const BANNER_TONES = {
   saving: { card: 'bg-weight', ink: 'text-weight-ink', accent: 'text-weight-accent', dot: 'bg-weight-soft' },
   needs: { card: 'bg-[#CFE7FE]', ink: 'text-[#183B5E]', accent: 'text-[#436B94]', dot: 'bg-[#E8F3FF]' },
   wants: { card: 'bg-[#FAE0B4]', ink: 'text-[#7D4E14]', accent: 'text-[#9B6E32]', dot: 'bg-[#FDF3E0]' },
+  gift: { card: 'bg-[#FFD9E8]', ink: 'text-[#7A1F4B]', accent: 'text-[#9C4C73]', dot: 'bg-[#FFEDF4]' },
 };
 
 export type BannerTone = keyof typeof BANNER_TONES;
@@ -92,6 +93,7 @@ const SAVE_TONES = {
   income: 'bg-intake text-intake-ink',
   saving: 'bg-weight text-weight-ink',
   neutral: 'bg-intake text-intake-ink',
+  gift: 'bg-[#FFD9E8] text-[#7A1F4B]',
 };
 
 /** The row that ends a form: optional delete on the left, the wide save button on the right. */

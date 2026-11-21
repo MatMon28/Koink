@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { ChevronDown, PencilLine, PiggyBank, Plus, RefreshCw } from 'lucide-react';
+import { ChevronDown, Gift, Plus, RefreshCw } from 'lucide-react';
+import { PigIcon } from '../lib/pig';
 import { Modal } from '../components/Modal';
 import { AmountDisplay, NumPad, SaveBeforeCloseDialog, SectionLabel, seg, textInput, useAmountBuffer } from '../components/ui';
 import { accountBalance, goalSaved } from '../lib/calc';
 import { categoryMeta, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
 import { addDays, defaultDateFor, formatDay, formatMonth, monthOf, todayStr } from '../lib/dates';
+import { giftCardBalance, giftCardCover, giftCardExpired } from '../lib/giftcards';
 import { currencyDecimals, currencySymbol, formatRate, percent, round2 } from '../lib/format';
 import { iconFor } from '../lib/icons';
 import { useApp, useSheet } from '../lib/store';
@@ -96,7 +98,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
       return [...list, ...fresh];
     }
     if (kind === 'income') return INCOME_SOURCES;
-    return data.goals.map((goal) => ({ id: goal.id, name: goal.name, icon: PiggyBank }));
+    return data.goals.map((goal) => ({ id: goal.id, name: goal.name, icon: PigIcon }));
   }, [kind, data.goals, original, fresh]);
 
   // A new entry starts on the category used last for this kind of entry.
@@ -119,6 +121,8 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
     const last = data.txs.find((tx) => tx.accountId && data.accounts.some((a) => a.id === tx.accountId));
     return last?.accountId ?? data.accounts[0]?.id ?? '';
   });
+  // Gift card that pays (part of) an expense; '' = none. Only offered for expenses.
+  const [giftCardId, setGiftCardId] = useState(() => original?.giftCard?.id ?? (kind === 'expense' ? sheet.giftCardId ?? '' : ''));
   const [step, setStep] = useState<Step>(original ? 'details' : 'amount');
   const [pickingCurrency, setPickingCurrency] = useState(false);
 
@@ -168,9 +172,21 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
     return [...seen.entries()];
   }, [data.txs, kind, categoryId]);
 
+  // Gift cards: those with something left on them (the one this entry already used stays listed). What the
+  // entry itself used is added back first, so editing never double counts it.
+  const cardOptions = useMemo(() => {
+    if (kind !== 'expense') return [];
+    const day = todayStr();
+    return data.giftCards
+      .map((card) => ({ card, left: giftCardBalance(data.txs, card, original?.id) }))
+      .filter(({ card, left }) => card.id === giftCardId || (left > 0 && !giftCardExpired(card, day)));
+  }, [kind, data.giftCards, data.txs, original?.id, giftCardId]);
+  const chosenCard = cardOptions.find((option) => option.card.id === giftCardId);
+  const cardCover = chosenCard ? giftCardCover(chosenCard.left, converted) : 0;
+
   const account = data.accounts.find((a) => a.id === accountId);
   const accountAfter = account
-    ? round2(accountBalance(data.txs.filter((tx) => tx.id !== original?.id), account) + (kind === 'income' ? converted : -converted))
+    ? round2(accountBalance(data.txs.filter((tx) => tx.id !== original?.id), account) + (kind === 'income' ? converted : -(converted - cardCover)))
     : 0;
 
   const valid = converted > 0 && !!categoryId && /^\d{4}-\d{2}-\d{2}$/.test(date);
@@ -185,6 +201,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
       details: details.trim() || undefined,
       accountId: accountId || undefined,
       foreign: foreign ? { amount: round2(amount), currency, rate } : undefined,
+      giftCard: kind === 'expense' && chosenCard && cardCover > 0 ? { id: chosenCard.card.id, amount: cardCover } : undefined,
       date,
     };
     if (original) updateTx(original.id, entry);
@@ -196,7 +213,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
   const dirty = original
     ? converted !== original.amount || title.trim() !== original.note || details.trim() !== (original.details ?? '') ||
       categoryId !== original.categoryId || date !== original.date || (accountId || undefined) !== original.accountId ||
-      (foreign ? currency : undefined) !== original.foreign?.currency
+      (foreign ? currency : undefined) !== original.foreign?.currency || giftCardId !== (original.giftCard?.id ?? '')
     : amount > 0 || title.trim() !== '' || details.trim() !== '';
   useEffect(() => {
     guardRef.current = { dirty, valid, save };
@@ -311,7 +328,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
           </span>
           <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[var(--muted)] shrink-0">
             {currency}
-            <PencilLine size={15} aria-hidden="true" />
+            <span className="rounded-full bg-[var(--surface)] border border-[var(--border)] px-2 py-0.5 text-[11px]">Change</span>
           </span>
         </button>
         {foreign && (
@@ -369,6 +386,46 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
           {account && converted > 0 && (
             <p className="mt-1.5 text-[11px] font-bold text-[var(--muted)] tabular-nums">
               {account.name} afterwards: <span className={accountAfter < 0 ? 'text-[#A3312F]' : 'text-[var(--text)]'}>{money(accountAfter, { cents: true })}</span>
+            </p>
+          )}
+        </div>
+      )}
+
+      {cardOptions.length > 0 && (
+        <div>
+          <SectionLabel>Pay with a gift card</SectionLabel>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Gift card">
+            <button type="button" role="radio" aria-checked={giftCardId === ''} onClick={() => setGiftCardId('')} className={`${pill} ${giftCardId === '' ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)]'}`}>
+              No
+            </button>
+            {cardOptions.map(({ card, left }) => {
+              const active = card.id === giftCardId;
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setGiftCardId(card.id)}
+                  className={`${pill} inline-flex items-center gap-1.5 tabular-nums ${active ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'}`}
+                >
+                  <Gift size={14} aria-hidden="true" />
+                  <span className="truncate">{card.name}</span>
+                  <span className="opacity-70">{money(left, { cents: true })}</span>
+                </button>
+              );
+            })}
+          </div>
+          {chosenCard && (
+            <p className="mt-1.5 text-[11px] font-bold text-[var(--muted)] tabular-nums">
+              {converted > 0 ? (
+                <>
+                  The card pays <span className="text-[var(--text)]">{money(cardCover, { cents: true })}</span>, {money(round2(chosenCard.left - cardCover), { cents: true })} left on it
+                  {converted - cardCover > 0 && <> · the other <span className="text-[var(--text)]">{money(round2(converted - cardCover), { cents: true })}</span> is paid the normal way</>}.
+                </>
+              ) : (
+                <>{money(chosenCard.left, { cents: true })} left on {chosenCard.card.name}.</>
+              )}
             </p>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { PiggyBank } from 'lucide-react';
+import {  } from 'lucide-react';
+import { PigIcon } from '../lib/pig';
 import { Modal } from '../components/Modal';
 import { AmountStepper, ConfirmDialog, SectionLabel, seg, textInput } from '../components/ui';
 import { goalSaved, monthsBack, monthTotals, totalsByMonth } from '../lib/calc';
@@ -138,7 +139,7 @@ function GoalForm({ sheet }: { sheet: Extract<Sheet, { type: 'goal' }> }) {
       {original && (
         <Banner
           tone="saving"
-          icon={PiggyBank}
+          icon={PigIcon}
           label="Saved so far"
           value={money(saved, { cents: true })}
           sub={target > 0 ? (saved >= target ? 'Goal reached' : `${percent(saved, target)}% · ${money(target - saved)} to go`) : undefined}

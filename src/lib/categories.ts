@@ -1,7 +1,5 @@
-import {
-  Banknote, Briefcase, Car, Coins, Gift, HeartPulse, House, Laptop, PiggyBank, ShoppingBag,
-  ShoppingBasket, Ticket, UtensilsCrossed, Zap, type LucideIcon,
-} from 'lucide-react';
+import { Banknote, Briefcase, Car, Coins, Gift, HeartPulse, House, Laptop, ShoppingBag, ShoppingBasket, Ticket, UtensilsCrossed, Zap, type LucideIcon } from 'lucide-react';
+import { PigIcon } from './pig';
 import { iconFor } from './icons';
 import type { Bucket, CustomCategory, Goal, Kind } from './types';
 
@@ -79,7 +77,7 @@ export function categoryMeta(kind: Kind, id: string, goals: Goal[]): { name: str
     const c = incomeById.get(id);
     return { name: c?.name ?? 'Income', icon: c?.icon ?? Banknote };
   }
-  return { name: goals.find((g) => g.id === id)?.name ?? 'Savings', icon: PiggyBank };
+  return { name: goals.find((g) => g.id === id)?.name ?? 'Savings', icon: PigIcon };
 }
 
 export const KIND_LABEL: Record<Kind, string> = { expense: 'Expense', income: 'Income', saving: 'Savings' };

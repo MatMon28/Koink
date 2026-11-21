@@ -9,7 +9,8 @@ import { normalizeNotificationSettings } from './reminders';
 import { syncLaunchBackground, syncSystemBars } from './platform';
 import { STORAGE_KEY } from './storage';
 import { applyThemeAttributes, applyUltraMinimal, DEFAULT_MONO_HUE, normalizeMonoHue, normalizeTheme, normalizeThemeStyle } from './themes';
-import type { Account, ActiveTab, AppData, CurrencyCode, CustomCategory, Goal, Profile, Recurring, Settings, Sheet, Tx } from './types';
+import { normalizeWidgets } from './widgets';
+import type { Account, ActiveTab, AppData, CurrencyCode, CustomCategory, GiftCard, Goal, Profile, Recurring, Settings, Sheet, Tx } from './types';
 
 
 const defaultSettings = (): Settings => ({
@@ -21,7 +22,8 @@ const defaultSettings = (): Settings => ({
   hiddenCategories: [],
   rates: {},
   ratesDate: '',
-  quickAdd: { income: true, expense: true, recurring: true, quick: true, saving: true },
+  quickAdd: { income: true, expense: true, recurring: true, quick: true, saving: true, giftcard: false },
+  widgets: normalizeWidgets(undefined),
   notifications: normalizeNotificationSettings(undefined),
   sampleData: false,
 });
@@ -34,6 +36,7 @@ function sampleData(settings: Settings = defaultSettings()): AppData {
     goals: SAMPLE_GOALS.map((g) => ({ ...g })),
     recurring: SAMPLE_RECURRING.map((r) => ({ ...r })),
     accounts: SAMPLE_ACCOUNTS.map((a) => ({ ...a })),
+    giftCards: [],
     categories: [],
     profile: { ...SAMPLE_PROFILE, rule: { ...SAMPLE_PROFILE.rule }, budgets: { ...SAMPLE_PROFILE.budgets } },
     settings: { ...settings, sampleData: true },
@@ -49,6 +52,12 @@ function cleanRates(raw: unknown): Record<string, number> {
   const out: Record<string, number> = {};
   if (raw && typeof raw === 'object') for (const [code, rate] of Object.entries(raw)) if (isCurrency(code) && isNum(rate) && rate > 0) out[code] = rate;
   return out;
+}
+
+function cleanGiftCardUse(raw: unknown): Tx['giftCard'] {
+  const g = raw as Partial<NonNullable<Tx['giftCard']>> | undefined;
+  if (!g || !isStr(g.id) || !ID_PATTERN.test(g.id) || !isNum(g.amount) || !(g.amount > 0)) return undefined;
+  return { id: g.id, amount: round2(g.amount) };
 }
 
 function cleanForeign(raw: unknown): Tx['foreign'] {
@@ -80,6 +89,7 @@ function sanitize(raw: unknown): AppData | null {
       foreign: cleanForeign(t.foreign),
       date: t.date,
       recurringId: isStr(t.recurringId) ? t.recurringId : undefined,
+      giftCard: t.kind === 'expense' ? cleanGiftCardUse(t.giftCard) : undefined,
       ts: isNum(t.ts) ? t.ts : index,
     });
   });
@@ -103,6 +113,16 @@ function sanitize(raw: unknown): AppData | null {
     .filter((a): a is Account => !!a && isStr((a as Account).id) && ID_PATTERN.test((a as Account).id) && isStr((a as Account).name))
     .map((a) => ({ id: a.id, name: a.name.slice(0, 40), icon: isStr(a.icon) ? a.icon : 'wallet', opening: isNum(a.opening) ? round2(a.opening) : 0 }));
 
+  const giftCards: GiftCard[] = (Array.isArray(src.giftCards) ? src.giftCards : [])
+    .filter((g): g is GiftCard => !!g && isStr((g as GiftCard).id) && ID_PATTERN.test((g as GiftCard).id) && isStr((g as GiftCard).name) && isNum((g as GiftCard).initial))
+    .map((g) => ({
+      id: g.id,
+      name: g.name.slice(0, 40),
+      initial: round2(Math.max(0, g.initial)),
+      expires: isStr(g.expires) && /^\d{4}-\d{2}-\d{2}$/.test(g.expires) ? g.expires : undefined,
+      note: isStr(g.note) && g.note.trim() ? g.note.slice(0, 500) : undefined,
+    }));
+
   const categories: CustomCategory[] = (Array.isArray(src.categories) ? src.categories : [])
     .filter((c): c is CustomCategory => !!c && isStr((c as CustomCategory).id) && ID_PATTERN.test((c as CustomCategory).id) && isStr((c as CustomCategory).name))
     .map((c) => ({ id: c.id, name: c.name.slice(0, 30), icon: isStr(c.icon) ? c.icon : 'tag', bucket: c.bucket === 'needs' ? 'needs' : 'wants' }));
@@ -124,6 +144,8 @@ function sanitize(raw: unknown): AppData | null {
     rates: cleanRates(s.rates),
     ratesDate: isStr(s.ratesDate) ? s.ratesDate : '',
     quickAdd: { ...base.quickAdd, ...(s.quickAdd && typeof s.quickAdd === 'object' ? s.quickAdd : {}) },
+    // Journals and backups written before widgets existed get the default buttons.
+    widgets: normalizeWidgets(s.widgets),
     // Journals and backups written before reminders existed load with everything off.
     notifications: normalizeNotificationSettings(s.notifications),
     sampleData: s.sampleData === true,
@@ -134,6 +156,7 @@ function sanitize(raw: unknown): AppData | null {
     goals,
     recurring,
     accounts,
+    giftCards,
     categories,
     profile: { name: isStr(p.name) ? p.name : '', rule: { needs: rule.needs, wants: rule.wants, savings: rule.savings }, budgets },
     settings,
@@ -188,6 +211,10 @@ interface AppContextValue {
   logRecurring: (item: Recurring, month: string) => void;
   saveAccount: (account: { id?: string; name: string; icon: string; opening: number }) => void;
   removeAccount: (id: string) => void;
+  /** Creates or edits a gift card; returns its id. */
+  saveGiftCard: (card: { id?: string; name: string; initial: number; expires?: string; note?: string }) => string;
+  /** Deletes a gift card. Entries paid with it stay, and count as paid the normal way again. */
+  removeGiftCard: (id: string) => void;
   /** Creates or edits one of the user's own expense categories; returns its id. */
   saveCategory: (category: { id?: string; name: string; icon: string; bucket: CustomCategory['bucket'] }) => string;
   /** Deletes one of the user's own categories (its entries stay, listed under \"Other\"). */
@@ -379,6 +406,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const saveGiftCard = useCallback<AppContextValue['saveGiftCard']>((card) => {
+    const id = card.id ?? `gc_${uid()}`;
+    const clean = {
+      name: card.name.trim().slice(0, 40),
+      initial: round2(Math.max(0, card.initial)),
+      expires: card.expires && /^\d{4}-\d{2}-\d{2}$/.test(card.expires) ? card.expires : undefined,
+      note: card.note?.trim().slice(0, 500) || undefined,
+    };
+    setData((prev) => ({
+      ...prev,
+      giftCards: card.id ? prev.giftCards.map((g) => (g.id === id ? { ...g, ...clean } : g)) : [...prev.giftCards, { id, ...clean }],
+    }));
+    return id;
+  }, []);
+
+  const removeGiftCard = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      giftCards: prev.giftCards.filter((g) => g.id !== id),
+      txs: prev.txs.map((tx) => (tx.giftCard?.id === id ? { ...tx, giftCard: undefined } : tx)),
+    }));
+  }, []);
+
   const saveCategory = useCallback<AppContextValue['saveCategory']>((category) => {
     const id = category.id ?? `c_${uid()}`;
     const clean = { name: category.name.trim().slice(0, 30), icon: category.icon, bucket: category.bucket };
@@ -395,7 +445,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData((prev) => ({
       ...prev,
       categories: prev.categories.filter((c) => c.id !== id),
-      settings: { ...prev.settings, hiddenCategories: prev.settings.hiddenCategories.filter((x) => x !== id) },
+      settings: {
+        ...prev.settings,
+        hiddenCategories: prev.settings.hiddenCategories.filter((x) => x !== id),
+        // A deleted category leaves the widgets too (the single button falls back to plain Add expense).
+        widgets: {
+          ...prev.settings.widgets,
+          single: prev.settings.widgets.single === `cat:${id}` ? 'expense' : prev.settings.widgets.single,
+          multi: prev.settings.widgets.multi.filter((k) => k !== `cat:${id}`),
+          categories: prev.settings.widgets.categories.filter((k) => k !== `cat:${id}`),
+        },
+      },
       profile: { ...prev.profile, budgets: Object.fromEntries(Object.entries(prev.profile.budgets).filter(([key]) => key !== id)) },
       recurring: prev.recurring.map((r) => (r.categoryId === id ? { ...r, categoryId: 'bills' } : r)),
     }));
@@ -441,7 +501,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const eraseAll = useCallback(() => {
     setData((prev) => ({
-      txs: [], goals: [], recurring: [], accounts: [], categories: [], profile: emptyProfile(),
+      txs: [], goals: [], recurring: [], accounts: [], giftCards: [], categories: [], profile: emptyProfile(),
       settings: { ...prev.settings, hiddenCategories: [], sampleData: false },
     }));
     setSelectedMonth(currentMonth());
@@ -469,11 +529,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppContextValue>(() => ({
     data, activeTab, setActiveTab, selectedMonth, setSelectedMonth, openSheet, closeSheet,
     money, moneyFit, symbol: currencySymbol(currency), currency, rateFor, addTx, updateTx, removeTx, saveGoal, removeGoal, saveRecurring,
-    removeRecurring, logRecurring, saveAccount, removeAccount, saveCategory, removeCategory, setCategoryHidden, refreshRates, setBudget, updateProfile, updateSettings, eraseAll, loadSample, exportData,
+    removeRecurring, logRecurring, saveAccount, removeAccount, saveGiftCard, removeGiftCard, saveCategory, removeCategory, setCategoryHidden, refreshRates, setBudget, updateProfile, updateSettings, eraseAll, loadSample, exportData,
     importData, showToast, dismissToast,
   }), [
     data, activeTab, setActiveTab, selectedMonth, openSheet, closeSheet, money, moneyFit, currency, addTx,
-    updateTx, removeTx, saveGoal, removeGoal, saveRecurring, removeRecurring, logRecurring, saveAccount, removeAccount, saveCategory,
+    updateTx, removeTx, saveGoal, removeGoal, saveRecurring, removeRecurring, logRecurring, saveAccount, removeAccount, saveGiftCard, removeGiftCard, saveCategory,
     removeCategory, setCategoryHidden, refreshRates, rateFor, setBudget, updateProfile,
     updateSettings, eraseAll, loadSample, exportData, importData, showToast, dismissToast,
   ]);

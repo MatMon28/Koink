@@ -338,13 +338,21 @@ html.kc-sheet-open, .kc-sheet-open body { overscroll-behavior: none; }
   pointer-events: none;
   background: color-mix(in srgb, var(--bg) 93%, transparent);
   border-bottom: 1px solid var(--border);
-  will-change: opacity;
 }
+/* The pill that floats back in has no blur behind it: a backdrop-filter in the header made Android WebView
+   smear the cards under it (the "blurred hero cards" bug). A mostly solid surface keeps it readable. */
 .kc-header-surface[data-pill-floating="true"] .kc-nav-pill {
-  background: color-mix(in srgb, var(--surface) 76%, transparent) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
+/* Nothing in the header or on the hero cards may filter what is behind or inside it. */
+.kc-header-surface *,
+.kc-crisp {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.kc-crisp { filter: none !important; isolation: isolate; }
 
 /* The scrollbar gutter is outside every fixed layer: dim it with the page while a sheet is open. */
 html.kc-sheet-open {

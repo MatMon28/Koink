@@ -8,6 +8,8 @@
 
 **Status: generated and synced, never compiled or run** (that includes the three Java files). There was no Android SDK where this was written. Treat everything below as the design; the device checklist is in [prepare-apps.md](prepare-apps.md#first-run-on-a-device-check-these).
 
+> **Widgets (added):** three home-screen widgets (`KoinkWidgetProvider`), a `koink://widget` intent filter on `MainActivity` and the plugin method `setWidgets`. See [features/widgets.md](features/widgets.md). Not compiled or run on a device.
+
 ## Shape
 
 The Android app is the same web build inside a WebView. The only Java of its own is small and about one thing, the launch colour: `MainActivity` (a `BridgeActivity`), `LaunchBackground` and the plugin `KoinkDevicePlugin` ([launch-intro.md](launch-intro.md)). The web files are served from the APK at `https://localhost/` (`androidScheme: https`), so `localStorage`, absolute asset paths and secure-context APIs behave as on the website. No network is needed or used.

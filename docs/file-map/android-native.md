@@ -14,7 +14,11 @@ The project was created by `npx cap add android` (Capacitor 8.5.3). Paths below 
 | --- | --- |
 | `app/src/main/java/com/koink/app/MainActivity.java` | `BridgeActivity`: registers `KoinkDevicePlugin`, sets the window and WebView background to the saved colour before the page loads |
 | `app/src/main/java/com/koink/app/LaunchBackground.java` | Stores the app's background colour (SharedPreferences `launch_background`), applies it to window and WebView, and on Android 13+ switches the launch-screen style to `Splash_<hex>` |
-| `app/src/main/java/com/koink/app/KoinkDevicePlugin.java` | Capacitor plugin `KoinkDevice` with one method, `setLaunchBackground({ color })` |
+| `app/src/main/java/com/koink/app/KoinkDevicePlugin.java` | Capacitor plugin `KoinkDevice` with two methods: `setLaunchBackground({ color })` and `setWidgets({ json })` |
+| `app/src/main/java/com/koink/app/KoinkWidgetProvider.java` | The three home-screen widgets (`Single`, `Multi`, `Categories`): draw the buttons the web app stored with `setWidgets`, a tap starts the app with `koink://widget?a=<action>` |
+| `app/src/main/res/layout/widget_buttons.xml`, `widget_row.xml`, `widget_button.xml`, `widget_button_pad.xml` | RemoteViews layouts: tray, row, tile (tinted plate + icon + name), empty cell |
+| `app/src/main/res/drawable/widget_surface.xml`, `widget_tile_bg.xml` | Tray and tile shapes (the tile is white and tinted at run time) |
+| `app/src/main/res/xml/widget_single_info.xml`, `widget_multi_info.xml`, `widget_categories_info.xml` | `appwidget-provider` definitions (1x1, 4x1, 4x2) |
 | `app/src/main/res/values/splash_themes.xml` | **Generated** by `npm run android:splash`: 48 `Splash_<hex>` styles, one per app background. Do not edit |
 | `app/src/main/res/drawable/splash_blank.xml` | Transparent launch-screen icon, so the launch screen is a colour only |
 | `app/src/main/res/values/styles.xml` | Template themes; `AppTheme.NoActionBarLaunch` = colour, blank icon, `postSplashScreenTheme` |
@@ -24,8 +28,8 @@ The project was created by `npx cap add android` (Capacitor 8.5.3). Paths below 
 | `app/src/main/res/values/ic_launcher_background.xml` | Adaptive-icon background colour `#F9F3E6` |
 | `app/src/main/res/drawable-{m,h,xh,xxh,xxxh}dpi/ic_stat_koink.png` | Notification icon: the logo, white on transparent, rendered by `npm run brand`, found by name by the notifications plugin |
 | `app/src/main/res/raw/keep.xml` | Keeps `Splash_*` and `ic_stat_koink` if resource shrinking is ever enabled |
-| `app/src/main/res/values/strings.xml` | App name `Koink`, package `com.koink.app` (written by Capacitor from `capacitor.config.json`) |
-| `app/src/main/AndroidManifest.xml` | Template manifest plus three permissions for reminders: `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `SCHEDULE_EXACT_ALARM` |
+| `app/src/main/res/values/strings.xml` | App name `Koink`, package `com.koink.app` (written by Capacitor from `capacitor.config.json`), plus the widget names and descriptions |
+| `app/src/main/AndroidManifest.xml` | Template manifest plus three permissions for reminders (`POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`, `SCHEDULE_EXACT_ALARM`), the three widget receivers and the `koink://widget` intent filter |
 | `app/build.gradle` | `namespace` / `applicationId` `com.koink.app`, `versionCode`, `versionName`. Raise the version here for a release |
 
 ## Template, unchanged

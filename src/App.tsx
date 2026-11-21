@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from 'react';
-import { Banknote, PiggyBank, Receipt, Repeat, Zap } from 'lucide-react';
+import { Banknote, Gift, Receipt, Repeat, Zap } from 'lucide-react';
+import { PigIcon } from './lib/pig';
 import { ActionDock, type DockAction } from './components/ActionDock';
 import { Header } from './components/Header';
 import { PageSwiper } from './components/PageSwiper';
@@ -12,12 +13,15 @@ import { takeLaunchAction } from './lib/pwa';
 import { AppProvider, useApp } from './lib/store';
 import type { ActiveTab, OpenTarget } from './lib/types';
 import { useReminders } from './lib/useReminders';
+import { useWidgetSync } from './lib/useWidgets';
 import { BudgetsView } from './pages/BudgetsView';
 import { MonthView } from './pages/MonthView';
 import { StatsView } from './pages/StatsView';
 import { TransactionsView } from './pages/TransactionsView';
 import { AccountSheet } from './sheets/AccountSheet';
 import { CategoriesSheet } from './sheets/CategoriesSheet';
+import { GiftCardSheet } from './sheets/GiftCardSheet';
+import { WidgetsSheet } from './sheets/WidgetsSheet';
 import { BudgetSheet, GoalSheet, RecurringEditSheet } from './sheets/EditSheets';
 import { ProfileSheet } from './sheets/ProfileSheet';
 import { QuickSheet, RecurringSheet } from './sheets/QuickSheet';
@@ -46,12 +50,14 @@ function QuickAddBar() {
   if (quick.saving) {
     actions.push({
       id: 'saving',
-      icon: <PiggyBank />,
+      icon: <PigIcon />,
       tone: 'bg-weight text-weight-ink',
       label: 'Move to savings',
       onClick: () => openSheet(data.goals.length ? { type: 'tx', kind: 'saving' } : { type: 'goal' }),
     });
   }
+  // The gift card button is opt-in (Settings > Buttons in the bottom bar).
+  if (quick.giftcard) actions.push({ id: 'giftcard', icon: <Gift />, tone: 'bg-[#FFD9E8] text-[#7A1F4B]', label: 'New gift card', onClick: () => openSheet({ type: 'giftCard' }) });
   return <ActionDock label="Quick add" actions={actions} />;
 }
 
@@ -71,6 +77,8 @@ function Shell() {
     if (target === 'stats' || target === 'budgets') {
       closeSheet();
       setActiveTab(target);
+    } else if (target === 'giftcard') {
+      openSheet({ type: 'giftCard' });
     } else if (target === 'recurring') {
       setSelectedMonth(currentMonth()); // "due today" is about this month, whatever was being browsed
       openSheet({ type: 'recurring' });
@@ -86,6 +94,9 @@ function Shell() {
 
   // Reminder notifications: keeps them scheduled and opens the matching screen on a tap.
   useReminders(openTarget);
+
+  // Android home-screen widgets: keeps them drawn and opens the screen behind a tapped button.
+  useWidgetSync();
 
   return (
     <div data-journal-root className="min-h-dvh bg-[var(--bg)] text-[var(--text)] flex flex-col font-sans pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
@@ -107,6 +118,8 @@ function Shell() {
       <GoalSheet />
       <BudgetSheet />
       <AccountSheet />
+      <GiftCardSheet />
+      <WidgetsSheet />
       <CategoriesSheet />
       <ProfileSheet />
       <SettingsSheet />

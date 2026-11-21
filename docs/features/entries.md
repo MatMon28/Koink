@@ -6,6 +6,8 @@
 >
 > **Related:** [recurring.md](recurring.md), [savings-goals.md](savings-goals.md), [month.md](month.md)
 
+> **Gift cards (added):** for an expense, *Pay with a gift card* sits between Account and Title. Details: [gift-cards.md](gift-cards.md). The amount field on the second screen now has a visible **Change** chip next to the currency (it used to be a bare pencil icon).
+
 ## Ways in
 
 | From | Opens |

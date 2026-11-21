@@ -24,6 +24,13 @@
 
 `categoryId` means an expense category for expenses, an income source for income, and a goal id for savings. `categoryMeta(kind, id, goals)` in `categories.ts` resolves any of them to a name and icon.
 
+## Added: gift cards and widgets
+
+- `GiftCard { id, name, initial, expires?, note? }` in `AppData.giftCards`; `Tx.giftCard?: { id, amount }` (expenses only). Balance = `initial` - sum of `giftCard.amount` of the entries that point at the card (`src/lib/giftcards.ts`). See [features/gift-cards.md](features/gift-cards.md).
+- `Settings.widgets: { single: string; multi: string[]; categories: string[]; showInApp: boolean }` with action keys (`expense`, `income`, `saving`, `recurring`, `quick`, `giftcard`, `budgets`, `stats`, `cat:<id>`). Cleaned by `normalizeWidgets` (`src/lib/widgets.ts`) on load and import. See [features/widgets.md](features/widgets.md).
+- `QuickAddKey` gains `giftcard`; `OpenTarget` gains `giftcard`; `Sheet` gains `giftCard` and `widgets`, and `tx` accepts `giftCardId`.
+- Older journals and backups load without these fields: no cards, default widget buttons, gift card button off.
+
 ## What is stored
 
 Everything is `localStorage`, on the device, never sent anywhere.

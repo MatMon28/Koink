@@ -32,6 +32,8 @@
 | Adding and editing entries, Log again, toasts and Undo | [features/entries.md](features/entries.md) |
 | Recurring items | [features/recurring.md](features/recurring.md) |
 | Savings goals | [features/savings-goals.md](features/savings-goals.md) |
+| Widgets (single button, multiple buttons, expense-type buttons) | [features/widgets.md](features/widgets.md) |
+| Gift cards (add, pay an expense with one, tracker) | [features/gift-cards.md](features/gift-cards.md) |
 | Profile and the budget rule | [features/profile.md](features/profile.md) |
 | Settings: currency, bottom bar, install card, gestures list | [features/settings.md](features/settings.md) |
 | Themes and the six style presets | [features/themes.md](features/themes.md) |
@@ -73,5 +75,7 @@ Written together with the PWA / Android / gestures round. Checked against the tr
 **Kakcal-features round (launch animation, page rail, reminders, Ultra minimal, sheet behaviour):** new documents `notifications.md`, `launch-intro.md`, `motion.md`, `features/ultra-minimal.md`; `gestures.md` rewritten; architecture, data-model, design-system, pwa, android, brand, prepare-apps, the feature documents and every file map updated. Checked: paths in the docs exist, storage keys and constants quoted match the source. What was run is in [verification.md](verification.md); Android was again not compiled.
 
 **Koink round (rename, new logo, light / dark versions, five launch animations, launch-screen colour, notification icon):** `brand.md` and `launch-intro.md` rewritten; android, the Android file map, notifications, known-gaps, verification, data-model, prepare-apps, design-system, pwa, architecture, the other file maps and both READMEs updated. Checked: every path named in the docs exists; no `Koins` left outside the two compatibility shims and the notes about them. Android was again not compiled: the three new Java files are untested.
+
+**Widgets / gift cards round (widgets, gift cards, pig icon, blur and pill fixes):** new documents `features/widgets.md` and `features/gift-cards.md`; `features/month.md`, `entries.md`, `accounts.md`, `settings.md`, `brand.md`, `data-model.md`, `android.md`, `known-gaps.md` and the file maps (`components.md`, `sheets.md`, `lib.md`, `android-native.md`) were updated.
 
 **Wallet round (number pad, title + long note, quick delete, own categories, accounts, many currencies, list / days view, smoother sheet drag and header scroll, logo animation):** new documents `features/accounts.md`, `features/categories.md`, `features/currencies.md`; entries, transactions, month, budgets, settings, data-model, gestures, motion, brand, known-gaps, the lib / sheets / components / pages file maps and the root README updated. Checked in headless Chromium at 390 px: the two-screen entry flow, foreign-currency entry and rate screen, category create / hide, Transactions list and days views and quick delete, sheet swipe-close, header fold, logo animation; `tsc -b`, `eslint` and the build are clean.

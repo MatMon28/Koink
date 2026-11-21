@@ -4,4 +4,11 @@
     <string name="title_activity_main">Koink</string>
     <string name="package_name">com.koink.app</string>
     <string name="custom_url_scheme">com.koink.app</string>
+    <string name="widget_single_name">Koink: Button</string>
+    <string name="widget_multi_name">Koink: Buttons</string>
+    <string name="widget_categories_name">Koink: Expense types</string>
+    <string name="widget_single_description">One shortcut button. Choose what it does in Koink, Settings, Widgets.</string>
+    <string name="widget_multi_description">The shortcut buttons you choose in Koink, Settings, Widgets.</string>
+    <string name="widget_categories_description">One button per expense type: a tap opens Add expense with that type chosen.</string>
+    <string name="widget_empty">Open Koink once to set this widget up</string>
 </resources>

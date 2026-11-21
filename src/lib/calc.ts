@@ -1,6 +1,7 @@
 import { bucketOf } from './categories';
 import { addMonths, monthOf } from './dates';
 import { round2 } from './format';
+import { accountShare } from './giftcards';
 import type { Account, Goal, Profile, Recurring, Tx } from './types';
 
 export interface MonthTotals {
@@ -137,7 +138,8 @@ export function accountBalance(txs: Tx[], account: Account): number {
   let balance = account.opening;
   for (const tx of txs) {
     if (tx.accountId !== account.id) continue;
-    balance += tx.kind === 'income' ? tx.amount : -tx.amount;
+    // An expense paid (partly) with a gift card only took the rest out of the account.
+    balance += tx.kind === 'income' ? tx.amount : -accountShare(tx);
   }
   return round2(balance);
 }

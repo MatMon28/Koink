@@ -48,7 +48,7 @@ function AccountForm({ sheet }: { sheet: Extract<Sheet, { type: 'account' }> }) 
       <Banner tone="needs" icon={Icon} label={name.trim() || 'Account'} value={money(balance, { cents: true })} sub={original ? `${data.txs.filter((tx) => tx.accountId === original.id).length} entries` : undefined} />
 
       <div>
-        <SectionLabel htmlFor="account-name">Name</SectionLabel>
+        <SectionLabel htmlFor="account-name">Account name</SectionLabel>
         <input
           id="account-name"
           type="text"
@@ -57,6 +57,9 @@ function AccountForm({ sheet }: { sheet: Extract<Sheet, { type: 'account' }> }) 
           placeholder="Current account, Cash, Credit card"
           maxLength={40}
           autoComplete="off"
+          autoFocus={!original}
+          aria-required="true"
+          aria-invalid={!original && name.length > 0 && !valid}
           className={`${textInput} text-sm`}
         />
       </div>
@@ -64,7 +67,7 @@ function AccountForm({ sheet }: { sheet: Extract<Sheet, { type: 'account' }> }) 
       <IconPicker value={icon} onChange={setIcon} />
 
       <div>
-        <SectionLabel>{original ? 'Balance today' : 'What is in it now'}</SectionLabel>
+        <SectionLabel>{original ? 'Balance today' : 'Opening balance'}</SectionLabel>
         <AmountStepper value={amount} onChange={setAmount} unit={symbol} step={10} ariaLabel="Balance" startOpen={!original} chips={[50, 100, 500]} />
         <div className="flex gap-1.5 mt-2" role="group" aria-label="Sign of the balance">
           <button type="button" aria-pressed={!negative} onClick={() => setNegative(false)} className={seg(!negative)}>In credit</button>
@@ -74,6 +77,10 @@ function AccountForm({ sheet }: { sheet: Extract<Sheet, { type: 'account' }> }) 
           From now on every entry you put in this account moves the balance. Entries without an account do not count here.
         </p>
       </div>
+
+      {!valid && (
+        <p className="-mb-2 text-center text-[11px] font-bold text-[var(--muted)]" role="status">Give the account a name to {original ? 'save it' : 'add it'}.</p>
+      )}
 
       <SaveRow
         tone="neutral"

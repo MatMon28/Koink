@@ -174,5 +174,5 @@ export function nextOccurrence(n: Pick<PlannedNotification, 'hour' | 'minute' | 
   return at;
 }
 
-const OPEN_TARGETS: OpenTarget[] = ['expense', 'income', 'recurring', 'stats', 'budgets'];
+const OPEN_TARGETS: OpenTarget[] = ['expense', 'income', 'recurring', 'stats', 'budgets', 'giftcard'];
 export const isOpenTarget = (value: unknown): value is OpenTarget => OPEN_TARGETS.includes(value as OpenTarget);

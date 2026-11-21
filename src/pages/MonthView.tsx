@@ -1,19 +1,22 @@
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Banknote, CalendarDays, ChartPie, Columns2, Eye, EyeOff, LayoutList, ListTree, PenLine, PiggyBank, Plus, Receipt, Repeat, Sparkles, Tag, Target, Wallet, X, type LucideIcon } from 'lucide-react';
+import { Banknote, CalendarDays, Gift, ChartPie, Columns2, Eye, EyeOff, LayoutList, ListTree, PenLine, Plus, Receipt, Repeat, Sparkles, Tag, Target, Wallet, X, type LucideIcon } from 'lucide-react';
+import { PigIcon } from '../lib/pig';
 import { EmptyRow, FoldCard, Headline, HeroPair, NoteCard, Pills, ShareCard, TxRow, type PillItem } from '../components/cards';
 import { MonthNavigator } from '../components/MonthNavigator';
+import { WidgetStrip } from '../components/WidgetStrip';
 import { RecurringRow } from '../components/RecurringRow';
 import { Bar, ConfirmDialog } from '../components/ui';
 import { budgetSummary, goalSaved, monthTotals, recurringEntry, ruleShares } from '../lib/calc';
 import { allExpenseCategories, categoryMeta, isCategoryHidden } from '../lib/categories';
-import { elapsedDays } from '../lib/dates';
+import { elapsedDays, formatDay, todayStr } from '../lib/dates';
+import { giftCardBalance, giftCardExpired } from '../lib/giftcards';
 import { percent, round2 } from '../lib/format';
 import { useApp } from '../lib/store';
 import type { Bucket } from '../lib/types';
 import { usePersistentState } from '../lib/usePersistentState';
 
 type Layout = 'compact' | 'normal' | 'expanded';
-const TRACKERS = ['income', 'savings', 'recurring'] as const;
+const TRACKERS = ['income', 'savings', 'recurring', 'giftcards'] as const;
 type TrackerId = (typeof TRACKERS)[number];
 
 /** A card of the category grid: one category, or (`ids` of several) the entries whose category no longer exists. */
@@ -50,6 +53,8 @@ export function MonthView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totals, data.categories, data.settings.hiddenCategories]);
   const categoryIds = cards.map((c) => c.id);
+  // The Gift cards tracker appears once there is a card, or when its button is switched on (Settings).
+  const showGiftCards = data.giftCards.length > 0 || data.settings.quickAdd.giftcard;
 
   // The needs / wants / savings split can be tucked away; the choice is remembered.
   const [splitHidden, setSplitHidden] = usePersistentState<boolean>('koink_month_split_hidden', false);
@@ -221,7 +226,7 @@ export function MonthView() {
       return (
         <FoldCard
           {...shared}
-          icon={<PiggyBank size={compact ? 15 : 16} strokeWidth={2.2} />}
+          icon={<PigIcon size={compact ? 15 : 16} strokeWidth={2.2} />}
           title="Savings"
           headline={<Headline text={moneyFit(totals.saved, compact ? 7 : 11)} compact={compact} />}
           summary={muted(data.goals.length ? `${data.goals.length} ${data.goals.length === 1 ? 'goal' : 'goals'}` : 'No goals yet')}
@@ -257,6 +262,55 @@ export function MonthView() {
           })}
           {savingItems.map((tx) => (
             <TxRow key={tx.id} tx={tx} compact={compact} sub={`${categoryMeta('saving', tx.categoryId, data.goals).name} · ${tx.date.slice(8, 10)}/${tx.date.slice(5, 7)}`} />
+          ))}
+        </FoldCard>
+      );
+    }
+
+    if (id === 'giftcards') {
+      const add = () => openSheet({ type: 'giftCard' });
+      const day = todayStr();
+      const rows = data.giftCards.map((card) => ({ card, left: giftCardBalance(data.txs, card), expired: giftCardExpired(card, day) }));
+      const usable = rows.filter((row) => !row.expired);
+      const totalLeft = round2(usable.reduce((sum, row) => sum + row.left, 0));
+      return (
+        <FoldCard
+          {...shared}
+          icon={<Gift size={compact ? 15 : 16} strokeWidth={2.2} />}
+          title="Gift cards"
+          headline={<Headline text={moneyFit(totalLeft, compact ? 7 : 11)} compact={compact} />}
+          summary={muted(rows.length === 0 ? 'None yet' : `${usable.length} ${usable.length === 1 ? 'card' : 'cards'} left to use`, rows.length === 0)}
+          onAdd={add}
+          addLabel="New gift card"
+        >
+          {rows.length === 0 && <EmptyRow text="Vouchers and gift cards" action="New" onAdd={add} />}
+          {rows.map(({ card, left, expired }) => (
+            <div key={card.id} className="py-2.5 flex items-center gap-2">
+              <button type="button" onClick={() => openSheet({ type: 'giftCard', id: card.id })} className="min-w-0 flex-1 text-left space-y-1.5 group" aria-label={`Edit gift card ${card.name}`}>
+                <span className="flex items-center justify-between gap-2 text-xs tabular-nums">
+                  <span className="font-bold text-[var(--text)] truncate group-hover:opacity-80">{card.name}</span>
+                  <span className="font-extrabold text-[var(--text)] shrink-0">
+                    {money(left, { cents: true })}
+                    <span className="font-semibold text-[var(--muted)]"> of {money(card.initial, { cents: true })}</span>
+                  </span>
+                </span>
+                <Bar value={left} max={card.initial || 1} track="kc-water-track bg-[var(--inset)]" fill="kc-water-fill bg-[var(--muted)]" />
+                {(expired || card.expires) && (
+                  <span className="block text-[11px] font-semibold text-[var(--muted)]">{expired ? 'Expired' : 'Valid until'} {card.expires && formatDay(card.expires)}</span>
+                )}
+              </button>
+              {left > 0 && !expired && (
+                <button
+                  type="button"
+                  onClick={() => openSheet({ type: 'tx', kind: 'expense', giftCardId: card.id })}
+                  className="pressable w-8 h-8 shrink-0 rounded-full text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
+                  aria-label={`Spend from ${card.name}`}
+                  title={`Spend from ${card.name}`}
+                >
+                  <Receipt size={15} strokeWidth={2.4} />
+                </button>
+              )}
+            </div>
           ))}
         </FoldCard>
       );
@@ -320,6 +374,8 @@ export function MonthView() {
       )}
 
       <MonthNavigator />
+
+      <WidgetStrip />
 
       <div ref={panel} className="um-stack space-y-3.5">
         <HeroPair inLabel="Income" outLabel="Spent" inAmount={totals.income} outAmount={totals.spent} pillTitle="Income minus spending" />
@@ -418,7 +474,7 @@ export function MonthView() {
         <div className={gridClass}>{categoryCards}</div>
 
         <div className={gridClass}>
-          {TRACKERS.map((id) => (
+          {TRACKERS.filter((id) => id !== 'giftcards' || showGiftCards).map((id) => (
             <div key={id} className={cellClass(layout === 'expanded' || openTrackers.includes(id))}>
               {trackerCard(id)}
             </div>

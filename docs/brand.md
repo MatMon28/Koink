@@ -37,6 +37,10 @@ The geometry is in the coordinate space of the 1024 x 1024 icon and was measured
 
 **`public/brand/index.html`** is a sheet that shows all of them (`/brand/` on the website). Tap an animation to play it again.
 
+## The pig icon
+
+`PigIcon` (`src/lib/pig.ts`, a Lucide-compatible icon made with `createLucideIcon`) is the logo's pig simplified for 24 px line use: the same round head, two open triangle ears, two dot eyes and outlined snout with two nostrils, mapped from the logo's coordinates (`HEAD`, `EAR_LEFT`, `EYE`, `SNOUT`, `NOSTRIL` in `art.js`; the formula is in the file's comment). It replaces Lucide's `PiggyBank` for Savings everywhere (share card, Savings tracker, Statistics, bottom bar, goals, categories) and is the icon stored as `piggy` in `ICON_CHOICES`. If the pig in `art.js` changes shape, update the numbers in `pig.ts`.
+
 Two details copied from the references on purpose: the wordmark's pig has slightly lighter lines than the icon's (x 0.885), and its ears are closed triangles whose base shows inside the head (`closedEars`).
 
 ## Generated files

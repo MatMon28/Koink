@@ -55,6 +55,8 @@ export function Header() {
       tabsRow.style.transform = `translate3d(0, calc(${(top - 1).toFixed(3)} * var(--hdr-shift) + ${((1 - tabs) * -8).toFixed(2)}px), 0) scale(${(0.97 + 0.03 * tabs).toFixed(3)})`;
       // Background and hairline follow only the name row, so scrolling back up reveals just the pill.
       bg.style.opacity = top.toFixed(3);
+      // Fully faded = not drawn at all (no layer left over the cards under the header).
+      bg.style.visibility = top <= 0.01 ? 'hidden' : 'visible';
 
       const topPointer = top > 0.45 ? 'auto' : 'none';
       if (written.topPointer !== topPointer) topRow.style.pointerEvents = written.topPointer = topPointer;

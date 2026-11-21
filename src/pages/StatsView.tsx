@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { CalendarDays, CalendarRange, ChartPie, ChevronDown, ChevronRight, HandCoins, LineChart, PiggyBank, Tag } from 'lucide-react';
+import { CalendarDays, CalendarRange, ChartPie, ChevronDown, ChevronRight, HandCoins, LineChart, Tag } from 'lucide-react';
+import { PigIcon } from '../lib/pig';
 import { HeroPair, NoteCard, ShareCard } from '../components/cards';
 import { Bar } from '../components/ui';
 import { monthsBack, ruleShares, totalsByMonth } from '../lib/calc';
@@ -135,7 +136,7 @@ export function StatsView() {
       </div>
 
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
-        <NoteCard icon={PiggyBank} label="Saved" value={moneyFit(period.saved, 7)} title="Moved to savings in this period" />
+        <NoteCard icon={PigIcon} label="Saved" value={moneyFit(period.saved, 7)} title="Moved to savings in this period" />
         <NoteCard icon={HandCoins} label="Kept" value={`${percent(period.income - period.spent, period.income)}%`} title="Share of income that was not spent" />
         <NoteCard icon={CalendarDays} label="Per day" value={moneyFit(period.perDay, 7)} title="Average spending per day" />
       </div>

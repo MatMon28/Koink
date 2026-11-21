@@ -6,6 +6,10 @@
 >
 > **Related:** [entries.md](entries.md), [budgets.md](budgets.md), [../data-model.md](../data-model.md)
 
+> **Gift cards:** an expense paid (partly) with a gift card only takes the rest out of the account (`accountShare`, [gift-cards.md](gift-cards.md)).
+>
+> **Account sheet fields:** the name field is *Account name*, focused on a new account and marked required; the amount is labelled **Opening balance** (new) or *Balance today* (existing); while the name is empty a hint says why the save button is disabled.
+
 ## Model
 
 `AppData.accounts: Account[]` with `{ id, name, icon, opening }` (`icon` is a key of `ICON_CHOICES` in `src/lib/icons.ts`; `opening` may be negative). An entry points at one with `Tx.accountId`; without it the entry belongs to no account and counts nowhere here.

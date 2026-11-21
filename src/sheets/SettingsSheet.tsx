@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Banknote, Download, ListChecks, Minimize2, PiggyBank, Receipt, RefreshCw, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
+import { Banknote, Download, Gift, LayoutGrid, ListChecks, Minimize2, Receipt, RefreshCw, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
+import { PigIcon } from '../lib/pig';
 import { AppIcon } from '../components/Brand';
 import { InstallApp } from '../components/InstallApp';
 import { Modal } from '../components/Modal';
@@ -24,7 +25,8 @@ const QUICK_ROWS: { key: QuickAddKey; label: string; icon: LucideIcon; tone: str
   { key: 'expense', label: 'Expense', icon: Receipt, tone: 'bg-activity text-activity-ink' },
   { key: 'recurring', label: 'Recurring', icon: Repeat, tone: 'bg-[#CFE7FE] text-[#183F66]' },
   { key: 'quick', label: 'Log again', icon: Zap, tone: 'bg-[#FAE0B4] text-[#7D4E14]' },
-  { key: 'saving', label: 'Savings', icon: PiggyBank, tone: 'bg-weight text-weight-ink' },
+  { key: 'saving', label: 'Savings', icon: PigIcon, tone: 'bg-weight text-weight-ink' },
+  { key: 'giftcard', label: 'Gift card', icon: Gift, tone: 'bg-[#FFD9E8] text-[#7A1F4B]' },
 ];
 
 const GESTURES: [string, string][] = [
@@ -243,6 +245,21 @@ export function SettingsSheet() {
             })}
           </div>
         </div>
+
+        {/* Widgets */}
+        <button
+          type="button"
+          onClick={() => openSheet({ type: 'widgets' })}
+          className="pressable w-full flex items-center justify-between gap-3 rounded-2xl bg-[var(--inset)] border border-[var(--border)] px-3.5 py-3 text-left hover:bg-[var(--hover)]"
+        >
+          <span className="flex items-center gap-2.5 min-w-0">
+            <span className="size-8 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center shrink-0"><LayoutGrid size={15} /></span>
+            <span className="min-w-0">
+              <span className="block text-sm font-extrabold text-[var(--text)]">Widgets</span>
+              <span className="block text-[11px] font-medium text-[var(--muted)]">One button, several buttons, or one per expense type</span>
+            </span>
+          </span>
+        </button>
 
         <NotificationSettings />
 

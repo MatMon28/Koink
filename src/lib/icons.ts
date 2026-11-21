@@ -1,8 +1,5 @@
-import {
-  Baby, Banknote, Beer, Book, Briefcase, Bus, Car, Coffee, Coins, CreditCard, Dumbbell, Film, Fuel, Gamepad2, Gift,
-  GraduationCap, Heart, House, Landmark, Music, PawPrint, PiggyBank, Pizza, Plane, Scissors, Shirt, ShoppingBag,
-  Smartphone, Sparkles, Tag, Wallet, Wifi, Wrench, type LucideIcon,
-} from 'lucide-react';
+import { Baby, Banknote, Beer, Book, Briefcase, Bus, Car, Coffee, Coins, CreditCard, Dumbbell, Film, Fuel, Gamepad2, Gift, GraduationCap, Heart, House, Landmark, Music, PawPrint, Pizza, Plane, Scissors, Shirt, ShoppingBag, Smartphone, Sparkles, Tag, Wallet, Wifi, Wrench, type LucideIcon } from 'lucide-react';
+import { PigIcon } from './pig';
 
 /**
  * The icons a user can give their own categories and accounts. The key is what is stored in the
@@ -40,7 +37,7 @@ export const ICON_CHOICES: { key: string; label: string; icon: LucideIcon }[] = 
   { key: 'bank', label: 'Bank', icon: Landmark },
   { key: 'cash', label: 'Cash', icon: Banknote },
   { key: 'coins', label: 'Coins', icon: Coins },
-  { key: 'piggy', label: 'Piggy bank', icon: PiggyBank },
+  { key: 'piggy', label: 'Piggy bank', icon: PigIcon },
   { key: 'briefcase', label: 'Work', icon: Briefcase },
 ];
 

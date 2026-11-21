@@ -29,6 +29,12 @@ export interface Tx {
   date: string;
   /** Set when the entry was logged from a recurring item. */
   recurringId?: string;
+  /**
+   * Set when (part of) an expense was paid with a gift card: `amount` is how much of the entry the card
+   * covered, in the journal's currency. It leaves the card's balance, and leaves the account's too:
+   * only the rest (`amount` of the entry minus this) moved through the account.
+   */
+  giftCard?: { id: string; amount: number };
   /** Creation order, newest first inside a day. */
   ts: number;
 }
@@ -50,6 +56,18 @@ export interface CustomCategory {
   /** Key into `ICON_CHOICES` (icons.ts). */
   icon: string;
   bucket: Bucket;
+}
+
+/** A gift card or voucher. What is left on it is `initial` minus every entry paid with it (`giftcards.ts`). */
+export interface GiftCard {
+  id: string;
+  name: string;
+  /** What it was worth when it was added, in the journal's currency. */
+  initial: number;
+  /** Optional last day it can be used, YYYY-MM-DD. */
+  expires?: string;
+  /** Optional longer note (code, shop address...). */
+  note?: string;
 }
 
 export interface Goal {
@@ -81,7 +99,7 @@ export interface Profile {
   budgets: Record<string, number>;
 }
 
-export type QuickAddKey = 'income' | 'expense' | 'recurring' | 'quick' | 'saving';
+export type QuickAddKey = 'income' | 'expense' | 'recurring' | 'quick' | 'saving' | 'giftcard';
 
 /** A reminder that fires at one time of day, `HH:MM` (24 h, local time). */
 export interface TimedReminder {
@@ -102,7 +120,22 @@ export interface NotificationSettings {
 }
 
 /** What a notification, a home-screen shortcut or a link can open. */
-export type OpenTarget = 'expense' | 'income' | 'recurring' | 'stats' | 'budgets';
+export type OpenTarget = 'expense' | 'income' | 'recurring' | 'stats' | 'budgets' | 'giftcard';
+
+/**
+ * Home-screen widgets (Settings > Widgets). A button is an action key (`widgets.ts`): `expense`, `income`,
+ * `saving`, `recurring`, `quick`, `giftcard`, `stats`, `budgets` or `cat:<expense category id>`.
+ */
+export interface WidgetSettings {
+  /** The one button of the single-button widget. */
+  single: string;
+  /** The buttons of the multiple-button widget, in order. */
+  multi: string[];
+  /** The expense categories of the category widget, as `cat:<id>` keys. Empty = every visible category. */
+  categories: string[];
+  /** Also show the widgets as a strip at the top of the Month page (browser, PWA and Android). */
+  showInApp: boolean;
+}
 
 export interface Settings {
   theme: Theme;
@@ -118,6 +151,7 @@ export interface Settings {
   /** Day (YYYY-MM-DD) the rates were last fetched, or '' while the built-in table is used. */
   ratesDate: string;
   quickAdd: Record<QuickAddKey, boolean>;
+  widgets: WidgetSettings;
   notifications: NotificationSettings;
   /** True while the journal still holds the sample data it started with. */
   sampleData: boolean;
@@ -128,17 +162,20 @@ export interface AppData {
   goals: Goal[];
   recurring: Recurring[];
   accounts: Account[];
+  giftCards: GiftCard[];
   categories: CustomCategory[];
   profile: Profile;
   settings: Settings;
 }
 
 export type Sheet =
-  | { type: 'tx'; kind: Kind; categoryId?: string; editId?: string }
+  | { type: 'tx'; kind: Kind; categoryId?: string; editId?: string; giftCardId?: string }
   | { type: 'recurring' }
   | { type: 'recurringEdit'; id?: string }
   | { type: 'goal'; id?: string }
   | { type: 'account'; id?: string }
+  | { type: 'giftCard'; id?: string }
+  | { type: 'widgets' }
   | { type: 'categories' }
   | { type: 'budget'; categoryId: string }
   | { type: 'quick' }

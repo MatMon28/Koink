@@ -18,4 +18,16 @@ public class KoinkDevicePlugin extends Plugin {
         if (LaunchBackground.save(getContext(), call.getString("color"))) call.resolve();
         else call.reject("Expected a #rrggbb colour");
     }
+
+    /** Stores the buttons of the three home-screen widgets (JSON from src/lib/widgetBridge.ts) and redraws them. */
+    @PluginMethod
+    public void setWidgets(PluginCall call) {
+        String json = call.getString("json");
+        if (json == null || json.isEmpty()) {
+            call.reject("Expected the widgets as a JSON string");
+            return;
+        }
+        KoinkWidgetProvider.save(getContext(), json);
+        call.resolve();
+    }
 }

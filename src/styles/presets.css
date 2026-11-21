@@ -913,22 +913,22 @@ html[data-style]:not([data-style="classic"]) [data-journal-root] {
 .kc-header-surface {
   background: color-mix(in srgb, var(--bg) calc(var(--header-bg-progress, 1) * 94%), transparent);
   border-bottom-color: color-mix(in srgb, var(--border) calc(var(--header-bg-progress, 1) * 100%), transparent);
-  backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 12px));
-  -webkit-backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 12px));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 html[data-style]:not([data-style="classic"]) .kc-header-surface {
   background: color-mix(in srgb, var(--bg) calc(var(--header-bg-progress, 1) * 90%), transparent);
   border-bottom-color: color-mix(in srgb, var(--border) calc(var(--header-bg-progress, 1) * 100%), transparent);
-  backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 14px));
-  -webkit-backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 14px));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Floating transparent page pill when revealed during scroll (no header background behind it) */
 .kc-header-surface[data-pill-floating="true"] .kc-nav-pill {
-  background: color-mix(in srgb, var(--surface) 76%, transparent) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--surface) 92%, transparent) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 html[data-style]:not([data-style="classic"]) .kc-icon-btn {
@@ -958,9 +958,9 @@ html[data-style]:not([data-style="classic"]) .kc-nav-pill {
 }
 
 html[data-style]:not([data-style="classic"]) .kc-header-surface[data-pill-floating="true"] .kc-nav-pill {
-  background: color-mix(in srgb, var(--surface-solid, var(--nav-bg, var(--surface))) 76%, transparent) !important;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--surface-solid, var(--nav-bg, var(--surface))) 92%, transparent) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 html[data-style]:not([data-style="classic"]) .kc-nav-tab {
@@ -1131,12 +1131,11 @@ html[data-style]:not([data-style="classic"]) .kc-themed-card {
   clip-path: var(--clip-md, none);
 }
 
+/* The header, its page pill and its buttons are not in this list on purpose: see index.css (.kc-header-surface). */
 html[data-style="aurora"] [data-meal-slot],
 html[data-style="aurora"] [data-tracker],
 html[data-style="aurora"] [data-library-section],
-html[data-style="aurora"] .kc-themed-card,
-html[data-style="aurora"] .kc-nav-pill,
-html[data-style="aurora"] .kc-icon-btn {
+html[data-style="aurora"] .kc-themed-card {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }

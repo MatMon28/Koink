@@ -25,6 +25,8 @@ Shared controls used here, all from `src/components/ui.tsx`: `seg()` (segmented 
 
 The switches are `role="switch"` buttons with `aria-checked`; segmented choices use `aria-pressed`.
 
+> **Added:** a **Widgets** row (opens `WidgetsSheet`, [widgets.md](widgets.md)) above Notifications, and a **Gift card** switch in *Buttons in the bottom bar* (off by default, [gift-cards.md](gift-cards.md)).
+
 ## Currency, rates, categories (this version)
 
 - **Currency** is a grid of ~40 currencies (`CurrencyGrid` in `sheets/shared.tsx`), the journal's own. **Update exchange rates** fetches current rates; until then approximate built-in ones are used. Details: [currencies.md](currencies.md).

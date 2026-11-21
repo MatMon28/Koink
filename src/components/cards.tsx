@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Banknote, ChevronDown, CircleCheck, Edit2, House, PiggyBank, Plus, Receipt, Repeat, Sparkles, StickyNote, Trash2, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { Banknote, ChevronDown, CircleCheck, Edit2, House, Plus, Receipt, Repeat, Sparkles, StickyNote, Trash2, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { PigIcon } from '../lib/pig';
 import { formatDay } from '../lib/dates';
 import { formatMoney } from '../lib/format';
 import { useApp } from '../lib/store';
@@ -48,7 +49,7 @@ export function HeroCard({ tone, label, amount, pct, pill, pillTitle, average = 
   const text = moneyFit(amount, 8);
   const Icon = icon ?? (tone === 'in' ? Banknote : Receipt);
   return (
-    <div role="group" aria-label={`${label}: ${text}${average ? ' per month on average' : ''}`} className={`${c.card} um-tight rounded-3xl p-4 sm:p-5 flex flex-col justify-between min-w-0`}>
+    <div role="group" aria-label={`${label}: ${text}${average ? ' per month on average' : ''}`} className={`${c.card} kc-crisp um-tight rounded-3xl p-4 sm:p-5 flex flex-col justify-between min-w-0`}>
       <div>
         <div className="flex items-center justify-between gap-1 mb-1 min-h-[22px]">
           <span className={`inline-flex min-w-0 items-center gap-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider ${c.label}`}>
@@ -125,7 +126,7 @@ export function HeroPair({ inLabel, outLabel, inAmount, outAmount, average = fal
 const SHARE = {
   needs: { card: 'kc-macro-carbs bg-[#CFE7FE]', label: 'text-[#1A4670]', number: 'text-[#0F3355]', icon: House },
   wants: { card: 'kc-macro-protein bg-[#FAE0B4]', label: 'text-[#7D4E14]', number: 'text-[#2D1E0B]', icon: Sparkles },
-  savings: { card: 'kc-macro-fat bg-[#E2D6FF]', label: 'text-[#523A8C]', number: 'text-[#1F1636]', icon: PiggyBank },
+  savings: { card: 'kc-macro-fat bg-[#E2D6FF]', label: 'text-[#523A8C]', number: 'text-[#1F1636]', icon: PigIcon },
 };
 
 interface ShareCardProps {
@@ -208,7 +209,7 @@ export interface PillItem {
 /** Short figures, each with its icon; the title spells them out. */
 export function Pills({ items, stretch = false, labels = false }: { items: PillItem[]; stretch?: boolean; labels?: boolean }) {
   return (
-    <span className={`flex items-center gap-1.5 ${stretch ? 'min-w-0 flex-1 w-full' : 'shrink-0'}`}>
+    <span className={`flex items-center gap-1.5 ${stretch ? 'min-w-0 flex-1 w-full flex-wrap' : 'shrink-0'}`}>
       {items.map((item, index) => {
         const Icon = item.icon;
         return (
@@ -217,10 +218,10 @@ export function Pills({ items, stretch = false, labels = false }: { items: PillI
             role="img"
             aria-label={item.title}
             title={item.title}
-            className={`${PILL_TONES[item.tone]} ${stretch ? 'flex-auto min-w-0 justify-center' : 'min-w-8'} inline-flex items-center gap-1 rounded-lg px-1.5 py-1.5 text-[11px] font-extrabold tabular-nums leading-none whitespace-nowrap`}
+            className={`${PILL_TONES[item.tone]} ${stretch ? 'flex-auto max-w-full justify-center' : 'min-w-8'} inline-flex items-center gap-1 rounded-lg px-1.5 py-1.5 text-[11px] font-extrabold tabular-nums leading-none whitespace-nowrap`}
           >
             <Icon size={11} strokeWidth={2.6} aria-hidden="true" className="shrink-0 opacity-70" />
-            <span className="truncate">{item.text}</span>
+            <span className={stretch ? 'whitespace-nowrap' : 'truncate'}>{item.text}</span>
             {labels && item.label && <span className="font-semibold opacity-70 truncate">{item.label}</span>}
           </span>
         );
@@ -234,6 +235,7 @@ export function Pills({ items, stretch = false, labels = false }: { items: PillI
 const PALETTES = {
   income: { surface: 'var(--color-intake)', text: 'var(--color-intake-ink)', muted: 'var(--color-intake-accent)', inset: 'var(--color-intake-soft)', border: '#A6DDB5', hover: '#B9E6C5' },
   savings: { surface: 'var(--color-weight)', text: 'var(--color-weight-ink)', muted: 'var(--color-weight-accent)', inset: 'var(--color-weight-soft)', border: '#CABAF3', hover: '#D5C6FB' },
+  giftcards: { surface: '#FFD9E8', text: '#5E1838', muted: '#9C4C73', inset: '#FFEDF4', border: '#F2B6D0', hover: '#FFC8DE' },
   recurring: { surface: '#CFE7FE', text: '#183B5E', muted: '#436B94', inset: '#E8F3FF', border: '#A9CFF5', hover: '#BDDDFC' },
 };
 

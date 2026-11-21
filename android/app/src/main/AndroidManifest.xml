@@ -22,7 +22,52 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- A tap on a home-screen widget button: koink://widget?a=<action> (src/lib/widgets.ts) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="koink" android:host="widget" />
+            </intent-filter>
+
         </activity>
+
+        <!-- Home-screen widgets: KoinkWidgetProvider.java, drawn from what the web app hands over (KoinkDevice.setWidgets) -->
+        <receiver
+            android:name=".KoinkWidgetProvider$Single"
+            android:exported="true"
+            android:label="@string/widget_single_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_single_info" />
+        </receiver>
+
+        <receiver
+            android:name=".KoinkWidgetProvider$Multi"
+            android:exported="true"
+            android:label="@string/widget_multi_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_multi_info" />
+        </receiver>
+
+        <receiver
+            android:name=".KoinkWidgetProvider$Categories"
+            android:exported="true"
+            android:label="@string/widget_categories_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_categories_info" />
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"
