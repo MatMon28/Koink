@@ -21,7 +21,7 @@
 
 | New thing | Put it in |
 | --- | --- |
-| A page | `src/pages/`, add it to `ActiveTab` (`types.ts`), `TAB_ORDER` (`tabs.ts`), `NAV_META` (`Tabs.tsx`), and `PAGE_TITLES` + `renderPage()` in `App.tsx` |
+| A page | `src/pages/`, add it to `ActiveTab` (`types.ts`), `ALL_TABS` (`tabs.ts`), `NAV_META` (`Tabs.tsx`), and `PAGE_TITLES` + `renderPage()` in `App.tsx` |
 | A sheet | `src/sheets/`, add its type to `Sheet` (`types.ts`), mount it in `App.tsx` |
 | A reusable visual piece | `src/components/` |
 | Logic without JSX | `src/lib/` (a file that exports components must export nothing else: the ESLint `react-refresh` rule) |

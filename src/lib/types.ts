@@ -4,7 +4,11 @@ export type Theme = 'light' | 'lite-dark' | 'dark';
 export type ThemeStyle = 'classic' | 'angular' | 'aurora' | 'pop' | 'playful' | 'minimal' | 'mono';
 
 export type Kind = 'expense' | 'income' | 'saving';
-export type Bucket = 'needs' | 'wants';
+/**
+ * The type an expense category belongs to: `needs`, `wants`, or the id (`ty_...`) of one of the user's own
+ * types (`CategoryType`). Needs and wants feed the 50 / 30 / 20 maths; every own type is counted apart.
+ */
+export type Bucket = string;
 /** ISO 4217 code of one of the currencies in `CURRENCIES` (format.ts). */
 export type CurrencyCode = string;
 export type ActiveTab = 'month' | 'transactions' | 'budgets' | 'stats';
@@ -60,6 +64,12 @@ export interface CustomCategory {
   bucket: Bucket;
 }
 
+/** A type of expense made by the user, next to the built-in Needs and Wants (Expense categories). */
+export interface CategoryType {
+  id: string;
+  name: string;
+}
+
 /** A gift card or voucher. What is left on it is `initial` minus every entry paid with it (`giftcards.ts`). */
 export interface GiftCard {
   id: string;
@@ -86,6 +96,10 @@ export interface Recurring {
   categoryId: string;
   /** Day of the month it is due (1-28). */
   day: number;
+  /** Every how many months it is due: 1 (every month), 2, 3, 6, 12... Counted from `start`. */
+  every: number;
+  /** The first month it is due, YYYY-MM: the anchor of the `every` count. */
+  start: string;
 }
 
 export interface BudgetRule {
@@ -144,6 +158,8 @@ export interface Settings {
   language: Language;
   /** Hide the Needs / Wants / Savings cards on the Month page (Settings > Appearance). */
   hideSplit: boolean;
+  /** Hide the Budgets page: it leaves the page pill and the swipe order (Settings > Appearance). */
+  hideBudgets: boolean;
   theme: Theme;
   themeStyle: ThemeStyle;
   monoHue: string;
@@ -170,6 +186,8 @@ export interface AppData {
   accounts: Account[];
   giftCards: GiftCard[];
   categories: CustomCategory[];
+  /** The user's own expense types, besides Needs and Wants. */
+  categoryTypes: CategoryType[];
   profile: Profile;
   settings: Settings;
 }

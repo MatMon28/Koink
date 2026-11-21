@@ -2,7 +2,7 @@
 
 > **Scope:** tracking how much money is in each place (current account, cash, card...).
 >
-> **Read when:** you change `src/sheets/ProfileAccounts.tsx`, `src/sheets/AccountSheet.tsx`, the Accounts card in `src/pages/BudgetsView.tsx`, `accountBalance` in `src/lib/calc.ts`, or the account row of `TxSheet.tsx`.
+> **Read when:** you change `src/sheets/ProfileAccounts.tsx`, `src/sheets/AccountSheet.tsx`, (the Accounts card that used to be in `src/pages/BudgetsView.tsx` is gone: accounts are managed in the Profile) `accountBalance` in `src/lib/calc.ts`, or the account row of `TxSheet.tsx`.
 >
 > **Related:** [entries.md](entries.md), [budgets.md](budgets.md), [../data-model.md](../data-model.md)
 
@@ -18,7 +18,7 @@
 
 ## Using them
 
-- **Create**: the `+` on the Accounts card (Budgets page) opens `AccountSheet` (`{ type: 'account', id? }`): name, icon, and the balance **today** (with an *In credit / Overdrawn* switch). Because the balance is what you type, the starting balance is computed from it (`opening = typed balance - what the account's entries add up to`), so editing an old account to match your bank statement just works.
+- **Create**: *Add account* in the Profile opens `AccountSheet` (`{ type: 'account', id? }`): name, icon, and the balance **today** (with an *In credit / Overdrawn* switch). Because the balance is what you type, the starting balance is computed from it (`opening = typed balance - what the account's entries add up to`), so editing an old account to match your bank statement just works.
 - **Log**: when at least one account exists the entry sheet shows an **Account** row (default: the last one used) and what the account will hold afterwards.
 - **Delete**: its entries stay, they just lose the link (`removeAccount`).
 - Sample data comes with three accounts (starting balances only).

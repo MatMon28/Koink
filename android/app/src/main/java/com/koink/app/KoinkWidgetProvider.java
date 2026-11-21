@@ -106,10 +106,8 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         RemoteViews tile = new RemoteViews(context.getPackageName(), lone ? R.layout.widget_button_single : R.layout.widget_button);
         int bg = color(button.optString("bg"), Color.parseColor("#FBF8F2"));
         tile.setInt(R.id.tile_bg, "setColorFilter", bg);
-        if (!lone) {
-            tile.setTextViewText(R.id.label, button.optString("label"));
-            tile.setTextColor(R.id.label, textColor);
-        }
+        // No visible text on a button: the name is only what a screen reader announces.
+        tile.setContentDescription(R.id.tile, button.optString("label"));
         Bitmap icon = icon(button.optString("icon"));
         if (icon != null) tile.setImageViewBitmap(R.id.icon, icon);
         String uri = button.optString("uri");

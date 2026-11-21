@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { recurringEntry } from '../lib/calc';
+import { nextDueMonth, recurringDue, recurringEntry } from '../lib/calc';
 import { categoryMeta } from '../lib/categories';
 import { formatMonth, ordinal } from '../lib/dates';
 import { useApp } from '../lib/store';
@@ -13,13 +13,14 @@ import { t } from '../lib/i18n';
 export function RecurringRow({ item, month, monthItems }: { item: Recurring; month: string; monthItems: Tx[] }) {
   const { data, money, openSheet, logRecurring, removeTx } = useApp();
   const entry = recurringEntry(monthItems, item);
+  const due = recurringDue(item, month);
   const meta = categoryMeta(item.kind, item.categoryId, data.goals);
   return (
     <div className="py-2.5 flex items-center justify-between gap-2">
       <button type="button" onClick={() => openSheet({ type: 'recurringEdit', id: item.id })} className="min-w-0 flex-1 text-left group" aria-label={t('Edit {name}', { name: item.name })}>
         <span className="text-xs sm:text-sm font-bold text-[var(--text)] group-hover:opacity-80 truncate block">{item.name}</span>
         <span className="text-[11px] font-medium tabular-nums text-[var(--muted)] truncate block">
-          {ordinal(item.day)} · {meta.name}
+          {ordinal(item.day)} · {item.every > 1 && <>{t('every {n} months', { n: item.every })} · </>}{meta.name}
         </span>
       </button>
       <span className="text-xs sm:text-sm font-extrabold tabular-nums text-[var(--text)] shrink-0">
@@ -36,6 +37,13 @@ export function RecurringRow({ item, month, monthItems }: { item: Recurring; mon
           <Check size={13} strokeWidth={3} />
           {t('Done')}
         </button>
+      ) : !due ? (
+        <span
+          className="h-8 shrink-0 rounded-full bg-[var(--inset)] text-[var(--muted)] px-3 text-[11px] font-extrabold inline-flex items-center justify-center whitespace-nowrap"
+          title={t('Not due in {v}', { v: formatMonth(month) })}
+        >
+          {t('Next')} {formatMonth(nextDueMonth(item, month), 'short', nextDueMonth(item, month).slice(0, 4) !== month.slice(0, 4))}
+        </span>
       ) : (
         <button
           type="button"

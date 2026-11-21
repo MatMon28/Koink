@@ -3,12 +3,13 @@ import { actionFor, widgetRows, widgetShape } from '../lib/widgets';
 
 /*
  * A widget button follows the bottom dock of the app: a round pastel button with a small icon (the dock's
- * buttons are circles too), the name under it in the app's text colour. The tray behind a group of buttons
+ * buttons are circles too), . The tray behind a group of buttons
  * is the dock's own surface: border, soft shadow, fully rounded for a single row, rounded card for several.
+ * A button carries no text: the name is only its tooltip and screen-reader label.
  * Sizes are in px on purpose: they are the dp of the Android widget (res/layout/widget_button.xml).
  */
 
-/** One widget button. `size="lg"` is the lone circle of a single-button widget (no name). */
+/** One widget button: just the round icon (no text). `size="lg"` is the lone, bigger circle of a single-button widget. */
 export function WidgetTile({ actionKey, onPress, size = 'md' }: { actionKey: string; onPress?: (key: string) => void; size?: 'md' | 'lg' }) {
   const action = actionFor(actionKey);
   const Icon = action.icon;
@@ -21,22 +22,13 @@ export function WidgetTile({ actionKey, onPress, size = 'md' }: { actionKey: str
       <Icon size={size === 'lg' ? 22 : 17} strokeWidth={2.2} aria-hidden="true" />
     </span>
   );
-  const content =
-    size === 'lg' ? (
-      circle
-    ) : (
-      <>
-        {circle}
-        <span className="mt-1 block w-full truncate text-center text-[10px] font-bold leading-tight text-[var(--text)]">{t(label)}</span>
-      </>
-    );
-  const cls = size === 'lg' ? 'shrink-0' : 'flex w-[58px] shrink-0 flex-col items-center';
+  const cls = size === 'lg' ? 'shrink-0' : 'flex w-12 shrink-0 items-center justify-center py-0.5';
   return onPress ? (
     <button type="button" onClick={() => onPress(action.key)} className={`pressable ${cls} hover:brightness-95`} aria-label={t(label)} title={t(label)}>
-      {content}
+      {circle}
     </button>
   ) : (
-    <span className={cls} aria-hidden="true">{content}</span>
+    <span className={cls} aria-hidden="true">{circle}</span>
   );
 }
 

@@ -2,7 +2,7 @@
 
 > **Scope:** the journal's currency, paying a single entry in another one, the rates behind it.
 >
-> **Read when:** you change `src/lib/format.ts` (`CURRENCIES`, `exchangeRate`), the currency parts of `TxSheet.tsx` / `SettingsSheet.tsx`, or `refreshRates` in `store.tsx`.
+> **Read when:** you change `src/lib/format.ts` (`CURRENCIES`, `exchangeRate`), the currency parts of `TxSheet.tsx` / `SettingsSheet.tsx`, or `refreshRates` in `store.tsx` (Frankfurter).
 >
 > **Related:** [entries.md](entries.md), [settings.md](settings.md), [../data-model.md](../data-model.md)
 
@@ -21,4 +21,4 @@ In the entry sheet: currency chip on the amount screen, then (on the details scr
 
 ## Rates
 
-`exchangeRate(from, to, rates)` = `perUsd(to) / perUsd(from)`; `rates` is `Settings.rates` (units per US dollar), falling back per code to the built-in approximate table. **Settings > Update exchange rates** (`refreshRates`) downloads `https://open.er-api.com/v6/latest/USD` (free, no key) and stores it with `Settings.ratesDate`; offline it fails with a toast and nothing changes. This is the only network request the app makes, and only on that button.
+`exchangeRate(from, to, rates)` = `perUsd(to) / perUsd(from)`; `rates` is `Settings.rates` (units per US dollar), falling back per code to the built-in approximate table. **Settings > Update exchange rates** (`refreshRates`) downloads `https://api.frankfurter.dev/v1/latest?base=USD` from [Frankfurter](https://frankfurter.dev) (European Central Bank reference rates, free, no key; it replaced open.er-api.com) and stores it with `Settings.ratesDate` (the date Frankfurter reports). USD is added as `1` because the base is not part of the answer. Frankfurter covers about 30 currencies (EUR, GBP, CHF, JPY, CAD, AUD...); a currency it does not list (AED, SAR, EGP, NGN, KES, MAD, UAH, ARS, VND, COP, CLP...) keeps using the built-in approximate figure, code by code, through `exchangeRate`. Offline (or if the service fails) it shows a toast and nothing changes. This is the only network request the app makes, and only on that button.

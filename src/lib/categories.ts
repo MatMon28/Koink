@@ -2,7 +2,7 @@ import { Banknote, Briefcase, Car, Coins, FileText, Gift, HeartPulse, House, Lap
 import { t } from './i18n';
 import { PigIcon } from './pig';
 import { iconFor } from './icons';
-import type { Bucket, CustomCategory, Goal, Kind } from './types';
+import type { Bucket, CategoryType, CustomCategory, Goal, Kind } from './types';
 
 export interface ExpenseCategory {
   id: string;
@@ -36,8 +36,8 @@ export const INCOME_SOURCES: IncomeSource[] = [
   { id: 'other', get name() { return t('Other'); }, icon: Coins },
 ];
 
-/** Getters, so the text follows the language chosen in Settings. */
-export const BUCKET_LABEL: Record<Bucket, string> = {
+/** Getters, so the text follows the language chosen in Settings. Only the two built-in types: see `bucketLabel`. */
+export const BUCKET_LABEL: Record<'needs' | 'wants', string> = {
   get needs() { return t('Needs'); },
   get wants() { return t('Wants'); },
 };
@@ -51,12 +51,15 @@ let expenseById = new Map(EXPENSE_CATEGORIES.map((c) => [c.id, c]));
 let everyCategory: ExpenseCategory[] = EXPENSE_CATEGORIES;
 let shownCategories: ExpenseCategory[] = EXPENSE_CATEGORIES;
 let hiddenIds = new Set<string>();
+let ownTypes: CategoryType[] = [];
 const incomeById = new Map(INCOME_SOURCES.map((c) => [c.id, c]));
 
-export function syncCategories(custom: CustomCategory[], hidden: string[]): void {
+export function syncCategories(custom: CustomCategory[], hidden: string[], types: CategoryType[] = []): void {
+  ownTypes = types;
   const own: ExpenseCategory[] = custom.map((c) => ({ id: c.id, name: c.name, icon: iconFor(c.icon), bucket: c.bucket }));
-  // Needs first, then wants: the order of the cards on the Month page (the sort is stable).
-  everyCategory = [...EXPENSE_CATEGORIES, ...own].sort((a, b) => (a.bucket === b.bucket ? 0 : a.bucket === 'needs' ? -1 : 1));
+  // Needs first, then wants, then the user's own types in the order they were made (the sort is stable).
+  const rank = (bucket: Bucket) => (bucket === 'needs' ? 0 : bucket === 'wants' ? 1 : 2 + Math.max(0, types.findIndex((x) => x.id === bucket)));
+  everyCategory = [...EXPENSE_CATEGORIES, ...own].sort((a, b) => rank(a.bucket) - rank(b.bucket));
   expenseById = new Map(everyCategory.map((c) => [c.id, c]));
   hiddenIds = new Set(hidden);
   shownCategories = everyCategory.filter((c) => !hiddenIds.has(c.id));
@@ -71,6 +74,17 @@ export const isBuiltInCategory = (id: string) => EXPENSE_CATEGORIES.some((c) => 
 
 export const expenseCategory = (id: string) => expenseById.get(id);
 export const bucketOf = (id: string): Bucket => expenseById.get(id)?.bucket ?? 'wants';
+
+/** Needs and wants first, then the user's own types: every type an expense can have. */
+export const allBuckets = (): { id: Bucket; name: string }[] => [
+  { id: 'needs', name: BUCKET_LABEL.needs },
+  { id: 'wants', name: BUCKET_LABEL.wants },
+  ...ownTypes.map((x) => ({ id: x.id, name: x.name })),
+];
+export const bucketLabel = (bucket: Bucket): string =>
+  bucket === 'needs' ? BUCKET_LABEL.needs : ownTypes.find((x) => x.id === bucket)?.name ?? BUCKET_LABEL.wants;
+/** Needs and wants are the built-in types; anything else is the user's own. */
+export const isOwnBucket = (bucket: Bucket) => bucket !== 'needs' && bucket !== 'wants';
 
 /** Name and icon of whatever an entry points at (category, income source or goal). */
 export function categoryMeta(kind: Kind, id: string, goals: Goal[]): { name: string; icon: LucideIcon } {

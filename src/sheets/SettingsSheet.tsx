@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Banknote, Download, EyeOff, Gift, ListChecks, Minimize2, Receipt, RefreshCw, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
+import { Banknote, Download, EyeOff, Gift, Minimize2, Receipt, RefreshCw, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { AppIcon } from '../components/Brand';
 import { InstallApp } from '../components/InstallApp';
@@ -12,6 +12,7 @@ import { saveTextFile } from '../lib/platform';
 import { useApp, useSheet } from '../lib/store';
 import { MONO_HUES, STYLE_PRESETS } from '../lib/themes';
 import type { QuickAddKey, Theme } from '../lib/types';
+import { CategoriesBody } from './CategoriesSheet';
 import { NotificationSettings } from './NotificationSettings';
 import { WidgetsSettings } from './WidgetsSettings';
 import { CurrencyGrid } from './shared';
@@ -36,7 +37,7 @@ const dataButton =
 
 export function SettingsSheet() {
   const { isOpen } = useSheet('settings');
-  const { data, updateSettings, closeSheet, openSheet, exportData, importData, loadSample, eraseAll, showToast, refreshRates } = useApp();
+  const { data, updateSettings, closeSheet, exportData, importData, loadSample, eraseAll, showToast, refreshRates } = useApp();
   const [updatingRates, setUpdatingRates] = useState(false);
   const { settings } = data;
   const fileInput = useRef<HTMLInputElement>(null);
@@ -202,6 +203,25 @@ export function SettingsSheet() {
             </span>
             <Switch on={settings.hideSplit} />
           </button>
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings.hideBudgets}
+            onClick={() => updateSettings({ hideBudgets: !settings.hideBudgets })}
+            className="w-full flex items-center justify-between gap-3 bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-2xl px-3 py-2.5 transition-colors text-left"
+          >
+            <span className="flex items-center gap-2.5 min-w-0">
+              <span className="size-8 rounded-full bg-[#E2D6FF] text-[#49346F] flex items-center justify-center shrink-0">
+                <EyeOff size={15} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{t('Hide the Budgets page')}</span>
+                <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{t('Takes Budgets out of the page bar. Your budgets are kept')}</span>
+              </span>
+            </span>
+            <Switch on={settings.hideBudgets} />
+          </button>
         </Collapsible>
 
         {/* Currency */}
@@ -233,17 +253,11 @@ export function SettingsSheet() {
         </div>
         </Collapsible>
 
-        <button
-          type="button"
-          onClick={() => openSheet({ type: 'categories' })}
-          className="pressable pressable-soft w-full flex items-center justify-between gap-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] px-4 py-3 text-left"
-        >
-          <span className="min-w-0">
-            <span className="block text-sm font-extrabold text-[var(--text)]">{t('Expense categories')}</span>
-            <span className="block text-[11px] font-medium text-[var(--muted)]">{t('Make your own, hide the ones you do not use')}</span>
-          </span>
-          <ListChecks size={18} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
-        </button>
+        {/* Expense categories: an expandable field (types, categories, hide, delete) */}
+        <Collapsible title={t('Expense categories')}>
+          <p className="text-[11px] font-medium text-[var(--muted)]">{t('Make your own, hide the ones you do not use')}</p>
+          <CategoriesBody />
+        </Collapsible>
 
         {/* Quick-add bar */}
         <Collapsible title={t('Buttons in the bottom bar')}>

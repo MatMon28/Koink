@@ -6,7 +6,7 @@ import { MonthNavigator } from '../components/MonthNavigator';
 import { WidgetStrip } from '../components/WidgetStrip';
 import { RecurringRow } from '../components/RecurringRow';
 import { Bar, ConfirmDialog } from '../components/ui';
-import { budgetSummary, goalSaved, monthTotals, recurringEntry, ruleShares } from '../lib/calc';
+import { budgetSummary, goalSaved, monthTotals, recurringEntry, recurringForMonth, ruleShares } from '../lib/calc';
 import { allExpenseCategories, categoryMeta, isCategoryHidden } from '../lib/categories';
 import { elapsedDays, formatDay, todayStr } from '../lib/dates';
 import { giftCardBalance, giftCardExpired } from '../lib/giftcards';
@@ -59,6 +59,11 @@ export function MonthView() {
 
   // The needs / wants / savings split can be tucked away in Settings > Appearance.
   const hideSplit = data.settings.hideSplit;
+  // Spending in the user's own expense types gets a fourth card (named after the type when there is one).
+  const ownTypeNames = data.categoryTypes
+    .filter((ty) => cards.some((c) => c.bucket === ty.id && c.ids.some((id) => (totals.byCategory[id]?.total ?? 0) > 0)))
+    .map((ty) => ty.name);
+  const showOther = totals.other > 0;
 
   // Card expansion and the chosen layout are remembered independently.
   const [chosenLayout, setLayout] = usePersistentState<Layout>('koink_month_layout', 'normal');
@@ -194,8 +199,10 @@ export function MonthView() {
   /* ---------- Trackers: income, savings, recurring ---------- */
   const incomeItems = totals.items.filter((tx) => tx.kind === 'income');
   const savingItems = totals.items.filter((tx) => tx.kind === 'saving');
-  const logged = data.recurring.filter((r) => recurringEntry(totals.items, r));
-  const due = data.recurring.filter((r) => !recurringEntry(totals.items, r));
+  // Only what belongs to this month: monthly items and the ones whose turn it is (every 3 months...).
+  const monthRecurring = recurringForMonth(data.recurring, selectedMonth, totals.items);
+  const logged = monthRecurring.filter((r) => recurringEntry(totals.items, r));
+  const due = monthRecurring.filter((r) => !recurringEntry(totals.items, r));
   const dueTotal = due.filter((r) => r.kind === 'expense').reduce((sum, r) => sum + r.amount, 0);
 
   const trackerCard = (id: TrackerId) => {
@@ -217,7 +224,7 @@ export function MonthView() {
         >
           {incomeItems.length === 0
             ? <EmptyRow text={t('Nothing yet')} action={t('Add')} onAdd={add} />
-            : incomeItems.map((tx) => <TxRow key={tx.id} tx={tx} compact={compact} />)}
+            : incomeItems.map((tx) => <TxRow key={tx.id} tx={tx} compact={compact} category={categoryMeta('income', tx.categoryId, data.goals).name} />)}
         </FoldCard>
       );
     }
@@ -262,7 +269,7 @@ export function MonthView() {
             );
           })}
           {savingItems.map((tx) => (
-            <TxRow key={tx.id} tx={tx} compact={compact} sub={`${categoryMeta('saving', tx.categoryId, data.goals).name} · ${tx.date.slice(8, 10)}/${tx.date.slice(5, 7)}`} />
+            <TxRow key={tx.id} tx={tx} compact={compact} category={categoryMeta('saving', tx.categoryId, data.goals).name} sub={`${tx.date.slice(8, 10)}/${tx.date.slice(5, 7)}`} />
           ))}
         </FoldCard>
       );
@@ -323,7 +330,7 @@ export function MonthView() {
         {...shared}
         icon={<Repeat size={compact ? 15 : 16} strokeWidth={2.2} />}
         title={t('Recurring')}
-        headline={<Headline text={`${logged.length}/${data.recurring.length}`} compact={compact} unit={t('logged')} />}
+        headline={<Headline text={`${logged.length}/${monthRecurring.length}`} compact={compact} unit={t('logged')} />}
         summary={muted(
           data.recurring.length === 0 ? 'Nothing set up' : due.length === 0 ? 'All done' : dueTotal > 0 ? `${money(dueTotal)} still due` : `${due.length} to come`,
         )}
@@ -331,7 +338,7 @@ export function MonthView() {
         addLabel={t('New recurring item')}
       >
         {data.recurring.length === 0 && <EmptyRow text={t('Rent, salary, subscriptions')} action={t('New')} onAdd={add} />}
-        {data.recurring.map((item) => (
+        {monthRecurring.map((item) => (
           <RecurringRow key={item.id} item={item} month={selectedMonth} monthItems={totals.items} />
         ))}
       </FoldCard>
@@ -340,6 +347,9 @@ export function MonthView() {
 
   return (
     <div className="um-stack space-y-3.5">
+      {/* The calendar (month row) is always the first thing on the page, above every note and card. */}
+      <MonthNavigator />
+
       {data.settings.sampleData && (
         <div className="flex items-center gap-2.5 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]/60 pl-3.5 pr-1.5 py-1.5">
           <Sparkles size={15} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
@@ -374,8 +384,6 @@ export function MonthView() {
         </div>
       )}
 
-      <MonthNavigator />
-
       <WidgetStrip />
 
       <div ref={panel} className="um-stack space-y-3.5">
@@ -397,9 +405,9 @@ export function MonthView() {
           {!hideSplit && (
             <div className="space-y-1.5">
               <div className="um-hide px-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Needs · Wants · Savings')}</span>
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{showOther ? t('Needs · Wants · Other · Savings') : t('Needs · Wants · Savings')}</span>
               </div>
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
+            <div className={`grid gap-2.5 sm:gap-3.5 ${showOther ? 'grid-cols-2 min-[480px]:grid-cols-4' : 'grid-cols-3'}`}>
               <ShareCard
                 tone="needs"
                 label={t('Needs')}
@@ -418,6 +426,15 @@ export function MonthView() {
                 status={shares.ofIncome && shares.wants > rule.wants ? 'over' : undefined}
                 shareTitle={shares.ofIncome ? t('of income') : t('of what went out')}
               />
+              {showOther && (
+                <ShareCard
+                  tone="wants"
+                  label={ownTypeNames.length === 1 ? ownTypeNames[0] : t('Other types')}
+                  amount={totals.other}
+                  share={shares.other}
+                  shareTitle={shares.ofIncome ? t('of income') : t('of what went out')}
+                />
+              )}
               <ShareCard
                 tone="savings"
                 label={t('Savings')}

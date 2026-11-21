@@ -7,11 +7,13 @@ import type { Account, Goal, Profile, Recurring, Tx } from './types';
 export interface MonthTotals {
   month: string;
   income: number;
-  /** Needs + wants. Money moved to savings is not "spent". */
+  /** Needs + wants + the user's own types. Money moved to savings is not "spent". */
   spent: number;
   saved: number;
   needs: number;
   wants: number;
+  /** Spending in the user's own expense types (neither needs nor wants). */
+  other: number;
   /** Income minus spending (money moved to savings is still yours). */
   net: number;
   /** Income minus spending minus savings: what has no job yet. */
@@ -30,20 +32,23 @@ export function totalsOf(month: string, items: Tx[]): MonthTotals {
   let saved = 0;
   let needs = 0;
   let wants = 0;
+  let other = 0;
   const byCategory: MonthTotals['byCategory'] = {};
   for (const tx of items) {
     if (tx.kind === 'income') income += tx.amount;
     else if (tx.kind === 'saving') saved += tx.amount;
     else {
-      if (bucketOf(tx.categoryId) === 'needs') needs += tx.amount;
-      else wants += tx.amount;
+      const bucket = bucketOf(tx.categoryId);
+      if (bucket === 'needs') needs += tx.amount;
+      else if (bucket === 'wants') wants += tx.amount;
+      else other += tx.amount;
       const entry = (byCategory[tx.categoryId] ??= { total: 0, count: 0 });
       entry.total += tx.amount;
       entry.count += 1;
     }
   }
   for (const entry of Object.values(byCategory)) entry.total = round2(entry.total);
-  const spent = round2(needs + wants);
+  const spent = round2(needs + wants + other);
   income = round2(income);
   saved = round2(saved);
   return {
@@ -53,6 +58,7 @@ export function totalsOf(month: string, items: Tx[]): MonthTotals {
     saved,
     needs: round2(needs),
     wants: round2(wants),
+    other: round2(other),
     net: round2(income - spent),
     left: round2(income - spent - saved),
     count: items.length,
@@ -76,10 +82,11 @@ export const monthsBack = (end: string, count: number) =>
   Array.from({ length: count }, (_, i) => addMonths(end, i - (count - 1)));
 
 /** Share of income (or of everything that left the account when no income was logged). */
-export function ruleShares(t: Pick<MonthTotals, 'income' | 'needs' | 'wants' | 'saved'>) {
-  const base = t.income > 0 ? t.income : t.needs + t.wants + t.saved;
+export function ruleShares(t: Pick<MonthTotals, 'income' | 'needs' | 'wants' | 'saved'> & { other?: number }) {
+  const other = t.other ?? 0;
+  const base = t.income > 0 ? t.income : t.needs + t.wants + other + t.saved;
   const share = (v: number) => (base > 0 ? Math.round((v / base) * 100) : 0);
-  return { needs: share(t.needs), wants: share(t.wants), savings: share(t.saved), ofIncome: t.income > 0 };
+  return { needs: share(t.needs), wants: share(t.wants), other: share(other), savings: share(t.saved), ofIncome: t.income > 0 };
 }
 
 export function budgetSummary(profile: Profile, totals: MonthTotals) {
@@ -142,4 +149,32 @@ export function accountBalance(txs: Tx[], account: Account): number {
     balance += tx.kind === 'income' ? tx.amount : -accountShare(tx);
   }
   return round2(balance);
+}
+
+const monthIndex = (month: string) => Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
+
+/**
+ * Is a recurring item due in `month`? Monthly items (every = 1) are due every month. Others are due
+ * every `every` months counted from their `start` month (every 3 from March: Mar, Jun, Sep, Dec) and
+ * not before it.
+ */
+export function recurringDue(item: Recurring, month: string): boolean {
+  if (item.every <= 1) return true;
+  const diff = monthIndex(month) - monthIndex(item.start);
+  return diff >= 0 && diff % item.every === 0;
+}
+
+/**
+ * The recurring items that belong on the checklist of `month`: the ones due, plus any already logged
+ * there (an entry stays visible even if the schedule was edited later).
+ */
+export const recurringForMonth = (items: Recurring[], month: string, monthItems: Tx[]): Recurring[] =>
+  items.filter((r) => recurringDue(r, month) || !!recurringEntry(monthItems, r));
+
+/** The next month (this one included) in which a recurring item is due. */
+export function nextDueMonth(item: Recurring, from: string): string {
+  if (item.every <= 1) return from;
+  const diff = monthIndex(from) - monthIndex(item.start);
+  if (diff <= 0) return item.start;
+  return addMonths(item.start, Math.ceil(diff / item.every) * item.every);
 }

@@ -4,19 +4,20 @@ import { HeroPair, NoteCard } from '../components/cards';
 import { MonthNavigator } from '../components/MonthNavigator';
 import { RecurringRow } from '../components/RecurringRow';
 import { Bar } from '../components/ui';
-import { accountBalance, budgetSummary, goalSaved, monthTotals } from '../lib/calc';
-import { allExpenseCategories, BUCKET_LABEL, isCategoryHidden } from '../lib/categories';
+import { budgetSummary, goalSaved, monthTotals } from '../lib/calc';
+import { allBuckets, allExpenseCategories, bucketLabel, isCategoryHidden } from '../lib/categories';
 import { currentMonth, daysInMonth, elapsedDays } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
-import { iconFor } from '../lib/icons';
 import { useApp } from '../lib/store';
 import type { Bucket } from '../lib/types';
 import { t } from '../lib/i18n';
 
 // Track and fill follow the pill colours of the active style (blue for needs, peach for wants).
-const BUCKET_BAR: Record<Bucket, { track: string; fill: string; dot: string }> = {
+const BUCKET_BAR: Record<string, { track: string; fill: string; dot: string }> = {
   needs: { track: 'bg-[var(--pill-c-bg,#CFE7FE)]', fill: 'bg-[var(--pill-c-text,#1A4670)]', dot: 'bg-[#CFE7FE] border-[#1A4670]/30' },
   wants: { track: 'bg-[var(--pill-p-bg,#FAE0B4)]', fill: 'bg-[var(--pill-p-text,#7D4E14)]', dot: 'bg-[#FAE0B4] border-[#7D4E14]/30' },
+  // The user's own types.
+  other: { track: 'bg-[#C9EFD3]', fill: 'bg-[#1A5632]', dot: 'bg-[#C9EFD3] border-[#1A5632]/30' },
 };
 
 function SectionCard({ title, aside, children, onAdd, addLabel }: { title: ReactNode; aside?: ReactNode; children: ReactNode; onAdd?: () => void; addLabel?: string }) {
@@ -54,18 +55,18 @@ export function BudgetsView() {
   const unbudgeted = round2(totals.spent - summary.spent);
   const safePerDay = summary.budget > 0 && daysLeft > 0 ? Math.max(0, summary.left) / daysLeft : null;
 
-  const accountTotal = round2(data.accounts.reduce((sum, account) => sum + accountBalance(data.txs, account), 0));
-
   const bucketCard = (bucket: Bucket) => {
     // Hidden categories stay here only while they still carry spending or a budget.
     const categories = allExpenseCategories().filter((c) => c.bucket === bucket && (!isCategoryHidden(c.id) || (totals.byCategory[c.id]?.total ?? 0) > 0 || (data.profile.budgets[c.id] ?? 0) > 0));
     const spent = round2(categories.reduce((sum, c) => sum + (totals.byCategory[c.id]?.total ?? 0), 0));
     const limit = round2(categories.reduce((sum, c) => sum + (data.profile.budgets[c.id] ?? 0), 0));
-    const tone = BUCKET_BAR[bucket];
+    const tone = BUCKET_BAR[bucket] ?? BUCKET_BAR.other;
+    // Needs and wants always have a card; one of your own types only once it holds a category.
+    if (categories.length === 0 && bucket !== 'needs' && bucket !== 'wants') return null;
     return (
       <SectionCard
         key={bucket}
-        title={<><span className={`size-2.5 rounded-full border ${tone.dot}`} aria-hidden="true" />{BUCKET_LABEL[bucket]}</>}
+        title={<><span className={`size-2.5 rounded-full border ${tone.dot}`} aria-hidden="true" />{bucketLabel(bucket)}</>}
         aside={<span className="text-xs font-bold tabular-nums text-[var(--muted)]">{money(spent)}{limit > 0 && ` of ${money(limit)}`}</span>}
       >
         <div className="space-y-2">
@@ -126,40 +127,7 @@ export function BudgetsView() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-start">
-        <SectionCard
-          title={<><span className="size-2.5 rounded-full border bg-[#E8F3FF] border-[#183B5E]/30" aria-hidden="true" />{t('Accounts')}</>}
-          aside={data.accounts.length > 1 ? <span className="text-xs font-bold tabular-nums text-[var(--muted)]">{money(accountTotal)} {t('in total')}</span> : undefined}
-          onAdd={() => openSheet({ type: 'account' })}
-          addLabel={t('New account')}
-        >
-          {data.accounts.length === 0 ? (
-            <p className="um-hide kc-section-empty text-xs font-medium text-[var(--muted)] pb-1">{t('Cash, a bank account, a card: add them to see what each holds. Pick one when you log an entry.')}</p>
-          ) : (
-            <div className="space-y-2">
-              {data.accounts.map((account) => {
-                const Icon = iconFor(account.icon);
-                const balance = accountBalance(data.txs, account);
-                return (
-                  <button
-                    key={account.id}
-                    type="button"
-                    onClick={() => openSheet({ type: 'account', id: account.id })}
-                    className="pressable pressable-soft w-full text-left p-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] flex items-center gap-2.5 group"
-                    aria-label={t('{name}: {v}. Edit', { name: account.name, v: money(balance, { cents: true }) })}
-                  >
-                    <Icon size={16} strokeWidth={2.2} className="kc-meal-icon shrink-0 text-[var(--text)]" aria-hidden="true" />
-                    <span className="min-w-0 flex-1 text-xs sm:text-sm font-extrabold text-[var(--text)] truncate">{account.name}</span>
-                    <span className={`text-xs sm:text-sm font-extrabold tabular-nums ${balance < 0 ? 'text-[#A3312F]' : 'text-[var(--text)]'}`}>{money(balance, { cents: true })}</span>
-                    <ChevronRight size={16} className="text-[var(--muted)] group-hover:translate-x-0.5 transition-transform shrink-0" />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </SectionCard>
-
-        {bucketCard('needs')}
-        {bucketCard('wants')}
+        {allBuckets().map((b) => bucketCard(b.id))}
 
         <SectionCard
           title={<><span className="size-2.5 rounded-full border bg-[#E2D6FF] border-[#49346F]/30" aria-hidden="true" />{t('Savings goals')}</>}

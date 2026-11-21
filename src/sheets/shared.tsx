@@ -1,6 +1,8 @@
-import type { ReactNode } from 'react';
-import { Check, Trash2, type LucideIcon } from 'lucide-react';
-import { SectionLabel } from '../components/ui';
+import { useState, type ReactNode } from 'react';
+import { Check, Plus, Trash2, type LucideIcon } from 'lucide-react';
+import { SectionLabel, seg, textInput } from '../components/ui';
+import { allBuckets } from '../lib/categories';
+import { useApp } from '../lib/store';
 import { CURRENCIES } from '../lib/format';
 import { ICON_CHOICES } from '../lib/icons';
 import { t } from '../lib/i18n';
@@ -188,6 +190,61 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (key:
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/**
+ * "Counts as": Need, Want, or one of the user's own expense types, plus a chip that makes a new type on the
+ * spot (it is selected at once). Own types are counted apart from needs and wants.
+ */
+export function BucketPicker({ value, onChange }: { value: string; onChange: (bucket: string) => void }) {
+  const { saveCategoryType } = useApp();
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState('');
+  const label = (id: string, text: string) => (id === 'needs' ? t('Need') : id === 'wants' ? t('Want') : text);
+  const create = () => {
+    if (!name.trim()) return;
+    onChange(saveCategoryType({ name }));
+    setName('');
+    setAdding(false);
+  };
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('Type of expense')}>
+        {allBuckets().map((bucket) => (
+          <button key={bucket.id} type="button" aria-pressed={value === bucket.id} onClick={() => onChange(bucket.id)} className={`${seg(value === bucket.id)} min-w-[5rem] truncate`}>
+            {label(bucket.id, bucket.name)}
+          </button>
+        ))}
+        {!adding && (
+          <button type="button" onClick={() => setAdding(true)} className="pressable inline-flex items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--border)] px-3 py-2.5 text-xs font-extrabold text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]">
+            <Plus size={13} strokeWidth={2.6} />
+            {t('New type')}
+          </button>
+        )}
+      </div>
+      {adding && (
+        <div className="flex items-center gap-1.5">
+          <input
+            type="text"
+            value={name}
+            autoFocus
+            maxLength={30}
+            autoComplete="off"
+            aria-label={t('Name of the new type')}
+            placeholder={t('Investments, Family, Travel...')}
+            onChange={(event) => setName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') { event.preventDefault(); create(); }
+            }}
+            className={`${textInput} min-w-0 flex-1 text-sm`}
+          />
+          <button type="button" disabled={!name.trim()} onClick={create} className="kc-primary-btn pressable shrink-0 rounded-2xl bg-activity px-4 py-3 text-sm font-extrabold text-activity-ink disabled:opacity-40">
+            {t('Add')}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

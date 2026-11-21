@@ -28,13 +28,13 @@ export const SAMPLE_GOALS: Goal[] = [
 ];
 
 export const SAMPLE_RECURRING: Recurring[] = [
-  { id: 'r_rent', name: 'Rent', amount: 820, kind: 'expense', categoryId: 'housing', day: 1 },
-  { id: 'r_gym', name: 'Gym', amount: 34.9, kind: 'expense', categoryId: 'health', day: 3 },
-  { id: 'r_net', name: 'Internet', amount: 27.9, kind: 'expense', categoryId: 'bills', day: 5 },
-  { id: 'r_salary', name: 'Salary', amount: 2650, kind: 'income', categoryId: 'salary', day: 10 },
-  { id: 'r_stream', name: 'Streaming', amount: 13.99, kind: 'expense', categoryId: 'fun', day: 14 },
-  { id: 'r_power', name: 'Electricity', amount: 62, kind: 'expense', categoryId: 'bills', day: 22 },
-  { id: 'r_phone', name: 'Phone plan', amount: 9.99, kind: 'expense', categoryId: 'bills', day: 25 },
+  { id: 'r_rent', name: 'Rent', amount: 820, kind: 'expense', categoryId: 'housing', day: 1, every: 1, start: '2000-01' },
+  { id: 'r_gym', name: 'Gym', amount: 34.9, kind: 'expense', categoryId: 'health', day: 3, every: 1, start: '2000-01' },
+  { id: 'r_net', name: 'Internet', amount: 27.9, kind: 'expense', categoryId: 'bills', day: 5, every: 1, start: '2000-01' },
+  { id: 'r_salary', name: 'Salary', amount: 2650, kind: 'income', categoryId: 'salary', day: 10, every: 1, start: '2000-01' },
+  { id: 'r_stream', name: 'Streaming', amount: 13.99, kind: 'expense', categoryId: 'fun', day: 14, every: 1, start: '2000-01' },
+  { id: 'r_power', name: 'Electricity', amount: 62, kind: 'expense', categoryId: 'bills', day: 22, every: 1, start: '2000-01' },
+  { id: 'r_phone', name: 'Phone plan', amount: 9.99, kind: 'expense', categoryId: 'bills', day: 25, every: 1, start: '2000-01' },
 ];
 
 export const SAMPLE_PROFILE: Profile = {

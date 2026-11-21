@@ -26,8 +26,8 @@
 | Feature | Open |
 | --- | --- |
 | Month page: hero cards, shares, category cards, layouts | [features/month.md](features/month.md) |
-| Transactions page: search, filter, day groups | [features/transactions.md](features/transactions.md) |
-| Budgets page: category budgets, goals, recurring | [features/budgets.md](features/budgets.md) |
+| Transactions page: search, filter, day groups, list / 2 days / scrolling days | [features/transactions.md](features/transactions.md) |
+| Budgets page: category budgets, goals, recurring, hiding the page | [features/budgets.md](features/budgets.md) |
 | Statistics page: averages, balance trend, breakdown | [features/statistics.md](features/statistics.md) |
 | Adding and editing entries, Log again, toasts and Undo | [features/entries.md](features/entries.md) |
 | Recurring items | [features/recurring.md](features/recurring.md) |

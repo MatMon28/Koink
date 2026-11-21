@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { sortTxs } from './calc';
 import { syncCategories } from './categories';
+import { syncTabs } from './tabs';
 import { currentMonth, daysInMonth, formatDay, pad, todayStr } from './dates';
 import { buildSampleTxs, SAMPLE_ACCOUNTS, SAMPLE_GOALS, SAMPLE_PROFILE, SAMPLE_RECURRING } from './demo';
 import { whenIdle } from './idle';
@@ -11,13 +12,14 @@ import { STORAGE_KEY } from './storage';
 import { applyThemeAttributes, applyUltraMinimal, DEFAULT_MONO_HUE, normalizeMonoHue, normalizeTheme, normalizeThemeStyle } from './themes';
 import { detectLanguage, normalizeLanguage, setLanguage } from './i18n';
 import { normalizeWidgets } from './widgets';
-import type { Account, ActiveTab, AppData, CurrencyCode, CustomCategory, GiftCard, Goal, Profile, Recurring, Settings, Sheet, Tx } from './types';
+import type { Account, ActiveTab, AppData, CategoryType, CurrencyCode, CustomCategory, GiftCard, Goal, Profile, Recurring, Settings, Sheet, Tx } from './types';
 import { t } from './i18n';
 
 
 const defaultSettings = (): Settings => ({
   language: detectLanguage(),
   hideSplit: false,
+  hideBudgets: false,
   theme: 'light',
   themeStyle: 'classic',
   monoHue: DEFAULT_MONO_HUE,
@@ -50,6 +52,7 @@ function sampleData(settings: Settings = defaultSettings()): AppData {
     accounts: SAMPLE_ACCOUNTS.map((a) => ({ ...a })),
     giftCards: [],
     categories: [],
+    categoryTypes: [],
     profile: { ...SAMPLE_PROFILE, rule: { ...SAMPLE_PROFILE.rule }, budgets: { ...SAMPLE_PROFILE.budgets } },
     settings: { ...settings, sampleData: true },
   };
@@ -119,6 +122,9 @@ function sanitize(raw: unknown): AppData | null {
       kind: r.kind === 'income' ? 'income' : 'expense',
       categoryId: isStr(r.categoryId) ? r.categoryId : 'bills',
       day: isNum(r.day) ? Math.min(28, Math.max(1, Math.round(r.day))) : 1,
+      // Items saved before frequencies existed are monthly.
+      every: isNum(r.every) && r.every >= 1 ? Math.min(60, Math.round(r.every)) : 1,
+      start: isStr(r.start) && /^\d{4}-\d{2}$/.test(r.start) ? r.start : currentMonth(),
     }));
 
   const accounts: Account[] = (Array.isArray(src.accounts) ? src.accounts : [])
@@ -135,9 +141,14 @@ function sanitize(raw: unknown): AppData | null {
       note: isStr(g.note) && g.note.trim() ? g.note.slice(0, 500) : undefined,
     }));
 
+  const categoryTypes: CategoryType[] = (Array.isArray(src.categoryTypes) ? src.categoryTypes : [])
+    .filter((c): c is CategoryType => !!c && isStr((c as CategoryType).id) && ID_PATTERN.test((c as CategoryType).id) && isStr((c as CategoryType).name) && !!(c as CategoryType).name.trim())
+    .map((c) => ({ id: c.id, name: c.name.trim().slice(0, 30) }));
+  const knownBucket = (b: unknown): string => (b === 'needs' || (isStr(b) && categoryTypes.some((x) => x.id === b)) ? (b as string) : 'wants');
+
   const categories: CustomCategory[] = (Array.isArray(src.categories) ? src.categories : [])
     .filter((c): c is CustomCategory => !!c && isStr((c as CustomCategory).id) && ID_PATTERN.test((c as CustomCategory).id) && isStr((c as CustomCategory).name))
-    .map((c) => ({ id: c.id, name: c.name.slice(0, 30), icon: isStr(c.icon) ? c.icon : 'tag', bucket: c.bucket === 'needs' ? 'needs' : 'wants' }));
+    .map((c) => ({ id: c.id, name: c.name.slice(0, 30), icon: isStr(c.icon) ? c.icon : 'tag', bucket: knownBucket(c.bucket) }));
 
   const p = (src.profile ?? {}) as Partial<Profile>;
   const rule = p.rule && isNum(p.rule.needs) && isNum(p.rule.wants) && isNum(p.rule.savings) ? p.rule : emptyProfile().rule;
@@ -148,6 +159,7 @@ function sanitize(raw: unknown): AppData | null {
   const base = defaultSettings();
   const settings: Settings = {
     language: s.language === undefined ? base.language : normalizeLanguage(s.language),
+    hideBudgets: s.hideBudgets === true,
     // Before this setting existed the choice lived in localStorage ('koink_month_split_hidden').
     hideSplit: s.hideSplit === undefined ? legacySplitHidden() : s.hideSplit === true,
     theme: normalizeTheme(s.theme),
@@ -173,6 +185,7 @@ function sanitize(raw: unknown): AppData | null {
     accounts,
     giftCards,
     categories,
+    categoryTypes,
     profile: { name: isStr(p.name) ? p.name : '', rule: { needs: rule.needs, wants: rule.wants, savings: rule.savings }, budgets },
     settings,
   };
@@ -232,6 +245,10 @@ interface AppContextValue {
   removeGiftCard: (id: string) => void;
   /** Creates or edits one of the user's own expense categories; returns its id. */
   saveCategory: (category: { id?: string; name: string; icon: string; bucket: CustomCategory['bucket'] }) => string;
+  /** Creates or edits one of the user's own expense types (besides Needs and Wants); returns its id. */
+  saveCategoryType: (type: { id?: string; name: string }) => string;
+  /** Deletes one of the user's own types: its categories move to Wants. */
+  removeCategoryType: (id: string) => void;
   /** Deletes one of the user's own categories (its entries stay, listed under \"Other\"). */
   removeCategory: (id: string) => void;
   /** Hides or shows a category (built-in or own) in the pickers and on the Month page. */
@@ -266,7 +283,7 @@ const UiContext = createContext<UiState>({ sheet: null, sheetSeq: 0, toast: null
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(load);
-  const [activeTab, setTab] = useState<ActiveTab>('month');
+  const [chosenTab, setTab] = useState<ActiveTab>('month');
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [sheetSeq, setSheetSeq] = useState(0);
@@ -283,7 +300,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [data]);
 
   // Everything below reads the category list through categories.ts: bring it up to date first.
-  useMemo(() => syncCategories(data.categories, data.settings.hiddenCategories), [data.categories, data.settings.hiddenCategories]);
+  // The page order (tabs.ts) also follows Settings: a hidden page leaves the pill and the swipe rail.
+  useMemo(() => syncTabs(data.settings.hideBudgets), [data.settings.hideBudgets]);
+  useMemo(() => syncCategories(data.categories, data.settings.hiddenCategories, data.categoryTypes), [data.categories, data.settings.hiddenCategories, data.categoryTypes]);
 
   const { theme, themeStyle, monoHue, currency, ultraMinimal, language } = data.settings;
   // Set during render (like the category list above) so every `t()` below already speaks the new language.
@@ -321,10 +340,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
   }, []);
 
+  // A hidden page is never the active one (hiding Budgets while it is open shows the Month page).
+  const hideBudgets = data.settings.hideBudgets;
+  const activeTab: ActiveTab = chosenTab === 'budgets' && hideBudgets ? 'month' : chosenTab;
   const setActiveTab = useCallback((tab: ActiveTab) => {
-    setTab(tab);
+    // A hidden page cannot be opened (a widget, a reminder or an old link may still ask for it).
+    setTab(tab === 'budgets' && hideBudgets ? 'month' : tab);
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, []);
+  }, [hideBudgets]);
 
   const openSheet = useCallback((next: Sheet) => {
     setSheet(next);
@@ -385,7 +408,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const saveRecurring = useCallback<AppContextValue['saveRecurring']>((item) => {
-    const clean = { ...item, name: item.name.trim(), amount: round2(item.amount), day: Math.min(28, Math.max(1, Math.round(item.day))) };
+    const clean = { ...item, name: item.name.trim(), amount: round2(item.amount), day: Math.min(28, Math.max(1, Math.round(item.day))), every: Math.max(1, Math.round(item.every || 1)) };
     setData((prev) => ({
       ...prev,
       recurring: (clean.id
@@ -458,6 +481,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return id;
   }, []);
 
+  const saveCategoryType = useCallback<AppContextValue['saveCategoryType']>((type) => {
+    const id = type.id ?? `ty_${uid()}`;
+    const name = type.name.trim().slice(0, 30);
+    setData((prev) => ({
+      ...prev,
+      categoryTypes: type.id ? prev.categoryTypes.map((x) => (x.id === id ? { ...x, name } : x)) : [...prev.categoryTypes, { id, name }],
+    }));
+    return id;
+  }, []);
+
+  const removeCategoryType = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      categoryTypes: prev.categoryTypes.filter((x) => x.id !== id),
+      categories: prev.categories.map((c) => (c.bucket === id ? { ...c, bucket: 'wants' } : c)),
+    }));
+  }, []);
+
   const removeCategory = useCallback((id: string) => {
     setData((prev) => ({
       ...prev,
@@ -485,14 +526,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Rates come from Frankfurter (ECB reference rates, free, no key): https://frankfurter.dev
+  // It covers about 30 currencies; any other code keeps using the built-in table (see exchangeRate).
   const refreshRates = useCallback(async () => {
     try {
-      const response = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' });
-      const body = (await response.json()) as { result?: string; rates?: Record<string, unknown> };
-      if (body.result !== 'success' || !body.rates) return false;
-      const fresh = cleanRates(body.rates);
+      const response = await fetch('https://api.frankfurter.dev/v1/latest?base=USD', { cache: 'no-store' });
+      if (!response.ok) return false;
+      const body = (await response.json()) as { date?: unknown; rates?: Record<string, unknown> };
+      if (!body.rates) return false;
+      const fresh = cleanRates({ ...body.rates, USD: 1 }); // the base itself is not in the answer
       if (Object.keys(fresh).length < 5) return false;
-      setData((prev) => ({ ...prev, settings: { ...prev.settings, rates: fresh, ratesDate: todayStr() } }));
+      const day = isStr(body.date) && /^\d{4}-\d{2}-\d{2}$/.test(body.date) ? body.date : todayStr();
+      setData((prev) => ({ ...prev, settings: { ...prev.settings, rates: fresh, ratesDate: day } }));
       return true;
     } catch {
       return false;
@@ -518,7 +563,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const eraseAll = useCallback(() => {
     setData((prev) => ({
-      txs: [], goals: [], recurring: [], accounts: [], giftCards: [], categories: [], profile: emptyProfile(),
+      txs: [], goals: [], recurring: [], accounts: [], giftCards: [], categories: [], categoryTypes: [], profile: emptyProfile(),
       settings: { ...prev.settings, hiddenCategories: [], sampleData: false },
     }));
     setSelectedMonth(currentMonth());
@@ -546,12 +591,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppContextValue>(() => ({
     data, activeTab, setActiveTab, selectedMonth, setSelectedMonth, openSheet, closeSheet,
     money, moneyFit, symbol: currencySymbol(currency), currency, rateFor, addTx, updateTx, removeTx, saveGoal, removeGoal, saveRecurring,
-    removeRecurring, logRecurring, saveAccount, removeAccount, saveGiftCard, removeGiftCard, saveCategory, removeCategory, setCategoryHidden, refreshRates, setBudget, updateProfile, updateSettings, eraseAll, loadSample, exportData,
+    removeRecurring, logRecurring, saveAccount, removeAccount, saveGiftCard, removeGiftCard, saveCategory, saveCategoryType, removeCategoryType, removeCategory, setCategoryHidden, refreshRates, setBudget, updateProfile, updateSettings, eraseAll, loadSample, exportData,
     importData, showToast, dismissToast,
   }), [
     data, activeTab, setActiveTab, selectedMonth, openSheet, closeSheet, money, moneyFit, currency, addTx,
     updateTx, removeTx, saveGoal, removeGoal, saveRecurring, removeRecurring, logRecurring, saveAccount, removeAccount, saveGiftCard, removeGiftCard, saveCategory,
-    removeCategory, setCategoryHidden, refreshRates, rateFor, setBudget, updateProfile,
+    saveCategoryType, removeCategoryType, removeCategory, setCategoryHidden, refreshRates, rateFor, setBudget, updateProfile,
     updateSettings, eraseAll, loadSample, exportData, importData, showToast, dismissToast,
   ]);
 

@@ -1,6 +1,6 @@
 import { ListOrdered, Target, TrendingUp, Wallet } from 'lucide-react';
 import { useApp } from '../lib/store';
-import { TAB_ORDER } from '../lib/tabs';
+import { tabOrder } from '../lib/tabs';
 import type { ActiveTab } from '../lib/types';
 import { t } from '../lib/i18n';
 
@@ -11,12 +11,11 @@ const NAV_META: Record<ActiveTab, { label: string; icon: typeof Wallet; activeCl
   budgets: { label: 'Budgets', icon: Target, activeClass: 'bg-[#E2D6FF] text-[#49346F]' },
   stats: { label: 'Statistics', icon: TrendingUp, activeClass: 'bg-[#CFE7FE] text-[#1A4670]' },
 };
-// The order is TAB_ORDER, the same one the page swipe follows.
-const NAV_ITEMS = TAB_ORDER.map((id) => ({ id, ...NAV_META[id] }));
-
 export function Tabs() {
   const { activeTab, setActiveTab, data } = useApp();
   const ultra = data.settings.ultraMinimal; // only icons: the active page is a filled circle
+  // The order is tabOrder(), the same one the page swipe follows (Budgets can be hidden in Settings).
+  const navItems = tabOrder().map((id) => ({ id, ...NAV_META[id] }));
 
   const select = (id: ActiveTab) => {
     if (activeTab === id) window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -29,7 +28,7 @@ export function Tabs() {
         aria-label={t('Primary')}
         className="kc-nav-pill inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full max-w-full"
       >
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (

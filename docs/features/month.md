@@ -10,11 +10,11 @@ Top to bottom:
 
 | Block | Component | What it shows |
 | --- | --- | --- |
+| Month row | `MonthNavigator` | **first block of the page, above every note and card.** Arrows, a pill that opens a year grid (dots mark months with entries), **Now** when not on the current month; swipeable |
 | Sample note | inline in `MonthView` | only while `settings.sampleData` is true: **Start fresh** (confirm, then `eraseAll()`) or dismiss (keeps the data) |
 | Empty note | inline | only when the journal has no entries at all |
-| Month row | `MonthNavigator` | arrows, a pill that opens a year grid (dots mark months with entries), **Now** when not on the current month; swipeable |
 | Income / Spent | `HeroPair` -> `HeroCard` | the two totals, bars scaled against each other, and the balance pill (`income - spent`) on whichever side is larger |
-| Needs / Wants / Savings | `ShareCard` x3 | amount, its share of income and the target from the budget rule (`10% / 30%`); a warning triangle when needs or wants pass their target, a check when savings reach theirs. Without income, shares are of everything that went out and no target is shown |
+| Needs / Wants / Savings | `ShareCard` x3 (x4 with a card for your own expense types, *Other types* or the type's name, in a month that has such spending: [categories.md](categories.md#types-besides-needs-and-wants)) | amount, its share of income and the target from the budget rule (`10% / 30%`); a warning triangle when needs or wants pass their target, a check when savings reach theirs. Without income, shares are of everything that went out and no target is shown |
 | Left / Per day / Budget | `NoteCard` x3 | `income - spent - saved`; spending divided by the days elapsed; share of the budgeted amount already used |
 | Layout switch | inline | Compact / Normal / Expanded |
 | Category cards | `FoldCard` (`variant="slot"`) x8 | one per expense category |

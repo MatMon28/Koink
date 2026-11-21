@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Plus, Repeat } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { RecurringRow } from '../components/RecurringRow';
-import { frequentEntries, monthTotals, recurringEntry } from '../lib/calc';
+import { frequentEntries, monthTotals, recurringEntry, recurringForMonth } from '../lib/calc';
 import { categoryMeta } from '../lib/categories';
 import { formatMonth, todayStr } from '../lib/dates';
 import { useApp, useSheet } from '../lib/store';
@@ -60,26 +60,28 @@ export function RecurringSheet() {
   const { isOpen } = useSheet('recurring');
   const { data, selectedMonth, money, openSheet, closeSheet } = useApp();
   const items = useMemo(() => (isOpen ? monthTotals(data.txs, selectedMonth).items : []), [isOpen, data.txs, selectedMonth]);
-  const due = data.recurring.filter((r) => !recurringEntry(items, r));
+  // Only what belongs to this month: monthly items and the ones whose turn it is (every 3 months...).
+  const list = recurringForMonth(data.recurring, selectedMonth, items);
+  const due = list.filter((r) => !recurringEntry(items, r));
   const dueOut = due.filter((r) => r.kind === 'expense').reduce((sum, r) => sum + r.amount, 0);
 
   return (
     <Modal isOpen={isOpen} onClose={closeSheet} title={t('Recurring')} subtitle={formatMonth(selectedMonth)} dockId="recurring" maxWidth="max-w-md">
       <div className="space-y-4">
-        {data.recurring.length > 0 && (
+        {list.length > 0 && (
           <Banner
             tone="needs"
             icon={Repeat}
-            label={due.length === 0 ? t('All logged') : t('{v} of {length} logged', { v: data.recurring.length - due.length, length: data.recurring.length })}
+            label={due.length === 0 ? t('All logged') : t('{v} of {length} logged', { v: list.length - due.length, length: list.length })}
             value={money(dueOut, { cents: true })}
             sub={t('still due')}
           />
         )}
-        {data.recurring.length === 0 ? (
+        {list.length === 0 ? (
           <p className="text-sm font-medium text-[var(--muted)]">{t('Rent, salary, subscriptions: set them up once, then log each month with one tap.')}</p>
         ) : (
           <div className="divide-y divide-[var(--border)] border border-[var(--border)] rounded-2xl px-3">
-            {data.recurring.map((item) => (
+            {list.map((item) => (
               <RecurringRow key={item.id} item={item} month={selectedMonth} monthItems={items} />
             ))}
           </div>

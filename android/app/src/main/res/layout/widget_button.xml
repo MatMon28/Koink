@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  One button, like the app's bottom dock: a round pastel button (tinted with setColorFilter) with a small icon,
-  and its name under it. Fixed size, so the tiles never stretch with the widget.
+  One button, like the app's bottom dock: a round pastel button (tinted with setColorFilter) with a small icon.
+  No text (the name is only the accessibility description). Fixed size, so the tiles never stretch with the widget.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/tile"
-    android:layout_width="58dp"
+    android:layout_width="48dp"
     android:layout_height="wrap_content"
-    android:gravity="center_horizontal"
+    android:gravity="center"
     android:orientation="vertical"
     android:paddingBottom="2dp"
     android:paddingTop="2dp">
@@ -32,16 +32,4 @@
             android:contentDescription="@null"
             android:scaleType="fitCenter" />
     </FrameLayout>
-
-    <TextView
-        android:id="@+id/label"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
-        android:textColor="#24201C"
-        android:textSize="10sp"
-        android:textStyle="bold" />
 </LinearLayout>

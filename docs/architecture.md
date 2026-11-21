@@ -27,7 +27,7 @@ Before anything else, an inline script in `index.html` paints the saved colours 
   <main>
     <PageSwiper renderPage>        the pages on one rail: the current one, plus hidden neighbours on touch devices
       MonthView | TransactionsView | BudgetsView | StatsView
-  <QuickAddBar/>                   the bottom dock (ActionDock); not on Statistics
+  <QuickAddBar/>                   the bottom dock (ActionDock); on every page, always visible
   <TxSheet/> <QuickSheet/> ...     every sheet is always mounted and shows itself when its type is open
   <ToastHost/>
 ```

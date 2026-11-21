@@ -388,19 +388,38 @@ export function EmptyRow({ text, action, onAdd }: { text: string; action: string
 }
 
 /** One entry inside an open card: tap the text to edit, or use the two round buttons. */
-export function TxRow({ tx, compact = false, sub }: { tx: Tx; compact?: boolean; sub?: string }) {
+export function TxRow({ tx, compact = false, sub, category }: { tx: Tx; compact?: boolean; sub?: string; category?: string }) {
   const { money, openSheet, removeTx } = useApp();
   const edit = () => openSheet({ type: 'tx', kind: tx.kind, editId: tx.id });
   const amount = money(tx.amount, { cents: true });
+  const marks = (
+    <>
+      {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label={t('Recurring')} />}
+      {tx.details && <StickyNote size={10} strokeWidth={2.6} aria-label={t('Has a note')} />}
+    </>
+  );
   return (
     <div className="py-2.5 flex items-center justify-between gap-2">
       <button type="button" onClick={edit} className="min-w-0 flex-1 text-left group">
-        <span className="text-xs sm:text-sm font-bold text-[var(--text)] group-hover:opacity-80 truncate block">{tx.note || 'Entry'}</span>
-        <span className="text-[11px] font-medium tabular-nums text-[var(--muted)] flex items-center gap-1">
-          {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label={t('Recurring')} />}
-          {tx.details && <StickyNote size={10} strokeWidth={2.6} aria-label={t('Has a note')} />}
-          <span className="truncate">{sub ?? formatDay(tx.date)}</span>
-        </span>
+        {category ? (
+          // Category on top, the title right below it, then the day.
+          <>
+            <span className="text-xs sm:text-sm font-bold text-[var(--text)] group-hover:opacity-80 truncate block">{category}</span>
+            {tx.note && <span className="text-[11px] sm:text-xs font-semibold text-[var(--text)]/80 truncate block">{tx.note}</span>}
+            <span className="text-[11px] font-medium tabular-nums text-[var(--muted)] flex items-center gap-1">
+              {marks}
+              <span className="truncate">{sub ?? formatDay(tx.date)}</span>
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="text-xs sm:text-sm font-bold text-[var(--text)] group-hover:opacity-80 truncate block">{tx.note || 'Entry'}</span>
+            <span className="text-[11px] font-medium tabular-nums text-[var(--muted)] flex items-center gap-1">
+              {marks}
+              <span className="truncate">{sub ?? formatDay(tx.date)}</span>
+            </span>
+          </>
+        )}
       </button>
       <div className="flex items-center gap-1 shrink-0">
         <span className="mr-1 text-right">

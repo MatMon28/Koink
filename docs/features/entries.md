@@ -12,7 +12,7 @@
 
 | From | Opens |
 | --- | --- |
-| Bottom dock (green, pink, lilac buttons) | Add income / Add expense / Move to savings |
+| Bottom dock (green, pink, lilac buttons), **always visible** (pinned, never hides on scroll) | Add income / Add expense / Move to savings |
 | `+` on a category card | Add expense with that category chosen |
 | `+` on a goal | Move to savings with that goal chosen |
 | Any entry row (Month, Transactions) | the same sheet in edit mode |

@@ -25,17 +25,17 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | Task | Source files | Document |
 | --- | --- | --- |
 | **Month page** (hero cards, needs / wants / savings, category cards, layouts) | `src/pages/MonthView.tsx`, `src/components/cards.tsx` | [features/month.md](docs/features/month.md) |
-| **Transactions page** (search, filter, list or days side by side, quick delete) | `src/pages/TransactionsView.tsx` | [features/transactions.md](docs/features/transactions.md) |
-| **Budgets page** (category budgets, goals, recurring lists, accounts card) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx` | [features/budgets.md](docs/features/budgets.md) |
+| **Transactions page** (search, filter, list / 2 days / scrolling days, category first and title below, quick delete) | `src/pages/TransactionsView.tsx` | [features/transactions.md](docs/features/transactions.md) |
+| **Budgets page** (category budgets per type, goals, recurring list; hiding the page) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx`, `src/lib/tabs.ts` | [features/budgets.md](docs/features/budgets.md) |
 | **Statistics page** (averages, balance trend, breakdown) | `src/pages/StatsView.tsx` | [features/statistics.md](docs/features/statistics.md) |
 | **Add / edit an entry** (number pad, title + long note, account, currency), "Log again" | `src/sheets/TxSheet.tsx`, `src/sheets/QuickSheet.tsx`, `src/sheets/shared.tsx`, `NumPad` / `AmountStepper` in `src/components/ui.tsx` | [features/entries.md](docs/features/entries.md) |
 | **Widgets** (single button, multiple buttons, expense-type buttons; Android home screen + Month-page strip) | `src/lib/widgets.ts`, `src/lib/widgetBridge.ts`, `src/lib/useWidgets.ts`, `src/sheets/WidgetsSettings.tsx`, `src/components/WidgetButtons.tsx`, `src/components/WidgetStrip.tsx`, `android/app/src/main/java/com/koink/app/KoinkWidgetProvider.java` | [features/widgets.md](docs/features/widgets.md) |
 | **Gift cards** (add a card, pay an expense with it, tracker on the Month page, optional bottom-bar button) | `src/lib/giftcards.ts`, `src/sheets/GiftCardPickerSheet.tsx` (what the gift card button opens), `src/sheets/GiftCardSheet.tsx`, `src/sheets/TxSheet.tsx` (*Pay with a gift card*), `src/pages/MonthView.tsx` (tracker) | [features/gift-cards.md](docs/features/gift-cards.md) |
-| **Accounts** (balance per account, edited in the Profile) | `src/sheets/ProfileAccounts.tsx`, `src/sheets/AccountSheet.tsx`, `accountBalance` in `src/lib/calc.ts`, accounts card in `src/pages/BudgetsView.tsx` | [features/accounts.md](docs/features/accounts.md) |
+| **Accounts** (balance per account, edited in the Profile only) | `src/sheets/ProfileAccounts.tsx`, `src/sheets/AccountSheet.tsx`, `accountBalance` in `src/lib/calc.ts` | [features/accounts.md](docs/features/accounts.md) |
 | **Language** (English / Italian, `t()`, the Italian dictionary) | `src/lib/i18n.ts`, `src/lib/i18n.it.ts`, `src/sheets/SettingsSheet.tsx` | [features/language.md](docs/features/language.md) |
-| **Expense categories** (own, hide, delete) | `src/lib/categories.ts`, `src/lib/icons.ts`, `src/sheets/CategoriesSheet.tsx` | [features/categories.md](docs/features/categories.md) |
-| **Currencies and exchange rates** (per-entry currency) | `src/lib/format.ts`, `src/sheets/TxSheet.tsx`, `src/sheets/SettingsSheet.tsx` | [features/currencies.md](docs/features/currencies.md) |
-| **Recurring items** | `src/sheets/EditSheets.tsx`, `src/sheets/QuickSheet.tsx`, `src/components/RecurringRow.tsx` | [features/recurring.md](docs/features/recurring.md) |
+| **Expense categories** (own, hide, delete, own types besides needs / wants, the expandable field in Settings) | `src/lib/categories.ts`, `src/lib/icons.ts`, `src/sheets/CategoriesSheet.tsx`, `BucketPicker` in `src/sheets/shared.tsx` | [features/categories.md](docs/features/categories.md) |
+| **Currencies and exchange rates** (per-entry currency, rates from Frankfurter) | `src/lib/format.ts`, `refreshRates` in `src/lib/store.tsx`, `src/sheets/TxSheet.tsx`, `src/sheets/SettingsSheet.tsx` | [features/currencies.md](docs/features/currencies.md) |
+| **Recurring items** (monthly or every N months) | `src/sheets/EditSheets.tsx`, `src/sheets/QuickSheet.tsx`, `src/components/RecurringRow.tsx`, `recurringDue` in `src/lib/calc.ts` | [features/recurring.md](docs/features/recurring.md) |
 | **Savings goals** | `src/sheets/EditSheets.tsx` (`GoalSheet`), `src/lib/calc.ts` (`goalSaved`) | [features/savings-goals.md](docs/features/savings-goals.md) |
 | **Profile and the budget rule** (50 / 30 / 20), accounts with their balances | `src/sheets/ProfileSheet.tsx`, `src/sheets/ProfileAccounts.tsx` | [features/profile.md](docs/features/profile.md) |
 | **Settings** (language, appearance, currency, bottom bar, widgets, install card) | `src/sheets/SettingsSheet.tsx`, `src/components/InstallApp.tsx` | [features/settings.md](docs/features/settings.md) |
@@ -56,7 +56,7 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **State, actions, what is stored** | `src/lib/store.tsx`, `src/lib/types.ts`, `src/lib/storage.ts` | [data-model.md](docs/data-model.md) |
 | **Money maths** (totals, shares, budgets, formatting) | `src/lib/calc.ts`, `src/lib/format.ts`, `src/lib/dates.ts` | [data-model.md](docs/data-model.md) |
 | **Categories and income sources** | `src/lib/categories.ts` | [data-model.md](docs/data-model.md) |
-| **Header, page pill, bottom dock, sheets, toasts** | `src/components/Header.tsx`, `Tabs.tsx`, `ActionDock.tsx`, `Modal.tsx`, `ui.tsx` | [architecture.md](docs/architecture.md) |
+| **Header, page pill, bottom dock (always visible), sheets, toasts** | `src/components/Header.tsx`, `Tabs.tsx`, `ActionDock.tsx`, `Modal.tsx`, `ui.tsx` | [architecture.md](docs/architecture.md) |
 | **Shared inputs** (amount stepper, switch, confirm dialog) | `src/components/ui.tsx` | [file-map/components.md](docs/file-map/components.md) |
 | **How the whole thing fits together** | `src/App.tsx`, `src/main.tsx` | [architecture.md](docs/architecture.md) |
 | **Which file does X?** | | [file-map/README.md](docs/file-map/README.md) |
@@ -87,7 +87,18 @@ docs/                 documentation (index: docs/README.md)
 3. Every sheet is a `<Modal>`; every sheet is opened with `openSheet({ type: ... })`. The list of types is the `Sheet` union in `src/lib/types.ts`.
 4. After adding, renaming or deleting a file, update its row in `docs/file-map/` and, if it is a feature, the matching `docs/features/*.md` (rule and table in [docs/README.md](docs/README.md#keeping-the-docs-current)).
 
-## Latest round: language, collapsible settings, accounts in the profile, rounder widgets
+## Latest round: Frankfurter rates, text-free widgets, expense types, recurring every N months, always-visible dock
+
+- **Exchange rates** now come from [Frankfurter](https://frankfurter.dev) (ECB rates, free, no key) instead of open.er-api.com; currencies it does not list keep the built-in approximate rate. [docs/features/currencies.md](docs/features/currencies.md)
+- **Widgets:** the buttons have no text any more, only the round icon (the name stays as tooltip / accessibility label), in the app and on Android. [docs/features/widgets.md](docs/features/widgets.md)
+- **Expense categories** are an expandable field in Settings (groups per type that fold open and shut), and you can add **your own types** next to Needs and Wants. [docs/features/categories.md](docs/features/categories.md)
+- **Budgets:** the Accounts card is gone (accounts live in the Profile), and **Settings > Appearance > Hide the Budgets page** removes the page from the pill and the swipe. [docs/features/budgets.md](docs/features/budgets.md)
+- **Recurring items** can repeat every 1, 2, 3, 6, 12 (or any number of) months, counted from a first month; they only show on the checklist in the months they are due. [docs/features/recurring.md](docs/features/recurring.md)
+- **Bottom buttons** (add expense / income...) are pinned and always visible on every page, and the month **calendar** is the first thing on the Month page. [docs/features/month.md](docs/features/month.md)
+- **Entries in lists:** the category is the first line and the title sits right below it. [docs/features/transactions.md](docs/features/transactions.md)
+- **Transactions:** a new **2 days** layout shows two days next to each other. [docs/features/transactions.md](docs/features/transactions.md)
+
+## Previous round: language, collapsible settings, accounts in the profile, rounder widgets
 
 - **Language:** Settings starts with an English / Italiano choice. Every visible text goes through `t()` (`src/lib/i18n.ts`), the Italian texts live in `src/lib/i18n.it.ts`; numbers and month names follow. [docs/features/language.md](docs/features/language.md)
 - **Settings:** order is Language, Appearance (now with *Hide needs, wants and savings*), Currency, Buttons in the bottom bar, Widgets (all collapsible), then notifications, install, data. No more Gestures list; *Delete all data* is as big as the other fields. [docs/features/settings.md](docs/features/settings.md)

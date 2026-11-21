@@ -88,3 +88,7 @@ The device checklist is in [prepare-apps.md](prepare-apps.md#first-run-on-a-devi
 ## Wallet round
 
 Run in headless Chromium (390 x 800, touch): add expense through the number pad, foreign-currency entry with a corrected rate, new and hidden categories, Transactions in both layouts and quick delete, swipe-down close of a sheet, header fold on scroll and the logo animation (screenshots inspected). **Not measured:** real frame times on a phone, so the "laggy swipe" fix is by construction (compositor-only changes, no re-render during the exit), not by profiling. The rates download was not exercised (no network in the test run).
+
+## Frankfurter / types / frequency round
+
+Checked: `tsc -b` and ESLint clean, `vite build` succeeds; the Frankfurter endpoint (`/v1/latest?base=USD`) was called once and its answer shape matches `refreshRates`. **Not** exercised in a browser: the 2 days layout, the expandable categories field, hiding Budgets, the frequency picker and the always-visible dock should be tried by hand (steps in the feature docs). The Android widget layout change (no text) is not compiled, as before.

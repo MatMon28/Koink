@@ -11,9 +11,9 @@ Every control applies at once (`updateSettings()`); there is no save button.
 | Section | Controls |
 | --- | --- |
 | **Language** (first, always visible) | English / Italiano, a two-button segment (`settings.language`). See [language.md](language.md) |
-| Appearance (collapsible, open) | Theme: Light / Soft dark / Dark. Style: Classic or one of six presets, each with its swatches. With Mono, ten colours to choose from. See [themes.md](themes.md). Then two switches: **Ultra minimal** ([ultra-minimal.md](ultra-minimal.md)) and **Hide needs, wants and savings** (`settings.hideSplit`, takes the three cards off the Month page; it used to be a *Hide* button on that page) |
+| Appearance (collapsible, open) | Theme: Light / Soft dark / Dark. Style: Classic or one of six presets, each with its swatches. With Mono, ten colours to choose from. See [themes.md](themes.md). Then three switches: **Ultra minimal** ([ultra-minimal.md](ultra-minimal.md)), **Hide needs, wants and savings** (`settings.hideSplit`, takes the three cards off the Month page; it used to be a *Hide* button on that page) and **Hide the Budgets page** (`settings.hideBudgets`, see [budgets.md](budgets.md#hiding-the-page)) |
 | Currency (collapsible) | the currency grid, *Update exchange rates*. Changes the symbol and formatting only; amounts are not converted. [currencies.md](currencies.md) |
-| Expense categories | a row that opens the category manager ([categories.md](categories.md)) |
+| Expense categories (collapsible) | an **expandable field** holding the whole category manager inline (`CategoriesBody`): one fold-open group per type (Needs, Wants, your own types), *New category* and *New type*. No popup. [categories.md](categories.md) |
 | Buttons in the bottom bar (collapsible) | a switch per dock button: Income, Expense, Recurring, Log again, Savings, Gift cards (`settings.quickAdd`). With all off, the dock disappears |
 | Widgets (collapsible) | `WidgetsSettings.tsx`: previews and pickers for the three widgets, the Month-page switch. **No popup**: everything is inside the section. See [widgets.md](widgets.md) |
 | Notifications (collapsible) | four opt-in reminders with their times, permission banner, test button. See [../notifications.md](../notifications.md) |
@@ -33,5 +33,5 @@ The switches are `role="switch"` buttons with `aria-checked`; segmented choices 
 
 ## Currency, rates, categories (this version)
 
-- **Currency** is a grid of ~40 currencies (`CurrencyGrid` in `sheets/shared.tsx`), the journal's own. **Update exchange rates** fetches current rates; until then approximate built-in ones are used. Details: [currencies.md](currencies.md).
-- **Expense categories** opens the category manager ([categories.md](categories.md)).
+- **Currency** is a grid of ~40 currencies (`CurrencyGrid` in `sheets/shared.tsx`), the journal's own. **Update exchange rates** fetches current rates from Frankfurter ([currencies.md](currencies.md)); until then approximate built-in ones are used. Details: [currencies.md](currencies.md).
+- **Expense categories** expands in place into the category manager ([categories.md](categories.md)); it is the same body as the sheet opened from the Budgets page.

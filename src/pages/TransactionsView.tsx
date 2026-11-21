@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Columns3, List, Repeat, Search, StickyNote, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Columns2, Columns3, List, Repeat, Search, StickyNote, Trash2, X } from 'lucide-react';
 import { categoryMeta } from '../lib/categories';
 import { formatDay } from '../lib/dates';
 import { formatMoney, round2 } from '../lib/format';
@@ -16,11 +16,15 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'income', label: 'Income' },
   { id: 'saving', label: 'Savings' },
 ];
-/** One long list with day headings, or one card per day side by side. */
-type View = 'list' | 'days';
-const VIEWS: { id: View; label: string; icon: typeof List }[] = [
-  { id: 'list', label: 'List', icon: List },
-  { id: 'days', label: 'Days', icon: Columns3 },
+/**
+ * One long list with day headings, one card per day in a sideways scroller ('days'), or exactly two day
+ * cards next to each other, two columns on every screen ('pair').
+ */
+type View = 'list' | 'days' | 'pair';
+const VIEWS: { id: View; label: string; icon: typeof List; hint: string }[] = [
+  { id: 'list', label: 'List', icon: List, hint: 'One list, newest first' },
+  { id: 'pair', label: '2 days', icon: Columns2, hint: 'Two days next to each other' },
+  { id: 'days', label: 'Days', icon: Columns3, hint: 'Each day in its own card, side by side' },
 ];
 const PAGE = 14;
 
@@ -30,63 +34,69 @@ interface Group {
   net: number;
 }
 
-/** One entry: tap the text to edit it, tap the bin to delete it (an Undo shows at the bottom). */
-function EntryRow({ tx }: { tx: Tx }) {
+/**
+ * One entry: tap the text to edit it, tap the bin to delete it (an Undo shows at the bottom). The category
+ * comes first and the title sits right below it. `narrow` is the row inside a two-column day card: no
+ * icon, the amount under the text, so everything fits half a phone screen.
+ */
+function EntryRow({ tx, narrow = false }: { tx: Tx; narrow?: boolean }) {
   const { data, money, openSheet, removeTx } = useApp();
   const meta = categoryMeta(tx.kind, tx.categoryId, data.goals);
   const Icon = meta.icon;
   const account = tx.accountId ? data.accounts.find((a) => a.id === tx.accountId) : undefined;
   const amount = money(tx.amount, { cents: true });
   const title = tx.note || meta.name;
+  const noteMark = tx.details ? <StickyNote size={11} strokeWidth={2.4} className="shrink-0 text-[var(--muted)]" aria-label={t('Has a note')} /> : null;
+  const amountText = tx.kind === 'income' ? `+${amount}` : tx.kind === 'expense' ? `-${amount}` : amount;
+  const amountTone = tx.kind === 'income' ? 'text-[var(--intake-on-surface)]' : tx.kind === 'saving' ? 'text-[var(--weight-on-surface)]' : 'text-[var(--text)]';
+  const foreign = tx.foreign ? formatMoney(tx.foreign.amount, tx.foreign.currency, { cents: true }) : null;
   return (
     <div className="flex items-center rounded-2xl hover:bg-[var(--inset)] transition-colors">
       <button
         type="button"
         onClick={() => openSheet({ type: 'tx', kind: tx.kind, editId: tx.id })}
-        className="pressable pressable-soft min-w-0 flex-1 flex items-center gap-2.5 rounded-2xl pl-2.5 pr-1 py-2 text-left"
+        className={`pressable pressable-soft min-w-0 flex-1 flex rounded-2xl text-left ${narrow ? 'flex-col items-start gap-0.5 pl-2.5 pr-1 py-2' : 'items-center gap-2.5 pl-2.5 pr-1 py-2'}`}
       >
-        <span className="kc-meal-icon size-9 rounded-full flex items-center justify-center shrink-0 text-[var(--text)]">
-          <Icon size={16} strokeWidth={2.2} />
-        </span>
-        <span className="min-w-0 flex-1">
+        {!narrow && (
+          <span className="kc-meal-icon size-9 rounded-full flex items-center justify-center shrink-0 text-[var(--text)]">
+            <Icon size={16} strokeWidth={2.2} />
+          </span>
+        )}
+        <span className="min-w-0 w-full flex-1">
+          {/* 1. the category */}
           <span className="text-xs sm:text-sm font-bold text-[var(--text)] truncate flex items-center gap-1">
-            <span className="truncate">{t(title)}</span>
-            {tx.details && <StickyNote size={11} strokeWidth={2.4} className="shrink-0 text-[var(--muted)]" aria-label={t('Has a note')} />}
-          </span>
-          <span className="um-hide text-[11px] font-medium text-[var(--muted)] flex items-center gap-1 min-w-0">
-            {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label={t('Recurring')} className="shrink-0" />}
+            {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label={t('Recurring')} className="shrink-0 text-[var(--muted)]" />}
             <span className="truncate">{meta.name}</span>
-            {account && (
-              <>
-                <span aria-hidden="true">·</span>
-                <KeyIcon name={account.icon} size={10} strokeWidth={2.6} className="shrink-0" aria-hidden="true" />
-                <span className="truncate">{account.name}</span>
-              </>
-            )}
+            {!tx.note && noteMark}
           </span>
+          {/* 2. the title, below the category */}
+          {tx.note && (
+            <span className="text-[11px] sm:text-xs font-semibold text-[var(--text)]/80 truncate flex items-center gap-1 min-w-0">
+              <span className="truncate">{tx.note}</span>
+              {noteMark}
+            </span>
+          )}
+          {account && (
+            <span className="um-hide text-[11px] font-medium text-[var(--muted)] flex items-center gap-1 min-w-0">
+              <KeyIcon name={account.icon} size={10} strokeWidth={2.6} className="shrink-0" aria-hidden="true" />
+              <span className="truncate">{account.name}</span>
+            </span>
+          )}
           {tx.details && <span className="um-hide block truncate text-[11px] italic text-[var(--muted)]/90">{tx.details}</span>}
         </span>
-        <span className="shrink-0 text-right tabular-nums">
-          <span
-            className={`block text-xs sm:text-sm font-extrabold ${
-              tx.kind === 'income' ? 'text-[var(--intake-on-surface)]' : tx.kind === 'saving' ? 'text-[var(--weight-on-surface)]' : 'text-[var(--text)]'
-            }`}
-          >
-            {tx.kind === 'income' ? `+${amount}` : tx.kind === 'expense' ? `-${amount}` : amount}
-          </span>
-          {tx.foreign && (
-            <span className="um-hide block text-[10px] font-bold text-[var(--muted)]">{formatMoney(tx.foreign.amount, tx.foreign.currency, { cents: true })}</span>
-          )}
+        <span className={narrow ? 'tabular-nums' : 'shrink-0 text-right tabular-nums'}>
+          <span className={`block text-xs sm:text-sm font-extrabold ${amountTone}`}>{amountText}</span>
+          {foreign && <span className="um-hide block text-[10px] font-bold text-[var(--muted)]">{foreign}</span>}
         </span>
       </button>
       <button
         type="button"
         onClick={() => removeTx(tx.id)}
-        className="pressable mr-1 size-9 shrink-0 rounded-full text-[var(--muted)] hover:text-[#8C2D32] hover:bg-[#F6D0D0] flex items-center justify-center"
+        className={`pressable shrink-0 rounded-full text-[var(--muted)] hover:text-[#8C2D32] hover:bg-[#F6D0D0] flex items-center justify-center ${narrow ? 'mr-0.5 size-8' : 'mr-1 size-9'}`}
         title={t('Delete')}
         aria-label={t('Delete {title}', { title })}
       >
-        <Trash2 size={15} />
+        <Trash2 size={narrow ? 14 : 15} />
       </button>
     </div>
   );
@@ -218,7 +228,7 @@ export function TransactionsView() {
                 type="button"
                 aria-pressed={view === item.id}
                 onClick={() => setView(item.id)}
-                title={item.id === 'list' ? t('One list, newest first') : t('Each day in its own card, side by side')}
+                title={t(item.hint)}
                 className={`pressable inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap ${
                   view === item.id
                     ? 'bg-[var(--text)] text-[var(--on-text)]'
@@ -272,6 +282,21 @@ export function TransactionsView() {
             </div>
           ))}
         </section>
+      ) : view === 'pair' ? (
+        // Two days next to each other, on every screen size: newest on the left, the day before on the right.
+        <div className="grid grid-cols-2 items-start gap-2 sm:gap-3">
+          {visible.map((group) => (
+            <section key={group.date} className="kc-themed-card min-w-0 bg-[var(--surface)] border border-[var(--border)] rounded-3xl overflow-hidden">
+              <div className="px-3 pt-3 pb-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                <h3 className="min-w-0 truncate text-xs sm:text-sm font-extrabold text-[var(--text)]">{formatDay(group.date)}</h3>
+                <DayNet net={group.net} />
+              </div>
+              <div className="px-1 pb-1.5">
+                {group.items.map((tx) => <EntryRow key={tx.id} tx={tx} narrow />)}
+              </div>
+            </section>
+          ))}
+        </div>
       ) : (
         <div className="relative">
           {/* Days side by side. A sideways scroller: on a phone one card (and a peek of the next) fits, swipe to move; the page swipe leaves it alone. */}
@@ -321,7 +346,7 @@ export function TransactionsView() {
         </div>
       )}
 
-      {view === 'list' && groups.length > limit && (
+      {view !== 'days' && groups.length > limit && (
         <div className="flex justify-center">
           <button
             type="button"

@@ -1,16 +1,18 @@
-import { useState } from 'react';
-import { Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useId, useState, type ReactNode } from 'react';
+import { ChevronDown, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Modal } from '../components/Modal';
-import { ConfirmDialog, SectionLabel, seg, textInput } from '../components/ui';
-import { allExpenseCategories, BUCKET_LABEL, isBuiltInCategory, isCategoryHidden } from '../lib/categories';
+import { ConfirmDialog, SectionLabel, textInput } from '../components/ui';
+import { allBuckets, allExpenseCategories, isBuiltInCategory, isCategoryHidden, isOwnBucket } from '../lib/categories';
 import { useApp, useSheet } from '../lib/store';
 import type { Bucket } from '../lib/types';
-import { IconPicker } from './shared';
+import { BucketPicker, IconPicker } from './shared';
 import { t } from '../lib/i18n';
 
 /**
  * The expense categories: make your own, hide the ones you never use (housing, groceries...) and
  * show them again, delete your own. Hiding never touches entries: they keep their category.
+ * Categories are grouped by type (Needs, Wants and your own types); every group folds open and shut.
+ * The same body also sits inside the Settings sheet as an expandable field (`CategoriesBody`).
  */
 export function CategoriesSheet() {
   const { isOpen } = useSheet('categories');
@@ -25,23 +27,56 @@ export function CategoriesSheet() {
 const iconButton =
   'pressable size-9 shrink-0 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover)] flex items-center justify-center';
 
-function CategoriesBody() {
-  const { data, saveCategory, removeCategory, setCategoryHidden, showToast } = useApp();
+/** One type of expense (Needs, Wants or your own): a header that folds its categories open and shut. */
+function TypeGroup({ title, count, actions, defaultOpen = true, children }: { title: string; count: number; actions?: ReactNode; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const id = useId();
+  return (
+    <div className="rounded-2xl border border-[var(--border)]">
+      <div className="flex items-center gap-1 pr-1.5">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={`${id}-panel`}
+          onClick={() => setOpen((v) => !v)}
+          className="flex min-w-0 flex-1 items-center gap-2 px-3.5 py-3 text-left"
+        >
+          <ChevronDown size={16} aria-hidden="true" className={`shrink-0 text-[var(--muted)] transition-transform duration-300 ${open ? '' : '-rotate-90'}`} />
+          <span className="min-w-0 truncate text-xs font-extrabold uppercase tracking-wider text-[var(--text)]">{title}</span>
+          <span className="shrink-0 rounded-full bg-[var(--inset)] px-2 py-0.5 text-[10px] font-extrabold text-[var(--muted)]">{count}</span>
+        </button>
+        {actions}
+      </div>
+      <div id={`${id}-panel`} className="accordion-grid" data-open={open} inert={!open}>
+        <div className="accordion-inner">
+          <div className="px-2.5 pb-2.5">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The whole manager, without a sheet around it: used by the sheet below and by Settings. */
+export function CategoriesBody() {
+  const { data, saveCategory, removeCategory, saveCategoryType, removeCategoryType, setCategoryHidden, showToast } = useApp();
   const [editing, setEditing] = useState<string | null>(null); // id being edited, '' = a new one
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('tag');
   const [bucket, setBucket] = useState<Bucket>('wants');
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [typeEditing, setTypeEditing] = useState<string | null>(null); // type id being renamed, '' = a new type
+  const [typeName, setTypeName] = useState('');
+  const [typeDeleting, setTypeDeleting] = useState<string | null>(null);
 
   const list = allExpenseCategories();
   const uses = (id: string) => data.txs.filter((tx) => tx.kind === 'expense' && tx.categoryId === id).length;
   const visibleCount = list.filter((c) => !isCategoryHidden(c.id)).length;
 
-  const startNew = () => {
+  const startNew = (inBucket: Bucket = 'wants') => {
     setEditing('');
     setName('');
     setIcon('tag');
-    setBucket('wants');
+    setBucket(inBucket);
   };
   const startEdit = (id: string) => {
     const own = data.categories.find((c) => c.id === id);
@@ -56,6 +91,12 @@ function CategoriesBody() {
     saveCategory({ id: editing || undefined, name, icon, bucket });
     showToast(editing ? t('Saved {v}', { v: name.trim() }) : t('Added {v}', { v: name.trim() }));
     setEditing(null);
+  };
+  const submitType = () => {
+    if (!typeName.trim()) return;
+    saveCategoryType({ id: typeEditing || undefined, name: typeName });
+    showToast(typeEditing ? t('Saved {v}', { v: typeName.trim() }) : t('Added {v}', { v: typeName.trim() }));
+    setTypeEditing(null);
   };
 
   const row = (id: string) => {
@@ -105,26 +146,91 @@ function CategoriesBody() {
 
   const deletingCategory = deleting ? list.find((c) => c.id === deleting) : undefined;
   const deletingUses = deleting ? uses(deleting) : 0;
+  const deletingType = typeDeleting ? data.categoryTypes.find((x) => x.id === typeDeleting) : undefined;
+  const deletingTypeCount = typeDeleting ? list.filter((c) => c.bucket === typeDeleting).length : 0;
 
   return (
-    <div className="space-y-5">
-      {(['needs', 'wants'] as Bucket[]).map((b) => (
-        <div key={b}>
-          <SectionLabel>{BUCKET_LABEL[b]}</SectionLabel>
-          <ul className="space-y-1.5">{list.filter((c) => c.bucket === b).map((c) => row(c.id))}</ul>
-        </div>
-      ))}
+    <div className="space-y-3">
+      {allBuckets().map((b) => {
+        const members = list.filter((c) => c.bucket === b.id);
+        const own = isOwnBucket(b.id);
+        return (
+          <TypeGroup
+            key={b.id}
+            title={b.name}
+            count={members.length}
+            actions={
+              own ? (
+                <>
+                  <button type="button" className={iconButton} onClick={() => { setTypeEditing(b.id); setTypeName(b.name); }} aria-label={t('Rename {name}', { name: b.name })} title={t('Rename')}>
+                    <Pencil size={15} />
+                  </button>
+                  <button type="button" className={`${iconButton} hover:!text-[#8C2D32] hover:!bg-[#F6D0D0]`} onClick={() => setTypeDeleting(b.id)} aria-label={t('Delete {name}', { name: b.name })} title={t('Delete')}>
+                    <Trash2 size={15} />
+                  </button>
+                </>
+              ) : undefined
+            }
+          >
+            {typeEditing === b.id && (
+              <div className="mb-2 flex items-center gap-1.5">
+                <input type="text" value={typeName} autoFocus maxLength={30} autoComplete="off" aria-label={t('Name of the type')} onChange={(event) => setTypeName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submitType(); }} className={`${textInput} min-w-0 flex-1 text-sm`} />
+                <button type="button" onClick={() => setTypeEditing(null)} className="pressable shrink-0 rounded-2xl bg-[var(--inset)] px-3 py-3 text-sm font-extrabold text-[var(--text)]">{t('Cancel')}</button>
+                <button type="button" disabled={!typeName.trim()} onClick={submitType} className="kc-primary-btn pressable shrink-0 rounded-2xl bg-activity px-3 py-3 text-sm font-extrabold text-activity-ink disabled:opacity-40">{t('Save')}</button>
+              </div>
+            )}
+            {members.length === 0 ? (
+              <p className="px-1.5 py-1 text-[11px] font-medium text-[var(--muted)]">{t('No categories in this type yet.')}</p>
+            ) : (
+              <ul className="space-y-1.5">{members.map((c) => row(c.id))}</ul>
+            )}
+          </TypeGroup>
+        );
+      })}
 
-      {editing === null ? (
-        <button
-          type="button"
-          onClick={startNew}
-          className="pressable pressable-soft w-full py-3 rounded-2xl bg-[var(--text)] text-[var(--on-text)] font-extrabold text-sm flex items-center justify-center gap-2"
-        >
-          <Plus size={17} strokeWidth={2.5} />
-          {t('New category')}
-        </button>
-      ) : (
+      {typeEditing === '' && (
+        <div className="space-y-2 rounded-3xl border border-[var(--border)] p-3.5">
+          <SectionLabel htmlFor="type-name">{t('New type')}</SectionLabel>
+          <input
+            id="type-name"
+            type="text"
+            value={typeName}
+            autoFocus
+            maxLength={30}
+            autoComplete="off"
+            placeholder={t('Investments, Family, Travel...')}
+            onChange={(event) => setTypeName(event.target.value)}
+            onKeyDown={(event) => { if (event.key === 'Enter') submitType(); }}
+            className={`${textInput} text-sm`}
+          />
+          <p className="text-[11px] font-medium text-[var(--muted)]">{t('A type groups categories next to Needs and Wants. What goes in it is counted apart from both.')}</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setTypeEditing(null)} className="pressable py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold">{t('Cancel')}</button>
+            <button type="button" disabled={!typeName.trim()} onClick={submitType} className="kc-primary-btn pressable py-3 rounded-2xl bg-activity text-activity-ink font-extrabold text-sm disabled:opacity-40">{t('Add type')}</button>
+          </div>
+        </div>
+      )}
+
+      {editing === null && typeEditing !== '' ? (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => startNew()}
+            className="pressable pressable-soft w-full py-3 rounded-2xl bg-[var(--text)] text-[var(--on-text)] font-extrabold text-sm flex items-center justify-center gap-2"
+          >
+            <Plus size={17} strokeWidth={2.5} />
+            {t('New category')}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTypeEditing(''); setTypeName(''); }}
+            className="pressable pressable-soft w-full py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] font-extrabold text-sm flex items-center justify-center gap-2"
+          >
+            <Plus size={17} strokeWidth={2.5} />
+            {t('New type')}
+          </button>
+        </div>
+      ) : editing !== null ? (
         <div className="space-y-4 rounded-3xl border border-[var(--border)] p-3.5">
           <div>
             <SectionLabel htmlFor="category-name">{editing ? t('Edit category') : t('New category')}</SectionLabel>
@@ -146,10 +252,7 @@ function CategoriesBody() {
           <IconPicker value={icon} onChange={setIcon} />
           <div>
             <SectionLabel>{t('Counts as')}</SectionLabel>
-            <div className="flex gap-1.5" role="group" aria-label={t('Needs or wants')}>
-              <button type="button" aria-pressed={bucket === 'needs'} onClick={() => setBucket('needs')} className={seg(bucket === 'needs')}>{t('Need')}</button>
-              <button type="button" aria-pressed={bucket === 'wants'} onClick={() => setBucket('wants')} className={seg(bucket === 'wants')}>{t('Want')}</button>
-            </div>
+            <BucketPicker value={bucket} onChange={setBucket} />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={() => setEditing(null)} className="pressable py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold">{t('Cancel')}</button>
@@ -158,7 +261,7 @@ function CategoriesBody() {
             </button>
           </div>
         </div>
-      )}
+      ) : null}
 
       <ConfirmDialog
         open={deleting !== null}
@@ -170,6 +273,16 @@ function CategoriesBody() {
         onConfirm={() => {
           if (deleting) removeCategory(deleting);
           setDeleting(null);
+        }}
+      />
+      <ConfirmDialog
+        open={typeDeleting !== null}
+        title={t('Delete {v}?', { v: deletingType?.name ?? 'this type' })}
+        message={deletingTypeCount > 0 ? t('Its {n} categories move to Wants. Nothing is deleted from your journal.', { n: deletingTypeCount }) : t('No category uses it.')}
+        onCancel={() => setTypeDeleting(null)}
+        onConfirm={() => {
+          if (typeDeleting) removeCategoryType(typeDeleting);
+          setTypeDeleting(null);
         }}
       />
     </div>

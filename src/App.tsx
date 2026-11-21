@@ -64,7 +64,7 @@ function QuickAddBar() {
 
 function Shell() {
   const { activeTab, setActiveTab, setSelectedMonth, openSheet, closeSheet, data } = useApp();
-  const hasDock = activeTab !== 'stats' && Object.values(data.settings.quickAdd).some(Boolean);
+  const hasDock = Object.values(data.settings.quickAdd).some(Boolean);
 
   // Tells the launch animation that the first screen is painted (it leaves once it has also finished).
   useReportAppReady();

@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactM
 import { whenIdle } from '../lib/idle';
 import { SPRING } from '../lib/spring';
 import { useApp } from '../lib/store';
-import { neighbourTab, TAB_ORDER } from '../lib/tabs';
+import { neighbourTab, tabOrder } from '../lib/tabs';
 import { releaseSpeed, trackSample, type Sample } from '../lib/velocity';
 import type { ActiveTab } from '../lib/types';
 
@@ -100,7 +100,8 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
 
   useLayoutEffect(() => {
     if (shownTab.current === activeTab) return;
-    const direction = TAB_ORDER.indexOf(activeTab) > TAB_ORDER.indexOf(shownTab.current) ? 1 : -1;
+    const order = tabOrder();
+    const direction = order.indexOf(activeTab) > order.indexOf(shownTab.current) ? 1 : -1;
     shownTab.current = activeTab;
     leaving.current = false;
     // The dock (when it appears) enters from the same side as the page.
@@ -241,7 +242,7 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
 
   // The current page first, then whatever waits beside it: one keyed list, so a page keeps its
   // element (and its state) when it moves between "hidden", "riding along" and "current".
-  const others = TAB_ORDER.filter((tab) => tab !== activeTab && (warm.includes(tab) || peek?.tab === tab));
+  const others = tabOrder().filter((tab) => tab !== activeTab && (warm.includes(tab) || peek?.tab === tab));
 
   return (
     <div

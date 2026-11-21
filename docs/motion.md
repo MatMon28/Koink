@@ -26,7 +26,7 @@ A damped spring is sampled into a CSS `linear()` easing, so CSS transitions, key
 | A pressed button (`.pressable`) | shrinks to 90 % in 110 ms, springs back with the bounce curve; wide rows use `.pressable-soft` (98.5 %) |
 | Page swipe | the current page and its neighbour move together under the finger; a committed swipe finishes in 90-170 ms, a cancelled one springs back with the soft curve ([gestures.md](gestures.md)) |
 | Page reached by the pill or Back | slides in 28 px from the side it lies on, soft curve |
-| Dock | enters from the side the page came from (`--kc-swipe-dir`), hides on scroll down |
+| Dock | enters from the side the page came from (`--kc-swipe-dir`); always visible, it no longer hides on scroll |
 | Month change | the Month page's content slides in from the side of the newer month |
 | A changed total (`.anim-value`) | settles in from 7 px below |
 | Collapsible cards and settings groups | height animated with a CSS grid (`.accordion-grid`), 300 ms |

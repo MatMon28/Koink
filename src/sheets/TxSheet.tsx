@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { ChevronDown, Gift, Plus, RefreshCw } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { Modal } from '../components/Modal';
-import { AmountDisplay, NumPad, SaveBeforeCloseDialog, SectionLabel, seg, textInput, useAmountBuffer } from '../components/ui';
+import { AmountDisplay, NumPad, SaveBeforeCloseDialog, SectionLabel, textInput, useAmountBuffer } from '../components/ui';
 import { accountBalance, goalSaved } from '../lib/calc';
 import { categoryMeta, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
 import { addDays, defaultDateFor, formatDay, formatMonth, monthOf, todayStr } from '../lib/dates';
@@ -11,7 +11,7 @@ import { currencyDecimals, currencySymbol, formatRate, percent, round2 } from '.
 import { iconFor } from '../lib/icons';
 import { useApp, useSheet } from '../lib/store';
 import type { Bucket, Kind, Sheet } from '../lib/types';
-import { Banner, ChoiceGrid, CurrencyGrid, IconPicker, SaveRow, type Choice } from './shared';
+import { Banner, BucketPicker, ChoiceGrid, CurrencyGrid, IconPicker, SaveRow, type Choice } from './shared';
 import { t } from '../lib/i18n';
 
 const TITLES: Record<Kind, { add: string; edit: string; save: string }> = {
@@ -625,10 +625,7 @@ function NewCategoryStep({ onCancel, onCreate }: { onCancel: () => void; onCreat
       <IconPicker value={icon} onChange={setIcon} />
       <div>
         <SectionLabel>{t('Counts as')}</SectionLabel>
-        <div className="flex gap-1.5" role="group" aria-label={t('Needs or wants')}>
-          <button type="button" aria-pressed={bucket === 'needs'} onClick={() => setBucket('needs')} className={seg(bucket === 'needs')}>{t('Need')}</button>
-          <button type="button" aria-pressed={bucket === 'wants'} onClick={() => setBucket('wants')} className={seg(bucket === 'wants')}>{t('Want')}</button>
-        </div>
+        <BucketPicker value={bucket} onChange={setBucket} />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <button type="button" onClick={onCancel} className="pressable py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold">{t('Back')}</button>

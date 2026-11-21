@@ -56,7 +56,9 @@
 ## Added with accounts, categories and currencies
 
 - No transfers between accounts; entries without an account count nowhere in Accounts.
-- Exchange rates are approximate until **Update exchange rates** is used (online, one free public API); a foreign entry keeps the rate it was saved with.
+- Exchange rates are approximate until **Update exchange rates** is used (online, [Frankfurter](https://frankfurter.dev)); Frankfurter lists about 30 currencies, the others keep the built-in approximate rate; a foreign entry keeps the rate it was saved with.
+- Recurring items with a frequency above one month get no reminder notification (the alarm repeats monthly); only monthly items do.
+- The Android widget changes (no text on buttons) were written without an Android SDK, like the rest of `android/`: not compiled.
 - Custom category and account names use the phone keyboard (text cannot come from a number pad).
 - Not run on a device: the sheet-drag and header-scroll smoothness was checked in headless Chromium only (no frame-time measurement on a phone).
 

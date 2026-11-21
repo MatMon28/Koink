@@ -25,4 +25,4 @@ Notes:
 - The chart is a hand-written SVG (no chart library): a 320 x 120 view box, points are focusable `role="button"` groups with an enlarged hit area.
 - The balance trend starts at the first month that has entries, and counts everything before the period into its starting value.
 - The weekly-review reminder opens this page ([../notifications.md](../notifications.md)).
-- The bottom dock is not shown on this page (`hasDock` in `App.tsx`), so the toast sits lower here.
+- The bottom dock is shown here too (always visible on every page, `hasDock` in `App.tsx`).

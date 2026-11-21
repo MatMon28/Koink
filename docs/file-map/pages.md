@@ -9,8 +9,8 @@
 | File | Page | Reads from the store | Main pieces | Feature doc |
 | --- | --- | --- | --- | --- |
 | `MonthView.tsx` | Month | `data`, `selectedMonth`, `money`, `moneyFit`, `openSheet`, `eraseAll`, `updateSettings` | `MonthNavigator`, `HeroPair`, `ShareCard`, `NoteCard`, `FoldCard` (8 categories + 3 trackers), `RecurringRow`, `ConfirmDialog` | [../features/month.md](../features/month.md) |
-| `TransactionsView.tsx` | Transactions | `data`, `money`, `openSheet` | search field, filter pill, List / Days switch, local `EntryRow` (with quick delete) | [../features/transactions.md](../features/transactions.md) |
-| `BudgetsView.tsx` | Budgets | `data`, `selectedMonth`, `money`, `moneyFit`, `openSheet` | `MonthNavigator`, `HeroPair`, `NoteCard`, local `SectionCard`, `Bar`, `RecurringRow` | [../features/budgets.md](../features/budgets.md) |
+| `TransactionsView.tsx` | Transactions | `data`, `money`, `openSheet` | search field, filter pill, List / 2 days / Days switch, local `EntryRow` (category first, title below; `narrow` variant for the two-column view; quick delete) | [../features/transactions.md](../features/transactions.md) |
+| `BudgetsView.tsx` | Budgets | `data`, `selectedMonth`, `money`, `moneyFit`, `openSheet` | `MonthNavigator`, `HeroPair`, `NoteCard`, local `SectionCard` (Needs / Wants / own-type cards, goals, recurring; no Accounts card), `Bar`, `RecurringRow` | [../features/budgets.md](../features/budgets.md) |
 | `StatsView.tsx` | Statistics | `data`, `money`, `moneyFit`, `setSelectedMonth`, `setActiveTab` | `HeroPair` (average), `ShareCard`, `NoteCard`, inline SVG line chart, `Bar` | [../features/statistics.md](../features/statistics.md) |
 
 Shared habits:
