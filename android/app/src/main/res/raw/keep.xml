@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Resources that are only looked up BY NAME at run time. If resource shrinking is ever switched on
+  (shrinkResources true), anything no code or XML references by id is removed: this keeps them.
+    - Splash_<hex>: LaunchBackground.applySplashTheme() uses getIdentifier("Splash_...", "style").
+    - ic_stat_koink: the Local Notifications plugin resolves smallIcon by name.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@style/Splash_*,@drawable/ic_stat_koink" />

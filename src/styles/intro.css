@@ -1,0 +1,45 @@
+/*
+ * Launch animation overlay (created by src/lib/intro.ts before the app is evaluated). It sits on
+ * top of the mounting app, plays one animation that ends on the Koink logo, holds that frame
+ * briefly, then fades out. The art and its keyframes come from src/brand/art.js; this file is the
+ * overlay itself. See docs/launch-intro.md.
+ */
+.kc-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: grid;
+  place-items: center;
+  /*
+   * A plain colour: the app's own background, also where the page behind is a gradient. It is the
+   * colour of every surface shown before it (Android launch screen, window, WebView, first paint),
+   * so nothing changes colour until the app fades in. The logo is the light version on light
+   * themes and the dark version on dark ones (--kk-tile-ink and --kk-coin, index.css).
+   */
+  background: var(--bg, #EFE9DD);
+  --kk-bg: var(--bg, #EFE9DD);
+  --kk-ink: var(--kk-tile-ink, #0B0F1E);
+  opacity: 1;
+  transition: opacity 200ms ease-out; /* FADE_MS in intro.ts */
+  touch-action: manipulation;
+}
+/* Tapped to skip (SKIP_FADE_MS in intro.ts). */
+.kc-intro[data-fast='true'] { transition-duration: 120ms; }
+/* It keeps taking taps while it fades, so the tap that skips it never reaches the app underneath. */
+.kc-intro[data-leaving='true'] { opacity: 0; }
+
+.kc-intro__art {
+  width: min(64vw, 290px);
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+.kc-intro__art > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kc-intro { transition: none; }
+}

@@ -1,0 +1,386 @@
+@import "tailwindcss";
+
+/* ---- Bundled typography (latin subset, one woff2 each) ---- */
+@font-face {
+  font-family: 'Plus Jakarta Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('../node_modules/@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Space Grotesk Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 300 700;
+  src: url('../node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('../node_modules/@fontsource/chakra-petch/files/chakra-petch-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url('../node_modules/@fontsource/chakra-petch/files/chakra-petch-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('../node_modules/@fontsource/chakra-petch/files/chakra-petch-latin-700-normal.woff2') format('woff2');
+}
+
+/*
+ * Shared accents. The names are the ones of the reference design system, so its style presets
+ * (src/styles/presets.css) apply unchanged:
+ *   intake   = money in   (green)      activity = money out (pink)
+ *   weight   = savings    (lilac)      nutrient = notes     (yellow)
+ */
+@theme {
+  --font-sans: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+
+  --color-nutrient: #F7E9AA;
+  --color-nutrient-ink: #5D4911;
+  --color-intake: #C9EFD3;
+  --color-intake-ink: #17432A;
+  --color-intake-accent: #286540;
+  --color-intake-soft: #E6F8EB;
+  --color-activity: #F6D0D0;
+  --color-activity-ink: #702D32;
+  --color-activity-accent: #904149;
+  --color-activity-soft: #FBE9E9;
+  --color-activity-border: #E8AEAE;
+  --color-activity-hover: #F2BFBF;
+  --color-weight: #E2D6FF;
+  --color-weight-ink: #49346F;
+  --color-weight-accent: #6B518F;
+  --color-weight-soft: #F0E9FF;
+}
+
+/*
+ * Koink brand colours: the light version of the logo on light themes, the dark version on dark
+ * ones. Used by the app icon, the wordmark's coin and the launch animation (docs/brand.md).
+ */
+:root {
+  --kk-tile: #F9F3E6;
+  --kk-tile-ink: #0B0F1E;
+  --kk-coin: #F59F00;
+}
+[data-theme="lite-dark"], [data-theme="dark"] {
+  --kk-tile: #070A14;
+  --kk-tile-ink: #F9F3E6;
+  --kk-coin: #FFC53D;
+}
+
+:root {
+  --intake-on-surface: var(--color-intake-accent);
+  --activity-on-surface: var(--color-activity-accent);
+  --weight-on-surface: var(--color-weight-accent);
+}
+
+[data-theme="lite-dark"], [data-theme="dark"] {
+  --intake-on-surface: var(--color-intake);
+  --activity-on-surface: var(--color-activity);
+  --weight-on-surface: var(--color-weight);
+}
+
+/* ---- Three modes: warm oat, soft slate, deep charcoal ---- */
+:root {
+  color-scheme: light;
+  --bg: #EFE9DD;
+  --surface: #FBF8F2;
+  --inset: #EFE9DD;
+  --border: #E2D9C8;
+  --text: #24201C;
+  --muted: #736B62;
+  --hover: #E6DECF;
+  --text-warn: #7A2727;
+  /* Ink for text drawn on a solid var(--text) fill (selected segments, toasts). */
+  --on-text: var(--bg);
+}
+
+[data-theme="lite-dark"] {
+  color-scheme: dark;
+  --bg: #272A33;
+  --surface: #323642;
+  --inset: #292D37;
+  --border: #484D5C;
+  --text: #F3F0EA;
+  --muted: #BBC1D0;
+  --hover: #414655;
+  --text-warn: #F2A7A7;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #13151A;
+  --surface: #1B1E26;
+  --inset: #232733;
+  --border: #2A2F3D;
+  --text: #EDEBE6;
+  --muted: #9AA0AE;
+  --hover: #2C3140;
+  --text-warn: #F2A7A7;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scrollbar-gutter: stable;
+    background-color: var(--bg);
+  }
+  button:focus,
+  [role="button"]:focus {
+    outline: none;
+  }
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea,
+  label {
+    touch-action: manipulation;
+  }
+  button:not(:disabled),
+  [role="button"] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--muted);
+    outline-offset: 1px;
+  }
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg);
+    color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.55;
+    cursor: pointer;
+  }
+}
+
+/* ---- Motion ---- */
+:root {
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-soft: 260ms;
+  --ease-bounce: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-bounce: 300ms;
+}
+
+@keyframes kc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes kc-dialog-in {
+  from { opacity: 0; transform: translate3d(0, 28px, 0) scale(0.985); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes kc-pop-in {
+  from { opacity: 0; transform: translate3d(0, -8px, 0) scale(0.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes kc-dock-in {
+  /* --kc-swipe-dir: 1 or -1, the side the page just came from (PageSwiper.tsx). */
+  from { opacity: 0; transform: translate3d(calc(var(--kc-swipe-dir, 1) * 22px), 0, 0) scale(0.95); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes kc-dock-btn-in {
+  from { opacity: 0; transform: translate3d(calc(var(--kc-swipe-dir, 1) * 10px), 0, 0) scale(0.92); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+/* A changed number settles in from slightly below. */
+@keyframes kc-value-in {
+  from { opacity: 0.2; transform: translate3d(0, 7px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes kc-toast-in {
+  from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.96); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+.anim-backdrop { animation: kc-fade-in 180ms ease-out backwards; }
+.anim-dialog { animation: kc-dialog-in var(--dur-soft) var(--ease-soft) backwards; }
+.anim-page { animation: kc-fade-in 200ms ease-out; }
+.anim-pop { animation: kc-pop-in var(--dur-soft) var(--ease-soft) backwards; }
+.anim-toast { animation: kc-toast-in var(--dur-soft) var(--ease-bounce) backwards; }
+.anim-dock {
+  animation: kc-dock-in 130ms var(--ease-bounce) backwards;
+  transition: opacity 85ms ease-out;
+}
+.anim-dock .kc-dock-btn { animation: kc-dock-btn-in 130ms var(--ease-bounce) backwards; }
+.anim-value {
+  display: inline-block;
+  animation: kc-value-in var(--dur-soft) var(--ease-soft) backwards;
+}
+
+html.kc-sheet-open, .kc-sheet-open body { overscroll-behavior: none; }
+/* A sheet's frame follows window.visualViewport (Modal.tsx): with the on-screen keyboard open the
+   sheet sits just above it, and as low as the screen allows otherwise. */
+.kc-sheet-viewport {
+  top: var(--sheet-top, 0px);
+  left: var(--sheet-left, 0px);
+  width: var(--sheet-width, 100%);
+  height: 100vh;
+  height: var(--sheet-height, 100dvh);
+}
+.kc-sheet-open .anim-dock { visibility: hidden; pointer-events: none; }
+
+/* Scrolling down slides the bar below the screen edge; a small scroll up brings it back. */
+.kc-dock-wrap {
+  transition: transform 280ms var(--ease-soft), visibility 0s linear 0s;
+}
+.kc-dock-wrap[data-hidden="true"] {
+  transform: translate3d(0, calc(100% + 3rem), 0);
+  visibility: hidden;
+  transition: transform 240ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 240ms;
+}
+
+/* Smooth height accordion via CSS Grid (no overshoot, so the rows never jump). */
+.accordion-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.accordion-grid[data-open="true"] { grid-template-rows: 1fr; }
+.accordion-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Pressed controls: a quick shrink while the finger is down, then a springy return. */
+.pressable {
+  transition:
+    transform 300ms var(--ease-bounce),
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    opacity 220ms ease;
+}
+.pressable:active:not(:disabled) {
+  transform: scale(0.9);
+  transition:
+    transform 110ms cubic-bezier(0.3, 0, 0.6, 1),
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 220ms ease,
+    opacity 220ms ease;
+}
+/* Wide rows and cards shrink less than round buttons, or they look like they jump. */
+.pressable-soft:active:not(:disabled) { transform: scale(0.985); }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-backdrop,
+  .anim-dialog,
+  .anim-page,
+  .anim-pop,
+  .anim-toast,
+  .anim-dock,
+  .anim-dock .kc-dock-btn,
+  .anim-value {
+    animation: none !important;
+  }
+  .accordion-grid,
+  .pressable,
+  .kc-dock-wrap {
+    transition: none !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Header surface: the background and hairline fade in with the scroll progress set by Header.tsx. */
+.kc-header-surface {
+  background: color-mix(in srgb, var(--bg) calc(var(--header-bg-progress, 1) * 94%), transparent);
+  border-bottom-color: color-mix(in srgb, var(--border) calc(var(--header-bg-progress, 1) * 100%), transparent);
+  backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 12px));
+  -webkit-backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 12px));
+}
+.kc-header-surface[data-pill-floating="true"] .kc-nav-pill {
+  background: color-mix(in srgb, var(--surface) 76%, transparent) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* The scrollbar gutter is outside every fixed layer: dim it with the page while a sheet is open. */
+html.kc-sheet-open {
+  background-color: color-mix(in srgb, black 45%, var(--bg));
+}
+
+/* Two controls of this app that the style presets do not know: they borrow the preset's own tokens. */
+html[data-style]:not([data-style="classic"]) .kc-pill-alert {
+  background: var(--burned-bg) !important;
+  color: var(--burned-text) !important;
+  border: var(--pill-border, none) !important;
+  border-radius: var(--pill-radius, 8px) !important;
+  clip-path: var(--clip-xs, none);
+}
+html[data-style]:not([data-style="classic"]) .kc-done {
+  background: var(--intake-bg) !important;
+  color: var(--intake-text) !important;
+  border: var(--pill-border, none) !important;
+  border-radius: var(--pill-radius, 999px) !important;
+  clip-path: var(--clip-xs, none);
+}
+
+/* Page swipe (PageSwiper.tsx): vertical panning stays with the browser, horizontal drags reach the app. */
+.kc-swipe-surface {
+  touch-action: pan-y pinch-zoom;
+}
+
+/*
+ * Ultra minimal (Settings > Appearance): <html data-ultra="true">. Labels give way to icons and
+ * cards tighten. Components mark what changes with these helpers, so the look is switched in one
+ * place and every label stays available to screen readers. See docs/features/ultra-minimal.md.
+ */
+/* Shown only in Ultra minimal (the icon that stands in for a label). */
+html:not([data-ultra='true']) .um-only { display: none !important; }
+/* Removed in Ultra minimal (hints, helper lines, secondary text). */
+html[data-ultra='true'] .um-hide { display: none !important; }
+/* Kept for screen readers, taken off the screen (a label that an icon replaces). */
+html[data-ultra='true'] .um-sr {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+/* Tighter card padding, centred figures, closer stacking. */
+html[data-ultra='true'] .um-tight { padding: 0.75rem !important; }
+html[data-ultra='true'] .um-center { justify-content: center !important; text-align: center; }
+html[data-ultra='true'] .um-stack > :not(:last-child) { margin-block-end: 0.625rem !important; }

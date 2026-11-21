@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Koink brand sheet</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<style>
+  body { margin: 0; padding: 24px 16px 48px; background: #EFE9DD; color: #24201C; font: 500 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; margin: 32px 0 12px; color: #736B62; }
+  p { margin: 0 0 8px; color: #736B62; }
+  .row { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  figure { margin: 0; } figcaption { font-size: 12px; font-weight: 700; margin-top: 6px; color: #736B62; }
+  img { display: block; width: 100%; height: auto; border-radius: 20px; }
+  .wide { grid-column: span 2; } .play img { cursor: pointer; }
+  button { font: inherit; font-weight: 800; border: 0; border-radius: 999px; padding: 8px 16px; background: #24201C; color: #EFE9DD; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Koink brand sheet</h1>
+  <p>Every asset in its light and its dark version, generated from <code>src/brand/art.js</code> by <code>npm run brand</code>.</p>
+
+  <h2>Icon</h2>
+  <div class="row"><figure class=""><img src="koink-icon-light.svg" alt="Icon, light"><figcaption>Icon, light</figcaption></figure><figure class=""><img src="koink-icon-dark.svg" alt="Icon, dark"><figcaption>Icon, dark</figcaption></figure></div>
+
+  <h2>Wordmark</h2>
+  <div class="row"><figure class="wide"><img src="koink-wordmark-light.svg" alt="Wordmark, light"><figcaption>Wordmark, light</figcaption></figure><figure class="wide"><img src="koink-wordmark-dark.svg" alt="Wordmark, dark"><figcaption>Wordmark, dark</figcaption></figure></div>
+
+  <h2>Launch animations</h2>
+  <p>Tap one to play it again. <button type="button" id="all">Play all</button></p>
+  <div class="row play"><figure class=""><img src="koink-intro-coin-oink-light.svg" alt="1. coin-oink, light (1250 ms)"><figcaption>1. coin-oink, light (1250 ms)</figcaption></figure><figure class=""><img src="koink-intro-coin-oink-dark.svg" alt="1. coin-oink, dark (1250 ms)"><figcaption>1. coin-oink, dark (1250 ms)</figcaption></figure><figure class=""><img src="koink-intro-sketch-light.svg" alt="2. sketch, light (1000 ms)"><figcaption>2. sketch, light (1000 ms)</figcaption></figure><figure class=""><img src="koink-intro-sketch-dark.svg" alt="2. sketch, dark (1000 ms)"><figcaption>2. sketch, dark (1000 ms)</figcaption></figure><figure class=""><img src="koink-intro-roll-in-light.svg" alt="3. roll-in, light (1050 ms)"><figcaption>3. roll-in, light (1050 ms)</figcaption></figure><figure class=""><img src="koink-intro-roll-in-dark.svg" alt="3. roll-in, dark (1050 ms)"><figcaption>3. roll-in, dark (1050 ms)</figcaption></figure><figure class=""><img src="koink-intro-pop-toss-light.svg" alt="4. pop-toss, light (980 ms)"><figcaption>4. pop-toss, light (980 ms)</figcaption></figure><figure class=""><img src="koink-intro-pop-toss-dark.svg" alt="4. pop-toss, dark (980 ms)"><figcaption>4. pop-toss, dark (980 ms)</figcaption></figure><figure class=""><img src="koink-intro-hop-wink-light.svg" alt="5. hop-wink, light (820 ms)"><figcaption>5. hop-wink, light (820 ms)</figcaption></figure><figure class=""><img src="koink-intro-hop-wink-dark.svg" alt="5. hop-wink, dark (820 ms)"><figcaption>5. hop-wink, dark (820 ms)</figcaption></figure></div>
+</main>
+<script>
+  // An SVG image plays its animation when it loads: loading it again plays it again.
+  var play = function (img) { img.src = img.src.split('?')[0] + '?' + Date.now(); };
+  var images = document.querySelectorAll('.play img');
+  images.forEach(function (img) { img.addEventListener('click', function () { play(img); }); });
+  document.getElementById('all').addEventListener('click', function () { images.forEach(play); });
+</script>
+</body>
+</html>

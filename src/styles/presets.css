@@ -1,0 +1,1425 @@
+/*
+ * Style presets (Angular, Aurora, Pop, Playful, Minimal, Mono) x 3 modes.
+ * These tokens and override rules are the design system of the reference app (Kakcal), kept
+ * verbatim so every preset looks exactly like it does there. The hook names keep their original
+ * meaning: intake = money in, burned/activity = money out, carbs/protein/fat = needs/wants/savings,
+ * fiber/salt/sugar = the yellow note cards, meal-slot = category card, tracker = tracker card.
+ */
+/* ==========================================================================
+   6 INSPIRED THEMES × 3 MODES (Angular, Aurora, Pop, Playful, Minimal, Mono)
+   ========================================================================== */
+
+/* 1. ANGULAR THEME (Chakra Petch + Chamfered Polygons) */
+html[data-style="angular"] {
+  --font-family: 'Chakra Petch', system-ui, sans-serif;
+  --icon-btn-radius: 0px;
+  --nav-radius: 0px;
+  --nav-pill-radius: 0px;
+  --card-radius: 0px;
+  --micro-radius: 0px;
+  --badge-radius: 0px;
+  --bar-radius: 0px;
+  --pill-radius: 0px;
+  --dock-radius: 0px;
+  --dock-btn-radius: 0px;
+  --card-border: none;
+  --pill-border: none;
+  --dock-border: none;
+  --dock-btn-border: none;
+  --card-shadow: none;
+  --dock-shadow: none;
+
+  --clip-lg: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  --clip-md: polygon(0 0, calc(100% - 11px) 0, 100% 11px, 100% 100%, 11px 100%, 0 calc(100% - 11px));
+  --clip-sm: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+  --clip-xs: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+  --clip-dock: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+
+  --brand-flame-color: #ff551a;
+  --burned-bg: #ff551a;
+  --burned-text: #0b1019;
+  --burned-label: #0b1019;
+  --burned-track: rgba(11, 16, 25, 0.25);
+  --burned-fill: #0b1019;
+  --badge-bg: #0b1019;
+  --badge-text: #ff551a;
+  --nav-active-bg: #ff551a;
+  --nav-active-color: #0b1019;
+  --meal-icon-color: #ff551a;
+}
+
+html[data-style="angular"][data-theme="dark"] {
+  --bg: #0b1019;
+  --surface: #151e2d;
+  --surface-solid: #151e2d;
+  --inset: #101724;
+  --hover: #1e2a3e;
+  --border: #25344d;
+  --text: #ffffff;
+  --muted: #cbd5e1;
+  --header-btn-bg: #151e2d;
+  --header-icon-color: #e6edf3;
+  --nav-bg: #151e2d;
+  --nav-inactive-color: #e6edf3;
+
+  --intake-bg: #e6edf3;
+  --intake-text: #0b1019;
+  --intake-label: #0b1019;
+  --intake-track: #cbd5e1;
+  --intake-fill: #0b1019;
+  --intake-badge-bg: #0b1019; --intake-badge-text: #e6edf3;
+
+  --carbs-bg: #1d3c78;
+  --carbs-text: #93c5fd;
+  --protein-bg: #59480d;
+  --protein-text: #fde047;
+  --fat-bg: #3b2366;
+  --fat-text: #d8b4fe;
+
+  --pill-c-bg: #1d3c78;
+  --pill-c-text: #93c5fd;
+  --pill-p-bg: #59480d;
+  --pill-p-text: #fde047;
+  --pill-f-bg: #3b2366;
+  --pill-f-text: #d8b4fe;
+
+  --dock-bg: #151e2d;
+  --dock-1: #e6edf3; --dock-icon-1: #0b1019;
+  --dock-2: #ff551a; --dock-icon-2: #0b1019;
+  --dock-3: #c7d2fe; --dock-icon-3: #0b1019;
+  --dock-4: #fde047; --dock-icon-4: #0b1019;
+  --dock-5: #e9d5ff; --dock-icon-5: #0b1019;
+  --dock-6: #7dd3fc; --dock-icon-6: #0b1019;
+
+  --fiber-bg: #7dd3fc; --fiber-text: #0b1019;
+  --salt-bg: #7dd3fc; --salt-text: #0b1019;
+  --sugar-bg: #7dd3fc; --sugar-text: #0b1019;
+}
+
+html[data-style="angular"][data-theme="lite-dark"] {
+  --bg: #202836;
+  --surface: #2f3b4f;
+  --surface-solid: #2f3b4f;
+  --inset: #263042;
+  --hover: #38465d;
+  --border: #435470;
+  --text: #ffffff;
+  --muted: #e2e8f0;
+  --header-btn-bg: #2f3b4f;
+  --header-icon-color: #f8fafc;
+  --nav-bg: #2f3b4f;
+  --nav-inactive-color: #e2e8f0;
+
+  --intake-bg: #f1f5f9;
+  --intake-text: #090e17;
+  --intake-label: #090e17;
+  --intake-track: #cbd5e1;
+  --intake-fill: #090e17;
+  --intake-badge-bg: #090e17; --intake-badge-text: #f1f5f9;
+
+  --carbs-bg: #8eb4fa;
+  --carbs-text: #0f1f4b;
+  --protein-bg: #f5d758;
+  --protein-text: #381a04;
+  --fat-bg: #c6b0f7;
+  --fat-text: #250b57;
+
+  --pill-c-bg: #1e3a73;
+  --pill-c-text: #dbeafe;
+  --pill-p-bg: #5c460c;
+  --pill-p-text: #fef08a;
+  --pill-f-bg: #3d226b;
+  --pill-f-text: #f3e8ff;
+
+  --dock-bg: #2f3b4f;
+  --dock-1: #f1f5f9; --dock-icon-1: #090e17;
+  --dock-2: #ff551a; --dock-icon-2: #090e17;
+  --dock-3: #c7d2fe; --dock-icon-3: #090e17;
+  --dock-4: #fde047; --dock-icon-4: #090e17;
+  --dock-5: #e9d5ff; --dock-icon-5: #090e17;
+  --dock-6: #7dd3fc; --dock-icon-6: #090e17;
+
+  --fiber-bg: #7dd3fc; --fiber-text: #090e17;
+  --salt-bg: #7dd3fc; --salt-text: #090e17;
+  --sugar-bg: #7dd3fc; --sugar-text: #090e17;
+}
+
+html[data-style="angular"][data-theme="light"] {
+  --bg: #cfd8e3;
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --inset: #e2e8f0;
+  --hover: #cbd5e1;
+  --border: #94a3b8;
+  --text: #090e17;
+  --muted: #1e293b;
+  --header-btn-bg: #ffffff;
+  --header-icon-color: #090e17;
+  --nav-bg: #ffffff;
+  --nav-inactive-color: #1e293b;
+  --card-shadow: 0 3px 10px rgba(11, 16, 25, 0.08);
+
+  --intake-bg: #0b1019;
+  --intake-text: #ffffff;
+  --intake-label: #ffffff;
+  --intake-track: #334155;
+  --intake-fill: #ffffff;
+  --intake-badge-bg: #ffffff; --intake-badge-text: #0b1019;
+
+  --carbs-bg: #b8d0ff;
+  --carbs-text: #112663;
+  --protein-bg: #f8da57;
+  --protein-text: #4d2806;
+  --fat-bg: #d4bcff;
+  --fat-text: #35116e;
+
+  --pill-c-bg: #b8d0ff;
+  --pill-c-text: #112663;
+  --pill-p-bg: #f8da57;
+  --pill-p-text: #4d2806;
+  --pill-f-bg: #d4bcff;
+  --pill-f-text: #35116e;
+
+  --dock-bg: #ffffff;
+  --dock-1: #0b1019; --dock-icon-1: #ffffff;
+  --dock-2: #ff551a; --dock-icon-2: #0b1019;
+  --dock-3: #b8d0ff; --dock-icon-3: #0b1019;
+  --dock-4: #f8da57; --dock-icon-4: #0b1019;
+  --dock-5: #d4bcff; --dock-icon-5: #0b1019;
+  --dock-6: #7dd3fc; --dock-icon-6: #0b1019;
+
+  --fiber-bg: #7dd3fc; --fiber-text: #0b1019;
+  --salt-bg: #7dd3fc; --salt-text: #0b1019;
+  --sugar-bg: #7dd3fc; --sugar-text: #0b1019;
+}
+
+/* 2. AURORA THEME (Soft Rounded Glass + Mint/Coral Gradients) */
+html[data-style="aurora"] {
+  --font-family: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+  --icon-btn-radius: 9999px;
+  --nav-radius: 999px;
+  --nav-pill-radius: 999px;
+  --card-radius: 22px;
+  --micro-radius: 999px;
+  --badge-radius: 999px;
+  --bar-radius: 999px;
+  --pill-radius: 999px;
+  --dock-radius: 999px;
+  --dock-btn-radius: 9999px;
+  --pill-border: none;
+  --dock-btn-border: none;
+  --clip-lg: none;
+  --clip-md: none;
+  --clip-sm: none;
+  --clip-xs: none;
+  --clip-dock: none;
+
+  --brand-flame-color: #34d399;
+  --intake-bg: linear-gradient(135deg, #4ade80 0%, #2dd4bf 100%);
+  --intake-text: #06281e;
+  --intake-label: #06281e;
+  --intake-track: rgba(6, 40, 30, 0.2);
+  --intake-fill: #06281e;
+  --intake-badge-bg: #06281e; --intake-badge-text: #d1fae5;
+
+  --burned-bg: linear-gradient(135deg, #fb923c 0%, #f43f5e 100%);
+  --burned-text: #2d0811;
+  --burned-label: #2d0811;
+  --burned-track: rgba(45, 8, 17, 0.22);
+  --burned-fill: #2d0811;
+  --badge-bg: #2d0811;
+  --badge-text: #ffe4e6;
+
+  --nav-active-bg: linear-gradient(135deg, #fb923c 0%, #f43f5e 100%);
+  --nav-active-color: #1f060d;
+
+  --dock-1: #34d399; --dock-icon-1: #06281e;
+  --dock-2: #fb7185; --dock-icon-2: #2d0811;
+  --dock-3: #60a5fa; --dock-icon-3: #0f172a;
+  --dock-4: #fb923c; --dock-icon-4: #1f0a00;
+  --dock-5: #a78bfa; --dock-icon-5: #1e1b4b;
+  --dock-6: #facc15; --dock-icon-6: #1c1917;
+
+  --fiber-bg: #facc15; --fiber-text: #1c1917;
+  --salt-bg: #facc15; --salt-text: #1c1917;
+  --sugar-bg: #facc15; --sugar-text: #1c1917;
+}
+
+html[data-style="aurora"][data-theme="dark"] {
+  --bg: #131024;
+  --app-bg-image: linear-gradient(160deg, #0d0d1a 0%, #16112b 60%, #1c1026 100%);
+  --surface: rgba(255, 255, 255, 0.07);
+  --surface-solid: #1b1630;
+  --inset: rgba(255, 255, 255, 0.05);
+  --hover: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.1);
+  --text: #ffffff;
+  --muted: #94a3b8;
+  --header-btn-bg: rgba(255, 255, 255, 0.07);
+  --header-icon-color: #f8fafc;
+  --nav-bg: rgba(255, 255, 255, 0.07);
+  --nav-inactive-color: #f8fafc;
+  --meal-icon-color: #ffffff;
+
+  --card-border: 1px solid rgba(255, 255, 255, 0.09);
+  --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+
+  --carbs-bg: rgba(255, 255, 255, 0.07);
+  --carbs-text: #60a5fa;
+  --protein-bg: rgba(255, 255, 255, 0.07);
+  --protein-text: #fbbf24;
+  --fat-bg: rgba(255, 255, 255, 0.07);
+  --fat-text: #c084fc;
+
+  --pill-c-bg: rgba(96, 165, 250, 0.18);
+  --pill-c-text: #93c5fd;
+  --pill-p-bg: rgba(251, 191, 36, 0.18);
+  --pill-p-text: #fde68a;
+  --pill-f-bg: rgba(192, 132, 252, 0.18);
+  --pill-f-text: #e9d5ff;
+
+  --dock-bg: rgba(24, 20, 44, 0.85);
+  --dock-border: 1px solid rgba(255, 255, 255, 0.12);
+  --dock-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+html[data-style="aurora"][data-theme="lite-dark"] {
+  --bg: #292744;
+  --app-bg-image: linear-gradient(160deg, #212338 0%, #2b2947 60%, #34233f 100%);
+  --surface: rgba(255, 255, 255, 0.11);
+  --surface-solid: #322f50;
+  --inset: rgba(255, 255, 255, 0.08);
+  --hover: rgba(255, 255, 255, 0.16);
+  --border: rgba(255, 255, 255, 0.18);
+  --text: #ffffff;
+  --muted: #e2e8f0;
+  --header-btn-bg: rgba(255, 255, 255, 0.11);
+  --header-icon-color: #ffffff;
+  --nav-bg: rgba(255, 255, 255, 0.11);
+  --nav-inactive-color: #f1f5f9;
+  --meal-icon-color: #ffffff;
+
+  --card-border: 1px solid rgba(255, 255, 255, 0.18);
+  --card-shadow: 0 8px 24px rgba(10, 10, 25, 0.28);
+
+  --carbs-bg: rgba(255, 255, 255, 0.11);
+  --carbs-text: #93c5fd;
+  --protein-bg: rgba(255, 255, 255, 0.11);
+  --protein-text: #fde047;
+  --fat-bg: rgba(255, 255, 255, 0.11);
+  --fat-text: #e9d5ff;
+
+  --pill-c-bg: rgba(96, 165, 250, 0.28);
+  --pill-c-text: #dbeafe;
+  --pill-p-bg: rgba(251, 191, 36, 0.28);
+  --pill-p-text: #fef9c3;
+  --pill-f-bg: rgba(192, 132, 252, 0.28);
+  --pill-f-text: #f3e8ff;
+
+  --dock-bg: rgba(45, 42, 72, 0.88);
+  --dock-border: 1px solid rgba(255, 255, 255, 0.18);
+  --dock-shadow: 0 12px 32px rgba(10, 10, 25, 0.32);
+}
+
+html[data-style="aurora"][data-theme="light"] {
+  --bg: #ede9fe;
+  --app-bg-image: linear-gradient(160deg, #e7e3f7 0%, #ede9fe 60%, #fce7f3 100%);
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --inset: #f3f0ff;
+  --hover: #e9e4fc;
+  --border: rgba(79, 70, 229, 0.16);
+  --text: #17143b;
+  --muted: #334155;
+  --header-btn-bg: #ffffff;
+  --header-icon-color: #17143b;
+  --nav-bg: #ffffff;
+  --nav-inactive-color: #1e293b;
+  --meal-icon-color: #17143b;
+
+  --card-border: 1px solid rgba(79, 70, 229, 0.16);
+  --card-shadow: 0 8px 22px rgba(55, 48, 107, 0.11);
+
+  --carbs-bg: #ffffff;
+  --carbs-text: #1d4ed8;
+  --protein-bg: #ffffff;
+  --protein-text: #b45309;
+  --fat-bg: #ffffff;
+  --fat-text: #6d28d9;
+
+  --pill-c-bg: #dbeafe;
+  --pill-c-text: #1e3a8a;
+  --pill-p-bg: #fef3c7;
+  --pill-p-text: #78350f;
+  --pill-f-bg: #ede9fe;
+  --pill-f-text: #4c1d95;
+
+  --dock-bg: #ffffff;
+  --dock-border: 1px solid rgba(79, 70, 229, 0.16);
+  --dock-shadow: 0 10px 28px rgba(55, 48, 107, 0.14);
+}
+
+/* 3. POP THEME (Neo-Brutalist Outlines + Hard Offset Shadows) */
+html[data-style="pop"] {
+  --font-family: 'Space Grotesk Variable', system-ui, sans-serif;
+  --icon-btn-radius: 9999px;
+  --nav-radius: 999px;
+  --nav-pill-radius: 999px;
+  --card-radius: 20px;
+  --micro-radius: 18px;
+  --badge-radius: 999px;
+  --bar-radius: 999px;
+  --pill-radius: 8px;
+  --dock-radius: 999px;
+  --dock-btn-radius: 9999px;
+  --clip-lg: none;
+  --clip-md: none;
+  --clip-sm: none;
+  --clip-xs: none;
+  --clip-dock: none;
+
+  --intake-bg: #7ef29d;
+  --intake-text: #09080d;
+  --intake-label: #09080d;
+  --intake-track: #ffffff;
+  --intake-fill: #09080d;
+  --intake-badge-bg: #09080d; --intake-badge-text: #7ef29d;
+
+  --burned-bg: #ff7a7a;
+  --burned-text: #09080d;
+  --burned-label: #09080d;
+  --burned-track: rgba(9, 8, 13, 0.25);
+  --burned-fill: #09080d;
+  --badge-bg: #09080d;
+  --badge-text: #ffffff;
+
+  --carbs-bg: #7cc4fa;
+  --carbs-text: #09080d;
+  --protein-bg: #ffb84d;
+  --protein-text: #09080d;
+  --fat-bg: #c99eff;
+  --fat-text: #09080d;
+
+  --nav-active-bg: #ff7a7a;
+  --nav-active-color: #09080d;
+
+  --dock-1: #7ef29d; --dock-icon-1: #09080d;
+  --dock-2: #ff7a7a; --dock-icon-2: #09080d;
+  --dock-3: #7cc4fa; --dock-icon-3: #09080d;
+  --dock-4: #ffb84d; --dock-icon-4: #09080d;
+  --dock-5: #c99eff; --dock-icon-5: #09080d;
+  --dock-6: #fde047; --dock-icon-6: #09080d;
+
+  --fiber-bg: #fde047; --fiber-text: #09080d;
+  --salt-bg: #fde047; --salt-text: #09080d;
+  --sugar-bg: #fde047; --sugar-text: #09080d;
+}
+
+html[data-style="pop"][data-theme="dark"] {
+  --bg: #120f18;
+  --surface: #211c2b;
+  --surface-solid: #211c2b;
+  --inset: #191522;
+  --hover: #2c2539;
+  --border: #fef9c3;
+  --text: #ffffff;
+  --muted: #cbd5e1;
+  --brand-flame-color: #fde047;
+  --header-btn-bg: #211c2b;
+  --header-icon-color: #fef9c3;
+  --nav-bg: #211c2b;
+  --nav-inactive-color: #fef9c3;
+  --meal-icon-color: #fde047;
+
+  --card-border: 2px solid #fef9c3;
+  --card-shadow: 3px 3px 0px #fde047;
+  --pill-border: 1.5px solid #fef9c3;
+  --pill-c-bg: #7cc4fa; --pill-c-text: #09080d;
+  --pill-p-bg: #ffb84d; --pill-p-text: #09080d;
+  --pill-f-bg: #c99eff; --pill-f-text: #09080d;
+
+  --dock-bg: #211c2b;
+  --dock-border: 2px solid #fef9c3;
+  --dock-shadow: 3px 3px 0px #fde047;
+  --dock-btn-border: 1.5px solid #fef9c3;
+}
+
+html[data-style="pop"][data-theme="lite-dark"] {
+  --bg: #201d2b;
+  --surface: #322d42;
+  --surface-solid: #322d42;
+  --inset: #272335;
+  --hover: #3d3751;
+  --border: #e2e8f0;
+  --text: #ffffff;
+  --muted: #e2e8f0;
+  --brand-flame-color: #fde047;
+  --header-btn-bg: #322d42;
+  --header-icon-color: #ffffff;
+  --nav-bg: #322d42;
+  --nav-inactive-color: #f1f5f9;
+  --meal-icon-color: #fde047;
+
+  --card-border: 2px solid #e2e8f0;
+  --card-shadow: 3px 3px 0px #09080d;
+  --pill-border: 1.5px solid #09080d;
+  --pill-c-bg: #7cc4fa; --pill-c-text: #09080d;
+  --pill-p-bg: #ffb84d; --pill-p-text: #09080d;
+  --pill-f-bg: #c99eff; --pill-f-text: #09080d;
+
+  --dock-bg: #322d42;
+  --dock-border: 2px solid #e2e8f0;
+  --dock-shadow: 3px 3px 0px #09080d;
+  --dock-btn-border: 1.5px solid #09080d;
+}
+
+html[data-style="pop"][data-theme="light"] {
+  --bg: #fae043;
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --inset: #fef9c3;
+  --hover: #fde047;
+  --border: #000000;
+  --text: #000000;
+  --muted: #1e293b;
+  --brand-flame-color: #000000;
+  --header-btn-bg: #ffffff;
+  --header-icon-color: #000000;
+  --nav-bg: #ffffff;
+  --nav-inactive-color: #000000;
+  --meal-icon-color: #000000;
+
+  --card-border: 2.5px solid #000000;
+  --card-shadow: 4px 4px 0px #000000;
+  --pill-border: 1.5px solid #000000;
+  --pill-c-bg: #7cc4fa; --pill-c-text: #000000;
+  --pill-p-bg: #ffb84d; --pill-p-text: #000000;
+  --pill-f-bg: #c99eff; --pill-f-text: #000000;
+
+  --dock-bg: #000000;
+  --dock-border: 2.5px solid #000000;
+  --dock-shadow: 4px 4px 0px rgba(0, 0, 0, 0.25);
+  --dock-btn-border: none;
+  --dock-6: #ffffff; --dock-icon-6: #000000;
+
+  --fiber-bg: #ffffff; --fiber-text: #000000;
+  --salt-bg: #ffffff; --salt-text: #000000;
+  --sugar-bg: #ffffff; --sugar-text: #000000;
+}
+
+/* 4. PLAYFUL THEME (Soft Bubbly Pastel Cards) */
+html[data-style="playful"] {
+  --font-family: 'Space Grotesk Variable', system-ui, sans-serif;
+  --icon-btn-radius: 9999px;
+  --nav-radius: 32px;
+  --nav-pill-radius: 32px;
+  --card-radius: 24px;
+  --micro-radius: 22px;
+  --badge-radius: 12px;
+  --bar-radius: 6px;
+  --pill-radius: 9px;
+  --dock-radius: 40px;
+  --dock-btn-radius: 9999px;
+  --card-border: none;
+  --pill-border: none;
+  --dock-border: none;
+  --dock-btn-border: none;
+  --clip-lg: none;
+  --clip-md: none;
+  --clip-sm: none;
+  --clip-xs: none;
+  --clip-dock: none;
+  --brand-flame-color: #fb7185;
+}
+
+html[data-style="playful"][data-theme="dark"] {
+  --bg: #1e1b4b;
+  --surface: #312e81;
+  --surface-solid: #312e81;
+  --inset: #272469;
+  --hover: #3b389c;
+  --border: rgba(165, 180, 252, 0.22);
+  --text: #f3e8ff;
+  --muted: #a5b4fc;
+  --header-btn-bg: #312e81;
+  --header-icon-color: #f3e8ff;
+  --nav-bg: #312e81;
+  --nav-inactive-color: #e0e7ff;
+  --nav-active-bg: #e11d48;
+  --nav-active-color: #ffffff;
+  --meal-icon-color: #fb7185;
+  --card-shadow: 0 6px 18px rgba(10, 8, 35, 0.35);
+
+  --intake-bg: #065f46;
+  --intake-text: #d1fae5;
+  --intake-label: #d1fae5;
+  --intake-track: rgba(209, 250, 229, 0.2);
+  --intake-fill: #d1fae5;
+  --intake-badge-bg: #d1fae5; --intake-badge-text: #065f46;
+
+  --burned-bg: #9f1239;
+  --burned-text: #ffe4e6;
+  --burned-label: #ffe4e6;
+  --burned-track: rgba(255, 228, 230, 0.22);
+  --burned-fill: #ffe4e6;
+  --badge-bg: rgba(0, 0, 0, 0.28);
+  --badge-text: #ffe4e6;
+
+  --carbs-bg: #312e81; --carbs-text: #e0e7ff;
+  --protein-bg: #713f12; --protein-text: #fef08a;
+  --fat-bg: #4c1d95; --fat-text: #e9d5ff;
+
+  --pill-c-bg: #1e3a8a; --pill-c-text: #bfdbfe;
+  --pill-p-bg: #854d0e; --pill-p-text: #fde68a;
+  --pill-f-bg: #4c1d95; --pill-f-text: #e9d5ff;
+
+  --dock-bg: #312e81;
+  --dock-shadow: 0 8px 24px rgba(10, 8, 35, 0.4);
+  --dock-1: #065f46; --dock-icon-1: #d1fae5;
+  --dock-2: #9f1239; --dock-icon-2: #ffe4e6;
+  --dock-3: #1e3a8a; --dock-icon-3: #bfdbfe;
+  --dock-4: #854d0e; --dock-icon-4: #fde68a;
+  --dock-5: #4c1d95; --dock-icon-5: #e9d5ff;
+  --dock-6: #a16207; --dock-icon-6: #fef08a;
+
+  --fiber-bg: #a16207; --fiber-text: #fef08a;
+  --salt-bg: #a16207; --salt-text: #fef08a;
+  --sugar-bg: #a16207; --sugar-text: #fef08a;
+}
+
+html[data-style="playful"][data-theme="lite-dark"] {
+  --bg: #252154;
+  --surface: #363173;
+  --surface-solid: #363173;
+  --inset: #2d2863;
+  --hover: #423c8a;
+  --border: rgba(255, 255, 255, 0.14);
+  --text: #ffffff;
+  --muted: #e0e7ff;
+  --header-btn-bg: #363173;
+  --header-icon-color: #f8fafc;
+  --nav-bg: #363173;
+  --nav-inactive-color: #e0e7ff;
+  --nav-active-bg: #fb7185;
+  --nav-active-color: #3b0413;
+  --meal-icon-color: #fda4af;
+  --card-border: 1px solid rgba(255, 255, 255, 0.14);
+  --card-shadow: 0 6px 18px rgba(15, 12, 45, 0.3);
+
+  --intake-bg: #34d399;
+  --intake-text: #042f2e;
+  --intake-label: #042f2e;
+  --intake-track: rgba(4, 47, 46, 0.22);
+  --intake-fill: #042f2e;
+  --intake-badge-bg: #042f2e; --intake-badge-text: #a7f3d0;
+
+  --burned-bg: #fb7185;
+  --burned-text: #3b0413;
+  --burned-label: #3b0413;
+  --burned-track: rgba(59, 4, 19, 0.22);
+  --burned-fill: #3b0413;
+  --badge-bg: rgba(59, 4, 19, 0.22);
+  --badge-text: #3b0413;
+
+  --carbs-bg: #3730a3; --carbs-text: #eef2ff;
+  --protein-bg: #854d0e; --protein-text: #fef9c3;
+  --fat-bg: #581c87; --fat-text: #faf5ff;
+
+  --pill-c-bg: #1e3a8a; --pill-c-text: #dbeafe;
+  --pill-p-bg: #713f12; --pill-p-text: #fef08a;
+  --pill-f-bg: #4c1d95; --pill-f-text: #f3e8ff;
+
+  --dock-bg: #363173;
+  --dock-border: 1px solid rgba(255, 255, 255, 0.14);
+  --dock-shadow: 0 8px 24px rgba(15, 12, 45, 0.35);
+  --dock-1: #34d399; --dock-icon-1: #042f2e;
+  --dock-2: #fb7185; --dock-icon-2: #3b0413;
+  --dock-3: #60a5fa; --dock-icon-3: #172554;
+  --dock-4: #fbbf24; --dock-icon-4: #451a03;
+  --dock-5: #c084fc; --dock-icon-5: #2e1065;
+  --dock-6: #fde047; --dock-icon-6: #422006;
+
+  --fiber-bg: #fde047; --fiber-text: #422006;
+  --salt-bg: #fde047; --salt-text: #422006;
+  --sugar-bg: #fde047; --sugar-text: #422006;
+}
+
+html[data-style="playful"][data-theme="light"] {
+  --bg: #ebe0fa;
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --inset: #f3ecfc;
+  --hover: #e5d5f8;
+  --border: rgba(76, 29, 149, 0.14);
+  --text: #17143b;
+  --muted: #334155;
+  --header-btn-bg: #ffffff;
+  --header-icon-color: #17143b;
+  --nav-bg: #ffffff;
+  --nav-inactive-color: #1e1b4b;
+  --nav-active-bg: #f43f5e;
+  --nav-active-color: #ffffff;
+  --meal-icon-color: #e11d48;
+  --card-border: 1px solid rgba(76, 29, 149, 0.14);
+  --card-shadow: 0 5px 14px rgba(30, 27, 75, 0.08);
+
+  --intake-bg: #34d399;
+  --intake-text: #042f2e;
+  --intake-label: #042f2e;
+  --intake-track: rgba(4, 47, 46, 0.22);
+  --intake-fill: #042f2e;
+  --intake-badge-bg: #042f2e; --intake-badge-text: #a7f3d0;
+
+  --burned-bg: #fb7185;
+  --burned-text: #3b0413;
+  --burned-label: #3b0413;
+  --burned-track: rgba(59, 4, 19, 0.22);
+  --burned-fill: #3b0413;
+  --badge-bg: rgba(59, 4, 19, 0.18);
+  --badge-text: #3b0413;
+
+  --carbs-bg: #dbeafe; --carbs-text: #172554;
+  --protein-bg: #fef08a; --protein-text: #422006;
+  --fat-bg: #e9d5ff; --fat-text: #2e1065;
+
+  --pill-c-bg: #dbeafe; --pill-c-text: #172554;
+  --pill-p-bg: #fef08a; --pill-p-text: #422006;
+  --pill-f-bg: #e9d5ff; --pill-f-text: #2e1065;
+
+  --dock-bg: #ffffff;
+  --dock-border: 1px solid rgba(76, 29, 149, 0.14);
+  --dock-shadow: 0 6px 18px rgba(30, 27, 75, 0.1);
+  --dock-1: #34d399; --dock-icon-1: #042f2e;
+  --dock-2: #fb7185; --dock-icon-2: #3b0413;
+  --dock-3: #60a5fa; --dock-icon-3: #172554;
+  --dock-4: #fbbf24; --dock-icon-4: #422006;
+  --dock-5: #c084fc; --dock-icon-5: #2e1065;
+  --dock-6: #fcd34d; --dock-icon-6: #422006;
+
+  --fiber-bg: #fcd34d; --fiber-text: #422006;
+  --salt-bg: #fcd34d; --salt-text: #422006;
+  --sugar-bg: #fcd34d; --sugar-text: #422006;
+}
+
+/* 5. MINIMAL THEME (Crisp Bordered Neutral Cards) */
+html[data-style="minimal"] {
+  --font-family: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+  --icon-btn-radius: 9999px;
+  --nav-radius: 12px;
+  --nav-pill-radius: 9px;
+  --card-radius: 14px;
+  --micro-radius: 14px;
+  --badge-radius: 6px;
+  --bar-radius: 4px;
+  --pill-radius: 6px;
+  --dock-radius: 16px;
+  --dock-btn-radius: 11px;
+  --pill-border: none;
+  --card-shadow: none;
+  --dock-shadow: none;
+  --clip-lg: none;
+  --clip-md: none;
+  --clip-sm: none;
+  --clip-xs: none;
+  --clip-dock: none;
+  --brand-flame-color: #3b82f6;
+}
+
+html[data-style="minimal"][data-theme="dark"] {
+  --bg: #060911;
+  --surface: #0d1320;
+  --surface-solid: #0d1320;
+  --inset: #070b14;
+  --hover: #172033;
+  --border: #1e293b;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --header-btn-bg: #0d1320;
+  --header-icon-color: #3b82f6;
+  --nav-bg: #0d1320;
+  --nav-inactive-color: #94a3b8;
+  --nav-active-bg: #1e293b;
+  --nav-active-color: #f8fafc;
+  --meal-icon-color: #3b82f6;
+
+  --card-border: 1px solid #1e293b;
+  --intake-bg: #0d1320; --intake-text: #bfdbfe; --intake-label: #93c5fd;
+  --intake-track: #1e293b; --intake-fill: #60a5fa;
+  --intake-badge-bg: #172554; --intake-badge-text: #bfdbfe;
+
+  --burned-bg: #0d1320; --burned-text: #fecaca; --burned-label: #fca5a5;
+  --burned-track: #1e293b; --burned-fill: #f87171;
+  --badge-bg: #450a0a; --badge-text: #fecaca;
+
+  --carbs-bg: #0d1320; --carbs-text: #bfdbfe;
+  --protein-bg: #0d1320; --protein-text: #fde68a;
+  --fat-bg: #0d1320; --fat-text: #e9d5ff;
+
+  --pill-c-bg: #060911; --pill-c-text: #93c5fd;
+  --pill-p-bg: #060911; --pill-p-text: #fde047;
+  --pill-f-bg: #060911; --pill-f-text: #d8b4fe;
+
+  --dock-bg: #0d1320;
+  --dock-border: 1px solid #1e293b;
+  --dock-btn-border: 1px solid #1e293b;
+  --dock-1: #060911; --dock-icon-1: #93c5fd;
+  --dock-2: #060911; --dock-icon-2: #fda4af;
+  --dock-3: #060911; --dock-icon-3: #93c5fd;
+  --dock-4: #060911; --dock-icon-4: #fde047;
+  --dock-5: #060911; --dock-icon-5: #d8b4fe;
+  --dock-6: #060911; --dock-icon-6: #f8fafc;
+
+  --fiber-bg: #060911; --fiber-text: #f8fafc;
+  --salt-bg: #060911; --salt-text: #f8fafc;
+  --sugar-bg: #060911; --sugar-text: #f8fafc;
+}
+
+html[data-style="minimal"][data-theme="lite-dark"] {
+  --bg: #182232;
+  --surface: #263347;
+  --surface-solid: #263347;
+  --inset: #172030;
+  --hover: #33445e;
+  --border: #475569;
+  --text: #ffffff;
+  --muted: #e2e8f0;
+  --header-btn-bg: #263347;
+  --header-icon-color: #60a5fa;
+  --nav-bg: #263347;
+  --nav-inactive-color: #e2e8f0;
+  --nav-active-bg: #3b4d68;
+  --nav-active-color: #ffffff;
+  --meal-icon-color: #60a5fa;
+
+  --card-border: 1px solid #475569;
+  --card-shadow: 0 4px 12px rgba(9, 14, 23, 0.25);
+  --intake-bg: #263347; --intake-text: #dbeafe; --intake-label: #93c5fd;
+  --intake-track: #475569; --intake-fill: #93c5fd;
+  --intake-badge-bg: #1e3a8a; --intake-badge-text: #dbeafe;
+
+  --burned-bg: #263347; --burned-text: #fee2e2; --burned-label: #fca5a5;
+  --burned-track: #475569; --burned-fill: #fca5a5;
+  --badge-bg: #991b1b; --badge-text: #fee2e2;
+
+  --carbs-bg: #263347; --carbs-text: #dbeafe;
+  --protein-bg: #263347; --protein-text: #fef08a;
+  --fat-bg: #263347; --fat-text: #f3e8ff;
+
+  --pill-c-bg: #172030; --pill-c-text: #bfdbfe;
+  --pill-p-bg: #172030; --pill-p-text: #fde68a;
+  --pill-f-bg: #172030; --pill-f-text: #e9d5ff;
+
+  --dock-bg: #263347;
+  --dock-border: 1px solid #475569;
+  --dock-btn-border: 1px solid #475569;
+  --dock-1: #172030; --dock-icon-1: #bfdbfe;
+  --dock-2: #172030; --dock-icon-2: #fda4af;
+  --dock-3: #172030; --dock-icon-3: #bfdbfe;
+  --dock-4: #172030; --dock-icon-4: #fde68a;
+  --dock-5: #172030; --dock-icon-5: #e9d5ff;
+  --dock-6: #172030; --dock-icon-6: #ffffff;
+
+  --fiber-bg: #172030; --fiber-text: #ffffff;
+  --salt-bg: #172030; --salt-text: #ffffff;
+  --sugar-bg: #172030; --sugar-text: #ffffff;
+}
+
+html[data-style="minimal"][data-theme="light"] {
+  --bg: #eef2f6;
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --inset: #e2e8f0;
+  --hover: #cbd5e1;
+  --border: #cbd5e1;
+  --text: #090e17;
+  --muted: #334155;
+  --header-btn-bg: #ffffff;
+  --header-icon-color: #2563eb;
+  --nav-bg: #ffffff;
+  --nav-inactive-color: #334155;
+  --nav-active-bg: #e2e8f0;
+  --nav-active-color: #090e17;
+  --meal-icon-color: #2563eb;
+
+  --card-border: 1.5px solid #cbd5e1;
+  --card-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  --intake-bg: #ffffff; --intake-text: #172554; --intake-label: #1d4ed8;
+  --intake-track: #e2e8f0; --intake-fill: #1d4ed8;
+  --intake-badge-bg: #dbeafe; --intake-badge-text: #172554;
+
+  --burned-bg: #ffffff; --burned-text: #7f1d1d; --burned-label: #dc2626;
+  --burned-track: #e2e8f0; --burned-fill: #dc2626;
+  --badge-bg: #fee2e2; --badge-text: #7f1d1d;
+
+  --carbs-bg: #ffffff; --carbs-text: #172554;
+  --protein-bg: #ffffff; --protein-text: #713f12;
+  --fat-bg: #ffffff; --fat-text: #3b0764;
+
+  --pill-c-bg: #e2e8f0; --pill-c-text: #172554;
+  --pill-p-bg: #e2e8f0; --pill-p-text: #713f12;
+  --pill-f-bg: #e2e8f0; --pill-f-text: #3b0764;
+
+  --dock-bg: #ffffff;
+  --dock-border: 1.5px solid #cbd5e1;
+  --dock-btn-border: 1px solid #cbd5e1;
+  --dock-1: #ffffff; --dock-icon-1: #172554;
+  --dock-2: #ffffff; --dock-icon-2: #9f1239;
+  --dock-3: #ffffff; --dock-icon-3: #172554;
+  --dock-4: #ffffff; --dock-icon-4: #713f12;
+  --dock-5: #ffffff; --dock-icon-5: #3b0764;
+  --dock-6: #ffffff; --dock-icon-6: #090e17;
+
+  --fiber-bg: #ffffff; --fiber-text: #090e17;
+  --salt-bg: #ffffff; --salt-text: #090e17;
+  --sugar-bg: #ffffff; --sugar-text: #090e17;
+}
+
+/* 6. MONO THEME (Dynamic Monochromatic Palette Driven by JS in src/utils/themes.ts) */
+html[data-style="mono"] {
+  --font-family: 'Space Grotesk Variable', system-ui, sans-serif;
+  --icon-btn-radius: 14px;
+  --nav-radius: 16px;
+  --nav-pill-radius: 12px;
+  --card-radius: 18px;
+  --micro-radius: 16px;
+  --badge-radius: 7px;
+  --bar-radius: 4px;
+  --pill-radius: 7px;
+  --dock-radius: 18px;
+  --dock-btn-radius: 12px;
+  --pill-border: none;
+  --dock-btn-border: none;
+  --card-shadow: none;
+  --dock-shadow: none;
+  --clip-lg: none;
+  --clip-md: none;
+  --clip-sm: none;
+  --clip-xs: none;
+  --clip-dock: none;
+}
+
+/* ==========================================================================
+   COHERENT APPLICATION-WIDE RULES FOR THE 6 NEW THEMES
+   ========================================================================== */
+html[data-style]:not([data-style="classic"]) body,
+html[data-style]:not([data-style="classic"]) [data-journal-root] {
+  font-family: var(--font-family, var(--font-sans));
+  background: var(--app-bg-image, var(--bg));
+  background-attachment: fixed;
+  color: var(--text);
+}
+
+/* Header surface & buttons */
+.kc-header-surface {
+  background: color-mix(in srgb, var(--bg) calc(var(--header-bg-progress, 1) * 94%), transparent);
+  border-bottom-color: color-mix(in srgb, var(--border) calc(var(--header-bg-progress, 1) * 100%), transparent);
+  backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 12px));
+  -webkit-backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 12px));
+}
+
+html[data-style]:not([data-style="classic"]) .kc-header-surface {
+  background: color-mix(in srgb, var(--bg) calc(var(--header-bg-progress, 1) * 90%), transparent);
+  border-bottom-color: color-mix(in srgb, var(--border) calc(var(--header-bg-progress, 1) * 100%), transparent);
+  backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 14px));
+  -webkit-backdrop-filter: blur(calc(var(--header-bg-progress, 1) * 14px));
+}
+
+/* Floating transparent page pill when revealed during scroll (no header background behind it) */
+.kc-header-surface[data-pill-floating="true"] .kc-nav-pill {
+  background: color-mix(in srgb, var(--surface) 76%, transparent) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-style]:not([data-style="classic"]) .kc-icon-btn {
+  background: var(--header-btn-bg, var(--surface)) !important;
+  color: var(--header-icon-color, var(--text)) !important;
+  border: var(--card-border, 1px solid var(--border)) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--icon-btn-radius, 9999px) !important;
+  clip-path: var(--clip-sm, none);
+}
+
+/* Wordmark: the poop (and the K) are outlines only. They must stay transparent in every theme, so no
+   theme may fill them (this used to colour the poop with --brand-flame-color in the non-classic themes). */
+.kc-wordmark svg g,
+.kc-wordmark svg g path {
+  fill: none !important;
+}
+
+/* Navigation pill & tabs */
+html[data-style]:not([data-style="classic"]) .kc-nav-pill {
+  background: var(--nav-bg, var(--surface)) !important;
+  border: var(--card-border, 1px solid var(--border)) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--nav-radius, 999px) !important;
+  clip-path: var(--clip-sm, none);
+  transition: background-color 180ms ease;
+}
+
+html[data-style]:not([data-style="classic"]) .kc-header-surface[data-pill-floating="true"] .kc-nav-pill {
+  background: color-mix(in srgb, var(--surface-solid, var(--nav-bg, var(--surface))) 76%, transparent) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+html[data-style]:not([data-style="classic"]) .kc-nav-tab {
+  border-radius: var(--nav-pill-radius, 999px) !important;
+  clip-path: var(--clip-xs, none);
+  color: var(--nav-inactive-color, var(--muted));
+}
+
+html[data-style]:not([data-style="classic"]) .kc-nav-tab-active {
+  background: var(--nav-active-bg) !important;
+  color: var(--nav-active-color) !important;
+}
+
+/* Hero Intake & Burned cards (Today, Statistics, Day Overview) */
+html[data-style]:not([data-style="classic"]) .kc-hero-intake {
+  background: var(--intake-bg) !important;
+  color: var(--intake-text) !important;
+  border: var(--card-border, none) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--card-radius, 24px) !important;
+  clip-path: var(--clip-lg, none);
+}
+html[data-style]:not([data-style="classic"]) .kc-hero-intake * {
+  color: inherit;
+}
+html[data-style]:not([data-style="classic"]) .kc-hero-intake .kc-hero-track {
+  background: var(--intake-track) !important;
+  border-radius: var(--bar-radius, 999px) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-hero-intake .kc-hero-fill {
+  background: var(--intake-fill) !important;
+  border-radius: var(--bar-radius, 999px) !important;
+}
+
+html[data-style]:not([data-style="classic"]) .kc-hero-burned {
+  background: var(--burned-bg) !important;
+  color: var(--burned-text) !important;
+  border: var(--card-border, none) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--card-radius, 24px) !important;
+  clip-path: var(--clip-lg, none);
+}
+html[data-style]:not([data-style="classic"]) .kc-hero-burned * {
+  color: inherit;
+}
+html[data-style]:not([data-style="classic"]) .kc-hero-burned .kc-hero-track {
+  background: var(--burned-track) !important;
+  border-radius: var(--bar-radius, 999px) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-hero-burned .kc-hero-fill {
+  background: var(--burned-fill) !important;
+  border-radius: var(--bar-radius, 999px) !important;
+}
+
+html[data-style]:not([data-style="classic"]) .kc-balance-badge {
+  background: var(--badge-bg) !important;
+  color: var(--badge-text) !important;
+  border-radius: var(--badge-radius, 999px) !important;
+  clip-path: var(--clip-xs, none);
+}
+
+/* Calorie-surplus pill sits on the green Intake card: it uses the intake palette, not the burned (red) badge colours. */
+html[data-style]:not([data-style="classic"]) .kc-balance-badge.kc-balance-badge-intake {
+  background: var(--intake-badge-bg, var(--intake-fill)) !important;
+  color: var(--intake-badge-text, var(--intake-bg)) !important;
+}
+
+/* Macro cards (Today, Statistics, Day Overview) */
+html[data-style]:not([data-style="classic"]) .kc-macro-carbs,
+html[data-style]:not([data-style="classic"]) [data-nutrient="carbs"] {
+  background: var(--carbs-bg) !important;
+  color: var(--carbs-text) !important;
+  border: var(--card-border, none) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--card-radius, 20px) !important;
+  clip-path: var(--clip-md, none);
+}
+html[data-style]:not([data-style="classic"]) .kc-macro-carbs *,
+html[data-style]:not([data-style="classic"]) [data-nutrient="carbs"] * {
+  color: inherit !important;
+}
+
+html[data-style]:not([data-style="classic"]) .kc-macro-protein,
+html[data-style]:not([data-style="classic"]) [data-nutrient="protein"] {
+  background: var(--protein-bg) !important;
+  color: var(--protein-text) !important;
+  border: var(--card-border, none) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--card-radius, 20px) !important;
+  clip-path: var(--clip-md, none);
+}
+html[data-style]:not([data-style="classic"]) .kc-macro-protein *,
+html[data-style]:not([data-style="classic"]) [data-nutrient="protein"] * {
+  color: inherit !important;
+}
+
+html[data-style]:not([data-style="classic"]) .kc-macro-fat,
+html[data-style]:not([data-style="classic"]) [data-nutrient="fat"] {
+  background: var(--fat-bg) !important;
+  color: var(--fat-text) !important;
+  border: var(--card-border, none) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--card-radius, 20px) !important;
+  clip-path: var(--clip-md, none);
+}
+html[data-style]:not([data-style="classic"]) .kc-macro-fat *,
+html[data-style]:not([data-style="classic"]) [data-nutrient="fat"] * {
+  color: inherit !important;
+}
+
+/* Secondary nutrients: Fiber, Salt, Sugar (Today, FoodMacroGrid, Statistics) */
+html[data-style]:not([data-style="classic"]) [data-nutrient="fiber"],
+html[data-style]:not([data-style="classic"]) [data-nutrient="salt"],
+html[data-style]:not([data-style="classic"]) [data-nutrient="sugar"] {
+  background: var(--fiber-bg) !important;
+  color: var(--fiber-text) !important;
+  border: var(--card-border, none) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--micro-radius, 18px) !important;
+  clip-path: var(--clip-sm, none);
+}
+html[data-style]:not([data-style="classic"]) [data-nutrient="fiber"] *,
+html[data-style]:not([data-style="classic"]) [data-nutrient="salt"] *,
+html[data-style]:not([data-style="classic"]) [data-nutrient="sugar"] * {
+  color: inherit !important;
+}
+
+/* Numeric Macro Pills (Meal cards, Food rows, Recipes, Database, Day Overview) */
+html[data-style]:not([data-style="classic"]) [data-macro="carbs"] {
+  background: var(--pill-c-bg) !important;
+  color: var(--pill-c-text) !important;
+  border: var(--pill-border, none) !important;
+  border-radius: var(--pill-radius, 8px) !important;
+  clip-path: var(--clip-xs, none);
+}
+html[data-style]:not([data-style="classic"]) [data-macro="protein"] {
+  background: var(--pill-p-bg) !important;
+  color: var(--pill-p-text) !important;
+  border: var(--pill-border, none) !important;
+  border-radius: var(--pill-radius, 8px) !important;
+  clip-path: var(--clip-xs, none);
+}
+html[data-style]:not([data-style="classic"]) [data-macro="fat"] {
+  background: var(--pill-f-bg) !important;
+  color: var(--pill-f-text) !important;
+  border: var(--pill-border, none) !important;
+  border-radius: var(--pill-radius, 8px) !important;
+  clip-path: var(--clip-xs, none);
+}
+html[data-style]:not([data-style="classic"]) [data-macro="sugar"] {
+  background: var(--fiber-bg) !important;
+  color: var(--fiber-text) !important;
+  border: var(--pill-border, none) !important;
+  border-radius: var(--pill-radius, 8px) !important;
+  clip-path: var(--clip-xs, none);
+}
+
+/* Meal slot cards, Tracker cards, Custom library sections, and Surface cards across all pages */
+html[data-style]:not([data-style="classic"]) [data-meal-slot],
+html[data-style]:not([data-style="classic"]) [data-tracker],
+html[data-style]:not([data-style="classic"]) [data-library-section],
+html[data-style]:not([data-style="classic"]) .kc-themed-card {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: var(--card-border, 1px solid var(--border)) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--card-radius, 20px) !important;
+  clip-path: var(--clip-md, none);
+}
+
+html[data-style="aurora"] [data-meal-slot],
+html[data-style="aurora"] [data-tracker],
+html[data-style="aurora"] [data-library-section],
+html[data-style="aurora"] .kc-themed-card,
+html[data-style="aurora"] .kc-nav-pill,
+html[data-style="aurora"] .kc-icon-btn {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+html[data-style]:not([data-style="classic"]) [data-meal-slot] .kc-meal-icon,
+html[data-style]:not([data-style="classic"]) [data-tracker] .kc-tracker-icon,
+html[data-style]:not([data-style="classic"]) .kc-period-header-icon {
+  color: var(--meal-icon-color, var(--text)) !important;
+}
+
+/* Custom page (PreBuiltMealsView) nested cards, ingredients, empty states & food action buttons */
+html[data-style]:not([data-style="classic"]) .kc-section-empty {
+  color: var(--muted) !important;
+}
+
+html[data-style]:not([data-style="classic"]) [data-library-card] {
+  background: var(--inset) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--micro-radius, 16px) !important;
+  clip-path: var(--clip-sm, none);
+}
+
+html[data-style]:not([data-style="classic"]) [data-library-ingredients] {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--pill-radius, 12px) !important;
+  clip-path: var(--clip-xs, none);
+}
+
+html[data-style]:not([data-style="classic"]) [data-library-food-btn] {
+  background: var(--inset) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--pill-radius, 999px) !important;
+  clip-path: var(--clip-sm, none);
+}
+html[data-style]:not([data-style="classic"]) [data-library-food-btn]:hover {
+  background: var(--hover) !important;
+}
+
+/* Custom item fields, tracker pills, water indicators & statistics custom tracker cards */
+html[data-style]:not([data-style="classic"]) .kc-custom-pill {
+  background: var(--inset) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--pill-radius, 8px) !important;
+  clip-path: var(--clip-xs, none);
+}
+
+html[data-style]:not([data-style="classic"]) .kc-custom-icon-badge {
+  background: var(--dock-6, var(--fiber-bg)) !important;
+  color: var(--dock-icon-6, var(--fiber-text)) !important;
+  border: var(--dock-btn-border, none) !important;
+  border-radius: var(--icon-btn-radius, 9999px) !important;
+  clip-path: var(--clip-xs, none);
+}
+
+html[data-style]:not([data-style="classic"]) [data-custom-nutrient] .kc-custom-num-input {
+  background: var(--inset) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--pill-radius, 12px) !important;
+  clip-path: var(--clip-xs, none);
+}
+html[data-style]:not([data-style="classic"]) [data-custom-nutrient] .kc-custom-num-unit {
+  color: var(--muted) !important;
+}
+
+html[data-style]:not([data-style="classic"]) .kc-water-track {
+  background: var(--inset) !important;
+  border-radius: var(--bar-radius, 6px) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-water-fill {
+  background: var(--carbs-text, var(--nav-active-bg)) !important;
+  border-radius: var(--bar-radius, 6px) !important;
+}
+
+html[data-style]:not([data-style="classic"]) .kc-custom-stat-header {
+  color: var(--text) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-custom-stat-sub {
+  color: var(--muted) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-custom-stat-dot-active {
+  background: var(--nav-active-bg) !important;
+  color: var(--nav-active-color) !important;
+  border: var(--pill-border, none) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-custom-stat-dot-empty {
+  background: var(--inset) !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--border) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-custom-stat-bar-active {
+  background: var(--nav-active-bg) !important;
+  border-radius: var(--bar-radius, 4px) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-custom-stat-bar-empty {
+  background: var(--inset) !important;
+  border-radius: var(--bar-radius, 4px) !important;
+}
+
+/* Period page, Calendar, Day Overview & Shared Action/Chip controls */
+html[data-style]:not([data-style="classic"]) [data-period-card],
+html[data-style]:not([data-style="classic"]) [data-day-overview-card],
+html[data-style]:not([data-style="classic"]) .kc-modal-banner {
+  background: var(--inset) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--micro-radius, 16px) !important;
+  clip-path: var(--clip-sm, none);
+}
+html[data-style]:not([data-style="classic"]) .kc-modal-banner * {
+  color: inherit !important;
+}
+html[data-style]:not([data-style="classic"]) [data-period-card] [data-period-value],
+html[data-style]:not([data-style="classic"]) [data-day-overview-card] [data-period-value] {
+  color: var(--text) !important;
+}
+html[data-style]:not([data-style="classic"]) [data-period-card] [data-period-label],
+html[data-style]:not([data-style="classic"]) [data-day-overview-card] [data-period-label] {
+  color: var(--muted) !important;
+}
+html[data-style]:not([data-style="classic"]) [data-day-overview-row] {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--pill-radius, 12px) !important;
+  clip-path: var(--clip-xs, none);
+}
+
+html[data-style]:not([data-style="classic"]) [data-period-cell="logged"] {
+  background: var(--burned-bg) !important;
+  color: var(--burned-text) !important;
+  border: var(--pill-border, none) !important;
+  border-radius: var(--micro-radius, 14px) !important;
+  clip-path: var(--clip-xs, none);
+}
+html[data-style]:not([data-style="classic"]) [data-period-cell="predicted"] {
+  background: var(--inset) !important;
+  color: var(--text) !important;
+  border: 1.5px dashed var(--border) !important;
+  border-radius: var(--micro-radius, 14px) !important;
+}
+html[data-style]:not([data-style="classic"]) [data-period-cell="logged"] .kc-period-cell-ink {
+  color: var(--burned-text) !important;
+}
+html[data-style]:not([data-style="classic"]) [data-period-cell="predicted"] .kc-period-cell-ink {
+  color: var(--text) !important;
+}
+
+html[data-style]:not([data-style="classic"]) .kc-period-pill,
+html[data-style]:not([data-style="classic"]) .kc-period-chip,
+html[data-style]:not([data-style="classic"]) .kc-action-pill,
+html[data-style]:not([data-style="classic"]) .kc-chip-active {
+  background: var(--nav-active-bg) !important;
+  color: var(--nav-active-color) !important;
+  border-color: transparent !important;
+  border-radius: var(--pill-radius, 999px) !important;
+  clip-path: var(--clip-xs, none);
+}
+
+html[data-style]:not([data-style="classic"]) .kc-period-bar {
+  background: var(--nav-active-bg) !important;
+  border-radius: var(--bar-radius, 4px) !important;
+}
+
+html[data-style]:not([data-style="classic"]) .kc-primary-btn {
+  background: var(--intake-bg) !important;
+  color: var(--intake-text) !important;
+  border: var(--card-border, none) !important;
+  box-shadow: var(--card-shadow, none) !important;
+  border-radius: var(--micro-radius, 16px) !important;
+  clip-path: var(--clip-sm, none);
+}
+
+/* Bottom Action Dock & Quick-Add Buttons (Today, Custom, Period) */
+html[data-style]:not([data-style="classic"]) .kc-dock {
+  background: var(--dock-bg, var(--surface)) !important;
+  border: var(--dock-border, var(--card-border, 1px solid var(--border))) !important;
+  box-shadow: var(--dock-shadow, var(--card-shadow, none)) !important;
+  border-radius: var(--dock-radius, 999px) !important;
+  clip-path: var(--clip-dock, none);
+}
+html[data-style="aurora"] .kc-dock {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+html[data-style]:not([data-style="classic"]) .kc-dock-btn {
+  border: var(--dock-btn-border, none) !important;
+  border-radius: var(--dock-btn-radius, 9999px) !important;
+  clip-path: var(--clip-sm, none);
+}
+html[data-style]:not([data-style="classic"]) .kc-dock-btn:nth-child(6n + 1) {
+  background: var(--dock-1) !important;
+  color: var(--dock-icon-1) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-dock-btn:nth-child(6n + 2) {
+  background: var(--dock-2) !important;
+  color: var(--dock-icon-2) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-dock-btn:nth-child(6n + 3) {
+  background: var(--dock-3) !important;
+  color: var(--dock-icon-3) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-dock-btn:nth-child(6n + 4) {
+  background: var(--dock-4) !important;
+  color: var(--dock-icon-4) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-dock-btn:nth-child(6n + 5) {
+  background: var(--dock-5) !important;
+  color: var(--dock-icon-5) !important;
+}
+html[data-style]:not([data-style="classic"]) .kc-dock-btn:nth-child(6n + 6) {
+  background: var(--dock-6) !important;
+  color: var(--dock-icon-6) !important;
+}
+
+/* Modals / Dialog Sheets */
+html[data-style]:not([data-style="classic"]) [role="dialog"] {
+  background: var(--surface-solid, var(--surface)) !important;
+  color: var(--text) !important;
+  border: var(--card-border, 1px solid var(--border)) !important;
+  box-shadow: var(--dock-shadow, 0 20px 50px rgba(0, 0, 0, 0.45)) !important;
+  border-radius: var(--card-radius, 24px) !important;
+  clip-path: var(--clip-lg, none);
+  font-family: var(--font-family, var(--font-sans));
+}
+
+/* Angular chamfered overrides for rounded containers across all views */
+html[data-style="angular"] .rounded-3xl,
+html[data-style="angular"] .rounded-2xl {
+  border-radius: 0px !important;
+  clip-path: var(--clip-md);
+}
+html[data-style="angular"] .rounded-xl,
+html[data-style="angular"] .rounded-lg {
+  border-radius: 0px !important;
+  clip-path: var(--clip-sm);
+}
+
+/* Pop Neo-Brutalist elevation on main cards across Custom, Period, Statistics & Database */
+html[data-style="pop"] main section.rounded-3xl,
+html[data-style="pop"] main div.rounded-3xl {
+  border: var(--card-border) !important;
+  box-shadow: var(--card-shadow) !important;
+  border-radius: var(--card-radius) !important;
+}
+html[data-style="minimal"] main section.rounded-3xl,
+html[data-style="minimal"] main div.rounded-3xl,
+html[data-style="mono"] main section.rounded-3xl,
+html[data-style="mono"] main div.rounded-3xl {
+  border: var(--card-border) !important;
+  border-radius: var(--card-radius) !important;
+}
+html[data-style="aurora"] main section.rounded-3xl,
+html[data-style="aurora"] main div.rounded-3xl,
+html[data-style="playful"] main section.rounded-3xl,
+html[data-style="playful"] main div.rounded-3xl {
+  border: var(--card-border, none) !important;
+  box-shadow: var(--card-shadow) !important;
+  border-radius: var(--card-radius) !important;
+}
+
+/*
+ * Aurora: --micro-radius / --pill-radius are 999px (right for small chips and buttons), but the rules above also
+ * apply them to tall containers (Custom page cards and ingredient lists, Period cards, calendar days, day-overview
+ * rows), which turned them into stretched pill shapes. Containers get ordinary rounded corners instead.
+ */
+html[data-style="aurora"]:not([data-style="classic"]) [data-library-card],
+html[data-style="aurora"]:not([data-style="classic"]) [data-period-card],
+html[data-style="aurora"]:not([data-style="classic"]) [data-day-overview-card],
+html[data-style="aurora"]:not([data-style="classic"]) .kc-modal-banner {
+  border-radius: 18px !important;
+}
+html[data-style="aurora"]:not([data-style="classic"]) [data-library-ingredients],
+html[data-style="aurora"]:not([data-style="classic"]) [data-day-overview-row],
+html[data-style="aurora"]:not([data-style="classic"]) button[data-period-cell] {
+  border-radius: 14px !important;
+}
+html[data-style="aurora"]:not([data-style="classic"]) span[data-period-cell] {
+  border-radius: 5px !important;
+}

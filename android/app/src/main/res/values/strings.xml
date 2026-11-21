@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Koink</string>
+    <string name="title_activity_main">Koink</string>
+    <string name="package_name">com.koink.app</string>
+    <string name="custom_url_scheme">com.koink.app</string>
+</resources>

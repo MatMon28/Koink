@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tile of the Koink icon, light version (scripts/render-brand.mjs draws the foreground for it). -->
+    <color name="ic_launcher_background">#F9F3E6</color>
+</resources>

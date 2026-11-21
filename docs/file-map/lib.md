@@ -1,0 +1,37 @@
+# File map: `src/lib/`
+
+> **Scope:** state, types, calculations and every non-visual module.
+>
+> **Read when:** you change behaviour rather than appearance.
+>
+> **Related:** [../data-model.md](../data-model.md), [../architecture.md](../architecture.md)
+
+| File | Exports | Role |
+| --- | --- | --- |
+| `store.tsx` | `AppProvider`, `useApp`, `useSheet`, `Toast` | The only state container. Loads and sanitises the journal, saves it after every change, applies the theme, and exposes every action (entries, goals, recurring, budgets, profile, settings, backup, sample, erase), navigation, sheets, money formatting and toasts. `useSheet(type)` is the per-sheet view of `sheet` |
+| `types.ts` | `Tx`, `Goal`, `Recurring`, `Profile`, `BudgetRule`, `Settings`, `NotificationSettings`, `TimedReminder`, `OpenTarget`, `AppData`, `Sheet`, `Kind`, `Bucket`, `ActiveTab`, `Theme`, `ThemeStyle`, `CurrencyCode`, `QuickAddKey` | Every shared type |
+| `storage.ts` | `STORAGE_KEY`, `migrateLegacyStorage` | The `localStorage` key of the journal (`koink_journal_v1`), and the one-time move of keys written under the old name (`koins_*`) |
+| `calc.ts` | `monthTotals`, `totalsOf`, `totalsByMonth`, `monthsBack`, `ruleShares`, `budgetSummary`, `goalSaved`, `recurringEntry`, `frequentEntries`, `sortTxs`, `MonthTotals`, `FrequentEntry` | Pure money maths. Definitions in [../data-model.md](../data-model.md#calculations-srclibcalcts) |
+| `categories.ts` | `EXPENSE_CATEGORIES`, `INCOME_SOURCES`, `BUCKET_LABEL`, `KIND_LABEL`, `expenseCategory`, `bucketOf`, `categoryMeta` | The fixed category and income-source lists with icons and buckets, and lookups |
+| `format.ts` | `formatMoney`, `formatMoneyFit`, `percent`, `round2`, `CURRENCIES`, `currencySymbol`, `currencyDecimals`, `MoneyOptions` | Currency formatting (cached `Intl.NumberFormat`), rounding |
+| `dates.ts` | `todayStr`, `currentMonth`, `monthOf`, `addDays`, `addMonths`, `daysInMonth`, `elapsedDays`, `defaultDateFor`, `formatMonth`, `formatDay`, `ordinal`, `pad`, `MONTH_SHORT` | Local-date helpers on `YYYY-MM-DD` / `YYYY-MM` strings |
+| `demo.ts` | `buildSampleTxs`, `SAMPLE_GOALS`, `SAMPLE_RECURRING`, `SAMPLE_PROFILE` | The deterministic sample journal for first run |
+| `themes.ts` | `applyThemeAttributes`, `applyUltraMinimal`, `applyStoredTheme`, `getMonoVariables`, `BOOT_KEY`, `STYLE_PRESETS`, `MONO_HUES`, `THEMES`, `THEME_STYLES`, `DEFAULT_MONO_HUE`, `normalizeTheme`, `normalizeThemeStyle`, `normalizeMonoHue` | Puts the theme and Ultra minimal on `<html>` (`applyThemeAttributes` returns the resulting `--bg`); keeps the `koink_boot` hint for the first paint; generates the Mono palette from one hue; preset metadata for Settings |
+| `reminders.ts` | `buildNotificationPlan`, `nextOccurrence`, `normalizeNotificationSettings`, `DEFAULT_NOTIFICATION_SETTINGS`, `NOTIFICATION_CHANNELS`, `NOTIFICATION_IDS`, `WEEKDAYS`, `isOpenTarget`, `PlannedNotification` | Reminders, the pure part: defaults, validation, and settings -> list of repeating alarms with their text. No device access. See [../notifications.md](../notifications.md) |
+| `notifications.ts` | `getNotificationPermission`, `requestNotificationPermission`, `syncNativeNotifications`, `startWebReminders`, `listenForNotificationTaps`, `sendTestNotification`, `NotificationPermission` | Reminders, the delivery part: Android alarms through `@capacitor/local-notifications` (imported on demand), browser timers and the Notification API, taps |
+| `useReminders.ts` | `useReminders` | Hook mounted once in `App.tsx`: keeps the alarms / timers in step with the settings and routes a tap to `openTarget()` |
+| `intro.ts` | `startLaunchIntro`, `shouldShowIntro`, `pickIntroAnimation`, `markAppReady`, `onLaunchIntroEnd`, `afterFirstPaint`, `useReportAppReady`, `IntroAnimation`, `INTRO_LAST_KEY` | The launch animation's overlay (plain DOM), pick (signature animation first, then random), timing, skip. The animations themselves are in `src/brand/art.js`. See [../launch-intro.md](../launch-intro.md) |
+| `earlyStart.ts` | (side effects only) | Imported first by `main.tsx`: storage migration, saved theme, motion tokens, launch animation, before the app is evaluated |
+| `spring.ts` | `SPRING`, `makeSpring`, `applyMotionTokens`, `SpringEase` | Damped springs sampled into CSS `linear()` curves; publishes `--ease-soft` / `--ease-bounce`. See [../motion.md](../motion.md) |
+| `velocity.ts` | `trackSample`, `releaseSpeed`, `Sample` | Release speed of a drag, shared by the page swipe and the sheets |
+| `idle.ts` | `whenIdle` | Runs a task in an idle moment with a deadline (rescheduling reminders, pre-mounting neighbour pages) |
+| `tabs.ts` | `TAB_ORDER`, `neighbourTab` | Page order, shared by the header pill (`Tabs.tsx`) and the page swipe (`PageSwiper.tsx`) |
+| `back.ts` | `initBackHandling`, `pushBackLayer`, `useBackLayer`, `handleBack` | What Back does: a stack of dismissable layers, driven by the Android back button or a browser-history sentinel. Back asks the top layer to close; a layer may refuse. See [../gestures.md](../gestures.md#back) |
+| `platform.ts` | `isNativeApp`, `isStandaloneApp`, `isAppShell`, `syncSystemBars`, `syncLaunchBackground`, `saveTextFile`, `SaveResult` | The only place that asks where the app runs, and the native bridges: system-bar style, launch colour (the app's own `KoinkDevice` plugin), saving a file. See [../android.md](../android.md#javascript-side) |
+| `pwa.ts` | `registerOfflineWorker`, `initInstallPrompt`, `promptInstall`, `useInstallState`, `InstallState`, `takeLaunchAction` | Offline-worker registration, install-prompt state, launch requests (`?add=`, `?open=`). See [../pwa.md](../pwa.md) |
+| `dock.ts` | `getDockTarget`, `DockTarget` | Finds the dock button a closing sheet should fly into |
+| `usePersistentState.ts` | `usePersistentState` | `useState` mirrored to a `localStorage` key (view preferences) |
+
+## Dependencies between them
+
+`types` <- everything. `storage` <- `store`, `themes`. `platform` <- `back`, `pwa`, `store`, `notifications`, `useReminders`. `tabs` <- `Tabs`, `PageSwiper`. `calc` uses `categories`, `dates`, `format`. `store` uses `calc`, `dates`, `demo`, `format`, `platform`, `reminders`, `storage`, `themes`. `earlyStart` uses `intro`, `spring`, `storage`, `themes` only (keep it that small); `intro` takes its art from `src/brand/art.js`. `notifications` uses `reminders`; `useReminders` uses both and `store`. Nothing in `lib/` imports from `components/`, `pages/` or `sheets/`.

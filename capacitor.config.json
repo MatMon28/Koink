@@ -1,0 +1,23 @@
+{
+  "appId": "com.koink.app",
+  "appName": "Koink",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_koink",
+      "iconColor": "#286540"
+    },
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover"
+    }
+  },
+  "android": {
+    "backgroundColor": "#EFE9DD",
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}

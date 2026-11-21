@@ -1,0 +1,30 @@
+# File map: `src/components/`
+
+> **Scope:** every shared component and what it exports.
+>
+> **Read when:** you need a building block or want to change one used on several screens.
+>
+> **Related:** [../design-system.md](../design-system.md), [pages.md](pages.md), [sheets.md](sheets.md)
+
+| File | Exports | Role |
+| --- | --- | --- |
+| `Header.tsx` | `Header` | Sticky header: profile button, wordmark (tap = Month page / scroll to top), settings button, and the page pill below. Scroll handler folds the name row away in the first 48 px and hides / reveals the pill by scroll direction, writing styles directly to the DOM |
+| `Tabs.tsx` | `Tabs` | The page pill. `NAV_META` = label, icon and the active pastel of each page; the order comes from `TAB_ORDER` (`lib/tabs.ts`). Only the active page shows its label (none do in Ultra minimal) |
+| `ActionDock.tsx` | `ActionDock`, `DockAction` | The floating bottom bar, rendered in a portal. Hides after 14 px of downward scroll, returns after 7 px upward, always visible near the top; reappears when a sheet opens (`kc:overlay-open` event) |
+| `Modal.tsx` | `Modal` | Frame of every sheet: portal, scrim, focus trap, Escape, scroll lock (`kc-sheet-open` on `<html>`), Back layer, drag-to-close (thresholds at the top of the file), frame sized from `visualViewport` so it sits above the keyboard, exit animation into the dock button named by `dockId`. While closing it is `inert`; the next press ends the exit; a tap after a swipe-close is rescued. See [../motion.md](../motion.md) |
+| `PageSwiper.tsx` | `PageSwiper` | The pages on one rail. Takes `renderPage(tab)`; renders the current page and, keyed by page id, the neighbours that are pre-mounted hidden (touch devices) or riding along during a swipe. Also the directional slide-in for page changes made any other way. All thresholds are constants at the top. See [../gestures.md](../gestures.md) |
+| `MonthNavigator.tsx` | `MonthNavigator` | Month row: arrows, pill + year-grid popover, "Now"; swipeable; marked `data-no-swipe` so it keeps its gesture; the popover is a Back layer; icon-only pill in Ultra minimal |
+| `cards.tsx` | `HeroCard`, `HeroPair`, `ShareCard`, `NoteCard`, `Pills`, `PillItem`, `FoldCard`, `Headline`, `EmptyRow`, `TxRow` | The card kit. `HeroPair` = Income / Spent style pair with balance pill. `ShareCard` = Needs / Wants / Savings. `NoteCard` = small yellow card (needs an `icon`). `FoldCard` = collapsible card used for categories (`variant="slot"`) and trackers (`variant="tracker"`, with its own palette in Classic). `TxRow` = an entry line with edit / delete. Labels carry `um-sr` and icons `um-only` for Ultra minimal |
+| `RecurringRow.tsx` | `RecurringRow` | One recurring item for a month: edit on tap, Log / Done button |
+| `ui.tsx` | `seg`, `textInput`, `SectionLabel`, `NumericInput`, `AmountStepper`, `Switch`, `Collapsible`, `ConfirmDialog`, `SaveBeforeCloseDialog`, `Bar`, `ToastHost` | Form and utility kit. `NumericInput` accepts a comma, two decimals, selects on focus. `AmountStepper` = minus / field / plus with hold-to-repeat and optional chips. `SaveBeforeCloseDialog` = the Save / Don't save / Keep editing question. `Bar` = progress bar. `ToastHost` = the one toast line with Undo |
+| `InstallApp.tsx` | `InstallApp` | "Install app" card of Settings; text and button depend on `useInstallState()`; renders nothing in the Android app |
+| `ProjectDownload.tsx` | `ProjectDownload` | "Project files" card of Settings: a download link to `downloads/koink-project.zip`; renders nothing in the Android app |
+| `Brand.tsx` | `Wordmark`, `AppIcon` | The wordmark (theme-coloured, class `koink-wordmark`) and the app icon (light or dark tile with the theme), both built from `src/brand/art.js`. See [../brand.md](../brand.md) |
+
+## Patterns worth knowing
+
+- **Hook classes** (`kc-hero-intake`, `data-meal-slot`, `kc-themed-card`...) are how the style presets find elements. Keep them when you restyle; the map is in [../design-system.md](../design-system.md#the-borrowed-names).
+- **Portals:** `ActionDock` and `Modal` render into `document.body`, so they are outside the swiped page and above it.
+- **Animations** use the Web Animations API (`element.animate`) for anything driven by a gesture, CSS classes for entrances; both respect `prefers-reduced-motion`. Curves come from `SPRING` (`lib/spring.ts`), release speeds from `lib/velocity.ts`.
+- **Ultra minimal:** mark labels `um-sr`, their stand-in icons `um-only`, hints `um-hide` ([../features/ultra-minimal.md](../features/ultra-minimal.md)).
+- `getDockTarget()` (where a closing sheet flies to) lives in `src/lib/dock.ts`, not here, because component files may only export components.
