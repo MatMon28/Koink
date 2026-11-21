@@ -82,3 +82,7 @@ Two shims keep an existing browser journal working, and are the only places the 
 
 - `migrateLegacyStorage()` (`src/lib/storage.ts`, called first thing in `lib/earlyStart.ts`) moves every `koins_*` key in `localStorage` to `koink_*`, once. The inline script of `index.html` also reads `koins_boot` as a fallback for that first launch.
 - The offline worker deletes caches named `koins-shell-*` when it activates.
+
+## Logo click animation
+
+`wordmarkMarkup({ ink, coin, animated })` can add the `kk-*` classes; `Brand.tsx` turns it on for the header wordmark, whose click animation lives at the end of `src/index.css` (see [motion.md](motion.md#logo-animation)). The generated brand files (`npm run brand`) are unchanged.

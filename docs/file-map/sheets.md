@@ -8,9 +8,12 @@
 
 | File | Exports | Sheet type(s) | Role | Feature doc |
 | --- | --- | --- | --- | --- |
-| `TxSheet.tsx` | `TxSheet` | `tx` | Add or edit an expense, income or savings entry: banner, amount, category tiles, note with recent chips, date, save / delete. Asks before unsaved input is dismissed (`FormGuard`, `SaveBeforeCloseDialog`) | [../features/entries.md](../features/entries.md) |
+| `TxSheet.tsx` | `TxSheet` | `tx` | Add or edit an entry in two screens: amount on a number pad (with currency chip), then banner, category tiles (+ New), account, title, long note, date, save / delete; side screens for the exchange rate and a new category. Asks before unsaved input is dismissed (`FormGuard`, `SaveBeforeCloseDialog`) | [../features/entries.md](../features/entries.md) |
 | `QuickSheet.tsx` | `QuickSheet`, `RecurringSheet` | `quick`, `recurring` | "Log again" list of frequent entries; this month's recurring checklist | [../features/entries.md](../features/entries.md), [../features/recurring.md](../features/recurring.md) |
 | `EditSheets.tsx` | `RecurringEditSheet`, `GoalSheet`, `BudgetSheet` | `recurringEdit`, `goal`, `budget` | Create / edit / delete a recurring item; create / edit / delete a goal; set a category budget | [../features/recurring.md](../features/recurring.md), [../features/savings-goals.md](../features/savings-goals.md), [../features/budgets.md](../features/budgets.md) |
+| `AccountSheet.tsx` | `AccountSheet` | `account` | Create / edit / delete an account and set its balance today | [../features/accounts.md](../features/accounts.md) |
+| `CategoriesSheet.tsx` | `CategoriesSheet` | `categories` | Manage expense categories: create, edit, hide / show, delete | [../features/categories.md](../features/categories.md) |
+| `shared.tsx` | `ChoiceGrid`, `Banner`, `SaveRow`, `CurrencyGrid`, `IconPicker` | (helpers) | Shared pieces of the forms | |
 | `ProfileSheet.tsx` | `ProfileSheet` | `profile` | Balance banner, name, the needs / wants / savings rule | [../features/profile.md](../features/profile.md) |
 | `SettingsSheet.tsx` | `SettingsSheet` | `settings` | Currency, appearance (with the Ultra minimal switch), dock buttons, notifications, install card, gestures list, data tools, project download, delete all | [../features/settings.md](../features/settings.md) |
 | `NotificationSettings.tsx` | `NotificationSettings` | (inside Settings) | The Notifications group: a switch row per reminder with its time (and weekday), permission banner, test button | [../notifications.md](../notifications.md) |

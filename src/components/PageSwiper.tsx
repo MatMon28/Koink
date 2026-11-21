@@ -79,7 +79,7 @@ interface Peek {
  * reached any other way slides in from the side it lies on. See docs/gestures.md.
  */
 export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => ReactNode }) {
-  const { activeTab, setActiveTab, sheet } = useApp();
+  const { activeTab, setActiveTab } = useApp();
   const ref = useRef<HTMLDivElement>(null);
   const gesture = useRef<Gesture | null>(null);
   const leaving = useRef(false);
@@ -141,7 +141,7 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     swallowClick.current = false;
     gesture.current = null;
-    if (event.pointerType === 'mouse' || !event.isPrimary || sheet || leaving.current) return;
+    if (event.pointerType === 'mouse' || !event.isPrimary || document.documentElement.classList.contains('kc-sheet-open') || leaving.current) return;
     if (event.clientX < EDGE_RESERVED_PX || event.clientX > window.innerWidth - EDGE_RESERVED_PX) return;
     const target = event.target as Element;
     if (target.closest(OWN_GESTURE) || hasHorizontalScroller(target, event.currentTarget)) return;

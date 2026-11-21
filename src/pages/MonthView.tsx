@@ -1,20 +1,31 @@
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Banknote, CalendarDays, Columns2, LayoutList, ListTree, PenLine, PiggyBank, Plus, Repeat, Sparkles, Target, Wallet, X } from 'lucide-react';
+import { Banknote, CalendarDays, ChartPie, Columns2, Eye, EyeOff, LayoutList, ListTree, PenLine, PiggyBank, Plus, Receipt, Repeat, Sparkles, Tag, Target, Wallet, X, type LucideIcon } from 'lucide-react';
 import { EmptyRow, FoldCard, Headline, HeroPair, NoteCard, Pills, ShareCard, TxRow, type PillItem } from '../components/cards';
 import { MonthNavigator } from '../components/MonthNavigator';
 import { RecurringRow } from '../components/RecurringRow';
 import { Bar, ConfirmDialog } from '../components/ui';
 import { budgetSummary, goalSaved, monthTotals, recurringEntry, ruleShares } from '../lib/calc';
-import { categoryMeta, EXPENSE_CATEGORIES } from '../lib/categories';
+import { allExpenseCategories, categoryMeta, isCategoryHidden } from '../lib/categories';
 import { elapsedDays } from '../lib/dates';
-import { percent } from '../lib/format';
+import { percent, round2 } from '../lib/format';
 import { useApp } from '../lib/store';
+import type { Bucket } from '../lib/types';
 import { usePersistentState } from '../lib/usePersistentState';
 
 type Layout = 'compact' | 'normal' | 'expanded';
 const TRACKERS = ['income', 'savings', 'recurring'] as const;
 type TrackerId = (typeof TRACKERS)[number];
-const CATEGORY_IDS = EXPENSE_CATEGORIES.map((c) => c.id);
+
+/** A card of the category grid: one category, or (`ids` of several) the entries whose category no longer exists. */
+interface CategoryCard {
+  id: string;
+  ids: string[];
+  name: string;
+  icon: LucideIcon;
+  bucket: Bucket;
+  /** Entries of a deleted category: no budget, no add button. */
+  orphan?: boolean;
+}
 
 const prefersReducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -25,6 +36,23 @@ export function MonthView() {
   const budget = budgetSummary(data.profile, totals);
   const rule = data.profile.rule;
   const [confirmFresh, setConfirmFresh] = useState(false);
+
+  // The cards: every category that is not hidden, a hidden one only while it has entries this month,
+  // and one "Other" card for entries whose own category was deleted (so the cards still add up).
+  const cards = useMemo(() => {
+    const known = allExpenseCategories();
+    const list: CategoryCard[] = known
+      .filter((c) => !isCategoryHidden(c.id) || (totals.byCategory[c.id]?.count ?? 0) > 0)
+      .map((c) => ({ id: c.id, ids: [c.id], name: c.name, icon: c.icon, bucket: c.bucket }));
+    const orphans = Object.keys(totals.byCategory).filter((id) => !known.some((c) => c.id === id));
+    if (orphans.length) list.push({ id: '_other', ids: orphans, name: 'Other', icon: Tag, bucket: 'wants', orphan: true });
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totals, data.categories, data.settings.hiddenCategories]);
+  const categoryIds = cards.map((c) => c.id);
+
+  // The needs / wants / savings split can be tucked away; the choice is remembered.
+  const [splitHidden, setSplitHidden] = usePersistentState<boolean>('koink_month_split_hidden', false);
 
   // Card expansion and the chosen layout are remembered independently.
   const [chosenLayout, setLayout] = usePersistentState<Layout>('koink_month_layout', 'normal');
@@ -56,7 +84,7 @@ export function MonthView() {
   const toggleSlot = (id: string) => {
     if (layout === 'expanded') {
       setLayout('normal');
-      setOpenSlots(CATEGORY_IDS.filter((x) => x !== id));
+      setOpenSlots(categoryIds.filter((x) => x !== id));
       setOpenTrackers([...TRACKERS]);
       return;
     }
@@ -65,7 +93,7 @@ export function MonthView() {
   const toggleTracker = (id: TrackerId) => {
     if (layout === 'expanded') {
       setLayout('normal');
-      setOpenSlots([...CATEGORY_IDS]);
+      setOpenSlots([...categoryIds]);
       setOpenTrackers(TRACKERS.filter((x) => x !== id));
       return;
     }
@@ -92,25 +120,27 @@ export function MonthView() {
   const muted = (text: string, empty = false) => <span className={`text-xs font-medium text-[var(--muted)] truncate ${empty ? 'um-hide' : ''}`}>{text}</span>;
 
   /* ---------- Expense categories ---------- */
-  const categoryCards = EXPENSE_CATEGORIES.map((category) => {
+  const categoryCards = cards.map((category) => {
     const open = layout === 'expanded' || openSlots.includes(category.id);
-    const entry = totals.byCategory[category.id];
-    const total = entry?.total ?? 0;
-    const count = entry?.count ?? 0;
-    const limit = data.profile.budgets[category.id] ?? 0;
+    const entries = category.ids.map((id) => totals.byCategory[id]);
+    const total = round2(entries.reduce((sum, entry) => sum + (entry?.total ?? 0), 0));
+    const count = entries.reduce((sum, entry) => sum + (entry?.count ?? 0), 0);
+    const limit = category.orphan ? 0 : data.profile.budgets[category.id] ?? 0;
     const left = limit - total;
-    const items = totals.items.filter((tx) => tx.kind === 'expense' && tx.categoryId === category.id);
+    const items = totals.items.filter((tx) => tx.kind === 'expense' && category.ids.includes(tx.categoryId));
     const Icon = category.icon;
-    const add = () => openSheet({ type: 'tx', kind: 'expense', categoryId: category.id });
+    const add = () => openSheet({ type: 'tx', kind: 'expense', categoryId: category.orphan ? undefined : category.id });
+    const share = percent(total, totals.spent);
 
+    // Grey on purpose (see Pills in cards.tsx): the colours belong to Needs / Wants / Savings.
     const pills: PillItem[] = [
-      { tone: 'carbs', text: `${count}×`, title: `${count} ${count === 1 ? 'entry' : 'entries'}` },
-      { tone: 'protein', text: `${percent(total, totals.spent)}%`, title: `${percent(total, totals.spent)}% of this month's spending` },
+      { tone: 'neutral', icon: Receipt, text: String(count), label: count === 1 ? 'entry' : 'entries', title: `${count} ${count === 1 ? 'entry' : 'entries'} this month` },
+      { tone: 'neutral', icon: ChartPie, text: `${share}%`, label: 'of spending', title: `${share}% of this month's spending` },
       limit > 0
         ? left >= 0
-          ? { tone: 'fat', text: moneyFit(left, 6), title: `${money(left)} of the ${money(limit)} budget left` }
-          : { tone: 'alert', text: moneyFit(left, 6), title: `${money(-left)} over the ${money(limit)} budget` }
-        : { tone: 'fat', text: '–', title: 'No budget set' },
+          ? { tone: 'neutral', icon: Wallet, text: moneyFit(left, 6), label: 'left', title: `${money(left)} of the ${money(limit)} budget left` }
+          : { tone: 'alert', icon: Wallet, text: moneyFit(left, 6), label: 'over', title: `${money(-left)} over the ${money(limit)} budget` }
+        : { tone: 'neutral', icon: Wallet, text: '–', label: 'no budget', title: 'No budget set' },
     ];
 
     return (
@@ -121,7 +151,7 @@ export function MonthView() {
           icon={<Icon size={compact ? 15 : 16} strokeWidth={2.2} />}
           title={category.name}
           headline={<Headline text={moneyFit(total, compact ? 7 : 11)} compact={compact} />}
-          summary={count > 0 ? <Pills items={pills} stretch /> : muted('Nothing yet', true)}
+          summary={count > 0 ? <Pills items={pills} stretch labels={!compact} /> : muted('Nothing yet', true)}
           onAdd={add}
           addLabel={`Add expense: ${category.name}`}
           open={open}
@@ -296,35 +326,6 @@ export function MonthView() {
 
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
-            <ShareCard
-              tone="needs"
-              label="Needs"
-              amount={totals.needs}
-              share={shares.needs}
-              target={shares.ofIncome ? rule.needs : undefined}
-              status={shares.ofIncome && shares.needs > rule.needs ? 'over' : undefined}
-              shareTitle={shares.ofIncome ? 'of income' : 'of what went out'}
-            />
-            <ShareCard
-              tone="wants"
-              label="Wants"
-              amount={totals.wants}
-              share={shares.wants}
-              target={shares.ofIncome ? rule.wants : undefined}
-              status={shares.ofIncome && shares.wants > rule.wants ? 'over' : undefined}
-              shareTitle={shares.ofIncome ? 'of income' : 'of what went out'}
-            />
-            <ShareCard
-              tone="savings"
-              label="Savings"
-              amount={totals.saved}
-              share={shares.savings}
-              target={shares.ofIncome ? rule.savings : undefined}
-              status={shares.ofIncome && totals.saved > 0 && shares.savings >= rule.savings ? 'ok' : undefined}
-              shareTitle={shares.ofIncome ? 'of income' : 'of what went out'}
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
             <NoteCard icon={Wallet} label="Left" value={moneyFit(totals.left, 7)} title="Income minus spending and savings" />
             <NoteCard icon={CalendarDays} label="Per day" value={moneyFit(perDay, 7)} title={`Average spending per day (${days} ${days === 1 ? 'day' : 'days'})`} />
             <NoteCard
@@ -335,6 +336,62 @@ export function MonthView() {
               title={budget.budget > 0 ? `${money(budget.spent)} of ${money(budget.budget)} budgeted` : 'No budgets set'}
             />
           </div>
+          {splitHidden ? (
+            <div className="um-hide flex justify-center">
+              <button
+                type="button"
+                onClick={() => setSplitHidden(false)}
+                className="pressable inline-flex items-center gap-1.5 rounded-full bg-[var(--surface)] hover:bg-[var(--inset)] border border-[var(--border)] px-3 py-1.5 text-[11px] font-extrabold text-[var(--muted)] hover:text-[var(--text)]"
+              >
+                <Eye size={13} aria-hidden="true" />
+                Show needs, wants and savings
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <div className="um-hide flex items-center justify-between gap-2 px-1">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">Needs · Wants · Savings</span>
+                <button
+                  type="button"
+                  onClick={() => setSplitHidden(true)}
+                  className="pressable inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-extrabold text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]"
+                  aria-label="Hide needs, wants and savings"
+                >
+                  <EyeOff size={13} aria-hidden="true" />
+                  Hide
+                </button>
+              </div>
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
+              <ShareCard
+                tone="needs"
+                label="Needs"
+                amount={totals.needs}
+                share={shares.needs}
+                target={shares.ofIncome ? rule.needs : undefined}
+                status={shares.ofIncome && shares.needs > rule.needs ? 'over' : undefined}
+                shareTitle={shares.ofIncome ? 'of income' : 'of what went out'}
+              />
+              <ShareCard
+                tone="wants"
+                label="Wants"
+                amount={totals.wants}
+                share={shares.wants}
+                target={shares.ofIncome ? rule.wants : undefined}
+                status={shares.ofIncome && shares.wants > rule.wants ? 'over' : undefined}
+                shareTitle={shares.ofIncome ? 'of income' : 'of what went out'}
+              />
+              <ShareCard
+                tone="savings"
+                label="Savings"
+                amount={totals.saved}
+                share={shares.savings}
+                target={shares.ofIncome ? rule.savings : undefined}
+                status={shares.ofIncome && totals.saved > 0 && shares.savings >= rule.savings ? 'ok' : undefined}
+                shareTitle={shares.ofIncome ? 'of income' : 'of what went out'}
+              />
+            </div>
+            </div>
+          )}
         </div>
 
         <div className="um-hide flex flex-wrap items-center justify-center gap-2 px-1">

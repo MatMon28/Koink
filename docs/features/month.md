@@ -53,3 +53,10 @@ Remembered in `localStorage`: `koink_month_layout`, `koink_month_open`, `koink_m
 - A changed total replays a short settle-in (`anim-value`).
 - Figures in cards go through `moneyFit`, which shortens very large amounts instead of clipping them; in Compact the headline's type size also steps down with its length.
 - The whole card header toggles on click; the chevron is the real `<button aria-expanded>` for keyboards and screen readers.
+
+## Changes in this version
+
+- **Order of the hero block**: the yellow cards (**Left**, **Per day**, **Budget**) now sit directly under Income / Spent; the **Needs / Wants / Savings** split comes after them.
+- **Hide the split**: a *Hide* button above the split tucks it away; a slim *Show needs, wants and savings* pill brings it back. Remembered as `koink_month_split_hidden`. Ultra minimal hides the label row and the pill.
+- **Category pills** are neutral grey with an icon and, outside Compact, a word: *receipt* `3 entries`, *pie* `42% of spending`, *wallet* `€40 left` (red `over` when the budget is exceeded). They used to be blue, orange and purple, the colours of Needs / Wants / Savings, which made them look related. Only the red "over budget" pill keeps a colour. (`Pills` / `PillItem` in `cards.tsx`.)
+- **Category cards** come from the live list (`categories.ts`): hidden categories only show while they have entries this month, and entries of a *deleted* custom category are gathered in an **Other** card so the cards still add up. See [categories.md](categories.md).

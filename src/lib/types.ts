@@ -3,7 +3,8 @@ export type ThemeStyle = 'classic' | 'angular' | 'aurora' | 'pop' | 'playful' | 
 
 export type Kind = 'expense' | 'income' | 'saving';
 export type Bucket = 'needs' | 'wants';
-export type CurrencyCode = 'EUR' | 'USD' | 'GBP' | 'CHF' | 'JPY';
+/** ISO 4217 code of one of the currencies in `CURRENCIES` (format.ts). */
+export type CurrencyCode = string;
 export type ActiveTab = 'month' | 'transactions' | 'budgets' | 'stats';
 
 /** One entry of the ledger. `amount` is always positive; `kind` gives it its direction. */
@@ -13,13 +14,42 @@ export interface Tx {
   amount: number;
   /** Expense category id, income source id, or savings goal id (by kind). */
   categoryId: string;
+  /** The short title of the entry (shown in lists). Called "Title" in the app; the field keeps its old name. */
   note: string;
+  /** The long note: an optional longer explanation. Called "Note" in the app. */
+  details?: string;
+  /** The account the money moved through (see `Account`). Missing = no account. */
+  accountId?: string;
+  /**
+   * Set when the entry was paid in another currency than the journal's: `amount` above is already
+   * converted into the journal's currency (it is what every total uses), this is what was paid.
+   */
+  foreign?: { amount: number; currency: CurrencyCode; rate: number };
   /** Local calendar day, YYYY-MM-DD. */
   date: string;
   /** Set when the entry was logged from a recurring item. */
   recurringId?: string;
   /** Creation order, newest first inside a day. */
   ts: number;
+}
+
+/** A place money lives: current account, cash, a card... Its balance is the starting balance plus its entries. */
+export interface Account {
+  id: string;
+  name: string;
+  /** Key into `ICON_CHOICES` (icons.ts). */
+  icon: string;
+  /** What was in it before the first entry that points at it. May be negative (an overdraft). */
+  opening: number;
+}
+
+/** An expense category made by the user. Built-in ones live in code (`categories.ts`). */
+export interface CustomCategory {
+  id: string;
+  name: string;
+  /** Key into `ICON_CHOICES` (icons.ts). */
+  icon: string;
+  bucket: Bucket;
 }
 
 export interface Goal {
@@ -81,6 +111,12 @@ export interface Settings {
   /** Icons instead of labels, tighter cards, compact Month layout. */
   ultraMinimal: boolean;
   currency: CurrencyCode;
+  /** Built-in or custom expense categories the user hid from the pickers (their entries stay). */
+  hiddenCategories: string[];
+  /** Units of each currency for 1 US dollar. Missing codes fall back to the built-in table. */
+  rates: Record<string, number>;
+  /** Day (YYYY-MM-DD) the rates were last fetched, or '' while the built-in table is used. */
+  ratesDate: string;
   quickAdd: Record<QuickAddKey, boolean>;
   notifications: NotificationSettings;
   /** True while the journal still holds the sample data it started with. */
@@ -91,6 +127,8 @@ export interface AppData {
   txs: Tx[];
   goals: Goal[];
   recurring: Recurring[];
+  accounts: Account[];
+  categories: CustomCategory[];
   profile: Profile;
   settings: Settings;
 }
@@ -100,6 +138,8 @@ export type Sheet =
   | { type: 'recurring' }
   | { type: 'recurringEdit'; id?: string }
   | { type: 'goal'; id?: string }
+  | { type: 'account'; id?: string }
+  | { type: 'categories' }
   | { type: 'budget'; categoryId: string }
   | { type: 'quick' }
   | { type: 'profile' }

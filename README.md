@@ -25,16 +25,20 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | Task | Source files | Document |
 | --- | --- | --- |
 | **Month page** (hero cards, needs / wants / savings, category cards, layouts) | `src/pages/MonthView.tsx`, `src/components/cards.tsx` | [features/month.md](docs/features/month.md) |
-| **Transactions page** (search, filter, day groups) | `src/pages/TransactionsView.tsx` | [features/transactions.md](docs/features/transactions.md) |
-| **Budgets page** (category budgets, goals, recurring lists) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx` | [features/budgets.md](docs/features/budgets.md) |
+| **Transactions page** (search, filter, list or days side by side, quick delete) | `src/pages/TransactionsView.tsx` | [features/transactions.md](docs/features/transactions.md) |
+| **Budgets page** (category budgets, goals, recurring lists, accounts card) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx` | [features/budgets.md](docs/features/budgets.md) |
 | **Statistics page** (averages, balance trend, breakdown) | `src/pages/StatsView.tsx` | [features/statistics.md](docs/features/statistics.md) |
-| **Add / edit an entry**, "Log again" | `src/sheets/TxSheet.tsx`, `src/sheets/QuickSheet.tsx`, `src/sheets/shared.tsx` | [features/entries.md](docs/features/entries.md) |
+| **Add / edit an entry** (number pad, title + long note, account, currency), "Log again" | `src/sheets/TxSheet.tsx`, `src/sheets/QuickSheet.tsx`, `src/sheets/shared.tsx`, `NumPad` / `AmountStepper` in `src/components/ui.tsx` | [features/entries.md](docs/features/entries.md) |
+| **Accounts** (balance per account) | `src/sheets/AccountSheet.tsx`, `accountBalance` in `src/lib/calc.ts`, accounts card in `src/pages/BudgetsView.tsx` | [features/accounts.md](docs/features/accounts.md) |
+| **Expense categories** (own, hide, delete) | `src/lib/categories.ts`, `src/lib/icons.ts`, `src/sheets/CategoriesSheet.tsx` | [features/categories.md](docs/features/categories.md) |
+| **Currencies and exchange rates** (per-entry currency) | `src/lib/format.ts`, `src/sheets/TxSheet.tsx`, `src/sheets/SettingsSheet.tsx` | [features/currencies.md](docs/features/currencies.md) |
 | **Recurring items** | `src/sheets/EditSheets.tsx`, `src/sheets/QuickSheet.tsx`, `src/components/RecurringRow.tsx` | [features/recurring.md](docs/features/recurring.md) |
 | **Savings goals** | `src/sheets/EditSheets.tsx` (`GoalSheet`), `src/lib/calc.ts` (`goalSaved`) | [features/savings-goals.md](docs/features/savings-goals.md) |
 | **Profile and the budget rule** (50 / 30 / 20) | `src/sheets/ProfileSheet.tsx` | [features/profile.md](docs/features/profile.md) |
 | **Settings** (currency, bottom bar, install card, gestures list) | `src/sheets/SettingsSheet.tsx`, `src/components/InstallApp.tsx` | [features/settings.md](docs/features/settings.md) |
 | **Backup, restore, sample data, delete all** | `src/lib/store.tsx`, `src/lib/platform.ts` (`saveTextFile`), `src/lib/demo.ts` | [features/backup.md](docs/features/backup.md) |
 | **Themes and style presets** | `src/lib/themes.ts`, `src/index.css`, `src/styles/presets.css` | [features/themes.md](docs/features/themes.md), [design-system.md](docs/design-system.md) |
+| **Smooth sheet drag / header scroll, logo click animation** | `src/components/Modal.tsx`, `src/components/Header.tsx`, end of `src/index.css` | [motion.md](docs/motion.md#smoothness-fixes-sheet-drag-scrolling) |
 | **Swipes, Back button, drag-to-close** | `src/components/PageSwiper.tsx`, `src/lib/back.ts`, `src/components/Modal.tsx`, `src/components/MonthNavigator.tsx`, `src/lib/velocity.ts` | [gestures.md](docs/gestures.md) |
 | **Reminder notifications** | `src/lib/reminders.ts` (plan), `src/lib/notifications.ts` (delivery), `src/lib/useReminders.ts`, `src/sheets/NotificationSettings.tsx` | [notifications.md](docs/notifications.md) |
 | **Ultra minimal mode** | `um-*` classes at the end of `src/index.css`, `src/components/cards.tsx`, `Tabs.tsx`, `MonthNavigator.tsx` | [features/ultra-minimal.md](docs/features/ultra-minimal.md) |
@@ -62,7 +66,7 @@ index.html            entry page + PWA tags
 src/main.tsx          start-up (theme, launch animation, Back handling, install prompt, offline worker)
 src/App.tsx           shell: header, page swiper, pages, dock, sheets
 src/pages/            the four pages
-src/sheets/           every bottom sheet
+src/sheets/           every bottom sheet (entry, accounts, categories, goals, budgets, settings...)
 src/components/       shared UI (cards, modal, header, dock, inputs)
 src/lib/              state, maths, dates, themes, platform bridges (no JSX except store.tsx)
 src/brand/art.js      all Koink artwork: logo, wordmark, launch animations (plain JS, shared with scripts/)

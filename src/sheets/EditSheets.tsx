@@ -3,7 +3,7 @@ import { PiggyBank } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { AmountStepper, ConfirmDialog, SectionLabel, seg, textInput } from '../components/ui';
 import { goalSaved, monthsBack, monthTotals, totalsByMonth } from '../lib/calc';
-import { EXPENSE_CATEGORIES, expenseCategory, INCOME_SOURCES } from '../lib/categories';
+import { allExpenseCategories, expenseCategory, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
 import { addMonths, currentMonth, formatMonth, ordinal } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
 import { useApp, useSheet } from '../lib/store';
@@ -32,7 +32,8 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
   const [day, setDay] = useState(original?.day ?? 1);
   const [confirm, setConfirm] = useState(false);
 
-  const choices = kind === 'expense' ? EXPENSE_CATEGORIES : INCOME_SOURCES;
+  // Hidden categories are not offered, except the one this item already has.
+  const choices = kind === 'expense' ? visibleExpenseCategories().concat(original && isCategoryHidden(original.categoryId) ? allExpenseCategories().filter((c) => c.id === original.categoryId) : []) : INCOME_SOURCES;
   const category = choices.some((c) => c.id === categoryId) ? categoryId : choices[0].id;
   const safeDay = Math.min(28, Math.max(1, Math.round(day) || 1));
   const valid = name.trim().length > 0 && amount > 0;
@@ -67,7 +68,7 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
 
       <div>
         <SectionLabel>Amount each month</SectionLabel>
-        <AmountStepper value={amount} onChange={setAmount} unit={symbol} ariaLabel="Amount each month" chips={kind === 'expense' ? [5, 10, 50, 100] : [100, 500, 1000]} />
+        <AmountStepper value={amount} onChange={setAmount} unit={symbol} ariaLabel="Amount each month" startOpen={!original} chips={kind === 'expense' ? [5, 10, 50, 100] : [100, 500, 1000]} />
       </div>
 
       <div>
@@ -77,7 +78,7 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
 
       <div>
         <SectionLabel>Day of the month</SectionLabel>
-        <AmountStepper value={day} onChange={setDay} unit="day" min={1} max={28} ariaLabel="Day of the month" />
+        <AmountStepper value={day} onChange={setDay} unit="day" min={1} max={28} decimals={0} ariaLabel="Day of the month" />
         <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">Days stop at the 28th so every month has one.</p>
       </div>
 
@@ -160,7 +161,7 @@ function GoalForm({ sheet }: { sheet: Extract<Sheet, { type: 'goal' }> }) {
 
       <div>
         <SectionLabel>Target</SectionLabel>
-        <AmountStepper value={target} onChange={setTarget} unit={symbol} step={50} ariaLabel="Target amount" chips={[100, 500, 1000]} />
+        <AmountStepper value={target} onChange={setTarget} unit={symbol} step={50} ariaLabel="Target amount" startOpen chips={[100, 500, 1000]} />
         <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">Leave it at 0 for an open-ended pot.</p>
       </div>
 
@@ -213,7 +214,7 @@ export function BudgetSheet() {
 
 function BudgetForm({ sheet }: { sheet: Extract<Sheet, { type: 'budget' }> }) {
   const { data, symbol, money, selectedMonth, setBudget, closeSheet } = useApp();
-  const category = expenseCategory(sheet.categoryId) ?? EXPENSE_CATEGORIES[0];
+  const category = expenseCategory(sheet.categoryId) ?? allExpenseCategories()[0];
   const [amount, setAmount] = useState(data.profile.budgets[category.id] ?? 0);
 
   const spent = useMemo(() => monthTotals(data.txs, selectedMonth).byCategory[category.id]?.total ?? 0, [data.txs, selectedMonth, category.id]);
@@ -238,7 +239,7 @@ function BudgetForm({ sheet }: { sheet: Extract<Sheet, { type: 'budget' }> }) {
         sub={amount > 0 ? (left >= 0 ? `${money(left)} left` : `${money(-left)} over`) : 'No budget'}
       />
 
-      <AmountStepper value={amount} onChange={setAmount} unit={symbol} step={10} ariaLabel="Monthly budget" chips={[10, 50, 100]} />
+      <AmountStepper value={amount} onChange={setAmount} unit={symbol} step={10} ariaLabel="Monthly budget" startOpen chips={[10, 50, 100]} />
 
       <div className="flex flex-wrap gap-1.5">
         {average > 0 && (

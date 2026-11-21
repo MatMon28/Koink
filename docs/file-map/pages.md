@@ -9,7 +9,7 @@
 | File | Page | Reads from the store | Main pieces | Feature doc |
 | --- | --- | --- | --- | --- |
 | `MonthView.tsx` | Month | `data`, `selectedMonth`, `money`, `moneyFit`, `openSheet`, `eraseAll`, `updateSettings` | `MonthNavigator`, `HeroPair`, `ShareCard`, `NoteCard`, `FoldCard` (8 categories + 3 trackers), `RecurringRow`, `ConfirmDialog` | [../features/month.md](../features/month.md) |
-| `TransactionsView.tsx` | Transactions | `data`, `money`, `openSheet` | search field, filter pill, day cards built inline | [../features/transactions.md](../features/transactions.md) |
+| `TransactionsView.tsx` | Transactions | `data`, `money`, `openSheet` | search field, filter pill, List / Days switch, local `EntryRow` (with quick delete) | [../features/transactions.md](../features/transactions.md) |
 | `BudgetsView.tsx` | Budgets | `data`, `selectedMonth`, `money`, `moneyFit`, `openSheet` | `MonthNavigator`, `HeroPair`, `NoteCard`, local `SectionCard`, `Bar`, `RecurringRow` | [../features/budgets.md](../features/budgets.md) |
 | `StatsView.tsx` | Statistics | `data`, `money`, `moneyFit`, `setSelectedMonth`, `setActiveTab` | `HeroPair` (average), `ShareCard`, `NoteCard`, inline SVG line chart, `Bar` | [../features/statistics.md](../features/statistics.md) |
 

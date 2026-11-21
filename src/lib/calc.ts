@@ -1,7 +1,7 @@
 import { bucketOf } from './categories';
 import { addMonths, monthOf } from './dates';
 import { round2 } from './format';
-import type { Goal, Profile, Recurring, Tx } from './types';
+import type { Account, Goal, Profile, Recurring, Tx } from './types';
 
 export interface MonthTotals {
   month: string;
@@ -127,4 +127,17 @@ export function frequentEntries(txs: Tx[], limit = 10): FrequentEntry[] {
     .filter((entry) => entry.count > 1)
     .sort((a, b) => b.count - a.count || (a.lastDate < b.lastDate ? 1 : -1))
     .slice(0, limit);
+}
+
+/**
+ * What an account holds: its starting balance, plus income that went into it, minus expenses and
+ * money moved to savings that came out of it. Entries without an account do not count anywhere.
+ */
+export function accountBalance(txs: Tx[], account: Account): number {
+  let balance = account.opening;
+  for (const tx of txs) {
+    if (tx.accountId !== account.id) continue;
+    balance += tx.kind === 'income' ? tx.amount : -tx.amount;
+  }
+  return round2(balance);
 }

@@ -1,17 +1,17 @@
 import { useRef, useState } from 'react';
-import { Banknote, Download, Minimize2, PiggyBank, Receipt, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
+import { Banknote, Download, ListChecks, Minimize2, PiggyBank, Receipt, RefreshCw, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
 import { AppIcon } from '../components/Brand';
 import { InstallApp } from '../components/InstallApp';
 import { Modal } from '../components/Modal';
 import { ProjectDownload } from '../components/ProjectDownload';
 import { Collapsible, ConfirmDialog, SectionLabel, seg, Switch } from '../components/ui';
 import { todayStr } from '../lib/dates';
-import { CURRENCIES } from '../lib/format';
 import { saveTextFile } from '../lib/platform';
 import { useApp, useSheet } from '../lib/store';
 import { MONO_HUES, STYLE_PRESETS } from '../lib/themes';
 import type { QuickAddKey, Theme } from '../lib/types';
 import { NotificationSettings } from './NotificationSettings';
+import { CurrencyGrid } from './shared';
 
 const THEME_CHOICES: [Theme, string][] = [
   ['light', 'Light'],
@@ -31,6 +31,7 @@ const GESTURES: [string, string][] = [
   ['Swipe left or right', 'Next or previous page'],
   ['Swipe the month row', 'Next or previous month'],
   ['Drag a sheet down', 'Close it'],
+  ['Tap the logo', 'The pig takes its coin'],
   ['Back', 'Close the open sheet or month picker'],
   ['Tap the launch animation', 'Skip it'],
   ['Hold + or -', 'Keep counting'],
@@ -42,7 +43,8 @@ const dataButton =
 
 export function SettingsSheet() {
   const { isOpen } = useSheet('settings');
-  const { data, updateSettings, closeSheet, exportData, importData, loadSample, eraseAll, showToast } = useApp();
+  const { data, updateSettings, closeSheet, openSheet, exportData, importData, loadSample, eraseAll, showToast, refreshRates } = useApp();
+  const [updatingRates, setUpdatingRates] = useState(false);
   const { settings } = data;
   const fileInput = useRef<HTMLInputElement>(null);
   const [eraseStep, setEraseStep] = useState<0 | 1 | 2>(0);
@@ -72,21 +74,42 @@ export function SettingsSheet() {
         {/* Currency */}
         <div>
           <SectionLabel>Currency</SectionLabel>
-          <div className="flex gap-1.5" role="group" aria-label="Currency">
-            {CURRENCIES.map((currency) => (
-              <button
-                key={currency.code}
-                type="button"
-                aria-pressed={settings.currency === currency.code}
-                onClick={() => updateSettings({ currency: currency.code })}
-                title={currency.name}
-                className={seg(settings.currency === currency.code)}
-              >
-                {currency.code}
-              </button>
-            ))}
+          <CurrencyGrid value={settings.currency} onChange={(code) => updateSettings({ currency: code })} label="Currency of the journal" />
+          <p className="mt-2 text-[11px] font-medium text-[var(--muted)]">
+            The journal's currency. Any single entry can be paid in another one: its amount is converted with the rates below.
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              disabled={updatingRates}
+              onClick={async () => {
+                setUpdatingRates(true);
+                const ok = await refreshRates();
+                setUpdatingRates(false);
+                showToast(ok ? 'Exchange rates updated' : 'Could not reach the rates service. The saved rates stay.');
+              }}
+              className={`${dataButton} flex-none disabled:opacity-60`}
+            >
+              <RefreshCw size={14} aria-hidden="true" className={updatingRates ? 'animate-spin' : ''} />
+              Update exchange rates
+            </button>
+            <span className="min-w-0 text-[11px] font-medium text-[var(--muted)]">
+              {settings.ratesDate ? `Fetched ${settings.ratesDate}` : 'Built-in, approximate'}
+            </span>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => openSheet({ type: 'categories' })}
+          className="pressable pressable-soft w-full flex items-center justify-between gap-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] px-4 py-3 text-left"
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-extrabold text-[var(--text)]">Expense categories</span>
+            <span className="block text-[11px] font-medium text-[var(--muted)]">Make your own, hide the ones you do not use</span>
+          </span>
+          <ListChecks size={18} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
+        </button>
 
         <Collapsible title="Appearance" defaultOpen>
           <div>

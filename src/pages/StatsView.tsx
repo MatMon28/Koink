@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { CalendarDays, CalendarRange, ChartPie, ChevronDown, ChevronRight, HandCoins, LineChart, PiggyBank } from 'lucide-react';
+import { CalendarDays, CalendarRange, ChartPie, ChevronDown, ChevronRight, HandCoins, LineChart, PiggyBank, Tag } from 'lucide-react';
 import { HeroPair, NoteCard, ShareCard } from '../components/cards';
 import { Bar } from '../components/ui';
 import { monthsBack, ruleShares, totalsByMonth } from '../lib/calc';
-import { EXPENSE_CATEGORIES } from '../lib/categories';
+import { allExpenseCategories } from '../lib/categories';
 import { currentMonth, elapsedDays, formatMonth, monthOf } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
 import { useApp } from '../lib/store';
@@ -37,10 +37,13 @@ export function StatsView() {
     const spent = sum((m) => m.spent);
     const saved = sum((m) => m.saved);
     const days = active.reduce((acc, m) => acc + elapsedDays(m.month), 0);
-    const byCategory = EXPENSE_CATEGORIES.map((category) => ({
+    const byCategory = allExpenseCategories().map((category) => ({
       category,
       total: round2(sum((m) => m.byCategory[category.id]?.total ?? 0)),
     })).filter((row) => row.total > 0).sort((a, b) => b.total - a.total);
+    // Entries whose category was deleted since still count: they are gathered under "Other".
+    const orphaned = round2(spent - byCategory.reduce((acc, row) => acc + row.total, 0));
+    if (orphaned > 0) byCategory.push({ category: { id: '_other', name: 'Other', icon: Tag, bucket: 'wants' }, total: orphaned });
     return {
       activeCount: active.length,
       income,
@@ -54,7 +57,8 @@ export function StatsView() {
       perDay: days > 0 ? spent / days : 0,
       byCategory,
     };
-  }, [list]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list, data.categories]);
 
   const shares = ruleShares({ income: period.avgIncome, needs: period.avgNeeds, wants: period.avgWants, saved: period.avgSaved });
   const shareTitle = shares.ofIncome ? 'of income' : 'of what went out';

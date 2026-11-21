@@ -10,15 +10,17 @@
 
 | Type | Meaning |
 | --- | --- |
-| `Tx` | One entry: `id`, `kind` (`expense` / `income` / `saving`), positive `amount`, `categoryId`, `note`, `date` (`YYYY-MM-DD`, local), optional `recurringId`, `ts` (creation order). |
+| `Tx` | One entry: `id`, `kind` (`expense` / `income` / `saving`), positive `amount`, `categoryId`, `note`, `date` (`YYYY-MM-DD`, local), optional `recurringId`, `ts` (creation order). Also: `note` = the short **Title**, `details` = the long **Note**, `accountId`, `foreign` (`{ amount, currency, rate }` when paid in another currency; `amount` is already converted). |
+| `Account` | `id`, `name`, `icon`, `opening` balance. [features/accounts.md](features/accounts.md) |
+| `CustomCategory` | Your own expense category: `id`, `name`, `icon`, `bucket`. [features/categories.md](features/categories.md) |
 | `Goal` | Savings goal: `id`, `name`, `target` (0 = open-ended). |
 | `Recurring` | Monthly item: `id`, `name`, `amount`, `kind` (`expense` / `income`), `categoryId`, `day` (1-28). |
 | `Profile` | `name`, `rule` (`needs` / `wants` / `savings` percentages), `budgets` (category id -> monthly amount). |
-| `Settings` | `theme`, `themeStyle`, `monoHue`, `ultraMinimal`, `currency`, `quickAdd` (which dock buttons show), `notifications`, `sampleData`. |
+| `Settings` | `theme`, `themeStyle`, `monoHue`, `ultraMinimal`, `currency` (any code of `CURRENCIES`), `hiddenCategories`, `rates` + `ratesDate` ([features/currencies.md](features/currencies.md)), `quickAdd` (which dock buttons show), `notifications`, `sampleData`. |
 | `NotificationSettings` | The four reminders: `logDay`, `recurring`, `monthStart` (`{ enabled, time }`, time as `HH:MM`) and `weeklyReview` (the same plus `weekday`, 1 = Sunday ... 7 = Saturday). [notifications.md](notifications.md) |
 | `OpenTarget` | What can be opened from outside: `expense`, `income`, `recurring`, `stats`, `budgets` (reminders, shortcuts, `?open=`). |
-| `AppData` | `{ txs, goals, recurring, profile, settings }`: the whole journal. |
-| `Sheet` | Which sheet is open and with what (`tx`, `recurring`, `recurringEdit`, `goal`, `budget`, `quick`, `profile`, `settings`). |
+| `AppData` | `{ txs, goals, recurring, accounts, categories, profile, settings }`: the whole journal. |
+| `Sheet` | Which sheet is open and with what (`tx`, `recurring`, `recurringEdit`, `goal`, `account`, `categories`, `budget`, `quick`, `profile`, `settings`). |
 
 `categoryId` means an expense category for expenses, an income source for income, and a goal id for savings. `categoryMeta(kind, id, goals)` in `categories.ts` resolves any of them to a name and icon.
 

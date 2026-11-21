@@ -12,7 +12,10 @@
 | --- | --- | --- | --- |
 | Swipe left / right | anywhere on a page | the page and its neighbour move together under the finger; release to change page (order of the header pill) | `PageSwiper.tsx` |
 | Swipe left / right | the month row | next / previous month (what the arrows do) | `MonthNavigator.tsx` |
-| Drag down | a sheet's handle or title bar | closes the sheet; a sheet with unsaved input asks first and springs back | `Modal.tsx`, `TxSheet.tsx` |
+| Drag down | a sheet's handle or title bar | closes the sheet; a sheet with unsaved input springs back at once and asks first | `Modal.tsx`, `TxSheet.tsx` |
+| Tap | the logo in the header | the pig takes its coin (and Month / scroll to top) | `Header.tsx`, `index.css` |
+| Swipe sideways | the *Days* view of Transactions | scrolls from day to day; the page swipe stays off there | `TransactionsView.tsx` (`data-no-swipe`) |
+| Hold | backspace of a number pad | clears the figure | `ui.tsx` (`NumPad`) |
 | Back (button, back swipe, browser Back) | anywhere | closes the top sheet or the month picker; installed: then returns to Month | `back.ts` |
 | Tap | the launch animation | skips it | `intro.ts` |
 | Hold | `+` / `-` of an amount stepper | repeats the step | `ui.tsx` (`AmountStepper`) |

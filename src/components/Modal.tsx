@@ -15,6 +15,11 @@ interface ModalProps {
   maxWidth?: string;
   /** Id of the dock button that opens this sheet: on close the sheet is sucked into it. */
   dockId?: string;
+  /**
+   * Asked when a swipe down is released far enough to close. Return false when the owner will ask a
+   * question instead of closing (unsaved input): the sheet then springs back at once.
+   */
+  canClose?: () => boolean;
 }
 
 /* Drag-to-close and exit timing. docs/gestures.md and docs/motion.md list these. */
@@ -94,7 +99,7 @@ const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select
  * handle or header, closes with Escape, Back or a tap on the scrim, follows the on-screen keyboard,
  * and leaves with a short animation that never blocks the page behind it.
  */
-export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = 'max-w-lg', dockId }: ModalProps) {
+export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = 'max-w-lg', dockId, canClose }: ModalProps) {
   const [mounted, setMounted] = useState(isOpen);
   const viewportRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -102,12 +107,18 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
   const drag = useRef<{ id: number; startY: number; dy: number; samples: Sample[] }>({ id: -1, startY: 0, dy: 0, samples: [] });
   const offset = useRef(0);
   const swiped = useRef(false);
+  /** The exit animation while one is playing (a swipe starts it before the owner has even closed the sheet). */
+  const exitRef = useRef<{ ready: Promise<unknown>; cancel: () => void } | null>(null);
+  /** The latest drag distance, applied once per frame. */
+  const frame = useRef({ id: 0, dy: 0 });
   const openRef = useRef(isOpen);
   const onCloseRef = useRef(onClose);
+  const canCloseRef = useRef(canClose);
   const titleId = useId();
 
   useEffect(() => {
     onCloseRef.current = onClose;
+    canCloseRef.current = canClose;
     openRef.current = isOpen;
   });
 
@@ -133,6 +144,10 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
     if (dialog) {
       dialog.style.transform = '';
       offset.current = 0;
+      if (backdropRef.current) {
+        backdropRef.current.style.opacity = '';
+        backdropRef.current.style.transition = '';
+      }
       if (!dialog.contains(document.activeElement)) dialog.focus({ preventScroll: true });
     }
 
@@ -211,16 +226,18 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
 
   // Closing: shrink into the dock button that opened the sheet, or drop away. The page behind is
   // usable at once (the closing sheet takes no input) and the next press ends the animation.
-  useLayoutEffect(() => {
-    if (isOpen || !mounted) return;
+  // A swipe has already started it (`beginExit` is idempotent); everything else starts it here.
+  const beginExit = () => {
+    if (exitRef.current) return exitRef.current;
     const dialog = dialogRef.current;
     const finish = () => {
       offset.current = 0;
+      exitRef.current = null;
       setMounted(false);
     };
     if (!dialog || prefersReducedMotion() || typeof dialog.animate !== 'function') {
       finish();
-      return;
+      return null;
     }
     const rect = dialog.getBoundingClientRect();
     const target = getDockTarget(dockId);
@@ -252,23 +269,54 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
       );
       end();
     };
-    return () => {
-      activeExits.delete(end);
-      if (done) return;
-      done = true;
-      anim.cancel();
-      fade?.cancel();
+    const control = {
+      ready: anim.ready,
+      cancel: () => {
+        activeExits.delete(end);
+        if (exitRef.current === control) exitRef.current = null;
+        if (done) return;
+        done = true;
+        anim.cancel();
+        fade?.cancel();
+      },
     };
+    exitRef.current = control;
+    return control;
+  };
+
+  useLayoutEffect(() => {
+    if (isOpen || !mounted) return;
+    beginExit();
+    return () => exitRef.current?.cancel(); // opened again, or unmounted, while it was playing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, mounted, dockId]);
 
   if (!mounted) return null;
 
   const springBack = () => {
     const dialog = dialogRef.current;
+    window.cancelAnimationFrame(frame.current.id);
+    frame.current.id = 0;
     offset.current = 0;
     if (!dialog) return;
     dialog.style.transition = `transform ${SPRING.soft.duration}ms ${SPRING.soft.easing}`;
     dialog.style.transform = '';
+    const backdrop = backdropRef.current;
+    if (backdrop) {
+      backdrop.style.transition = `opacity ${SPRING.soft.duration}ms ease-out`;
+      backdrop.style.opacity = '';
+    }
+  };
+
+  /** One write per frame, however many pointer events came in: the sheet and the scrim follow the finger. */
+  const paintDrag = () => {
+    frame.current.id = 0;
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const dy = frame.current.dy;
+    dialog.style.transform = `translate3d(0, ${dy}px, 0)`;
+    const backdrop = backdropRef.current;
+    if (backdrop) backdrop.style.opacity = String(Math.max(0.25, 1 - dy / Math.max(240, dialog.offsetHeight)));
   };
 
   const dragHandlers = {
@@ -276,38 +324,64 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
       if (!event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest('button')) return;
       drag.current = { id: event.pointerId, startY: event.clientY, dy: 0, samples: [{ pos: event.clientY, at: event.timeStamp }] };
       event.currentTarget.setPointerCapture?.(event.pointerId);
+      // From here the finger moves the sheet: no transition may fight it.
+      if (dialogRef.current) dialogRef.current.style.transition = 'none';
+      if (backdropRef.current) backdropRef.current.style.transition = 'none';
     },
     onPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => {
       const d = drag.current;
-      const dialog = dialogRef.current;
-      if (d.id !== event.pointerId || !dialog) return;
+      if (d.id !== event.pointerId || !dialogRef.current) return;
       trackSample(d.samples, event.clientY, event.timeStamp);
       d.dy = Math.max(0, event.clientY - d.startY);
       offset.current = d.dy;
-      dialog.style.transition = 'none';
-      dialog.style.transform = `translate3d(0, ${d.dy}px, 0)`;
+      frame.current.dy = d.dy;
+      if (!frame.current.id) frame.current.id = window.requestAnimationFrame(paintDrag);
     },
     onPointerUp: (event: ReactPointerEvent<HTMLDivElement>) => {
       const d = drag.current;
       if (d.id !== event.pointerId || !dialogRef.current) return;
       drag.current = { ...d, id: -1 };
-      if (d.dy > DISMISS_PX || (d.dy > FLICK_MIN_PX && releaseSpeed(d.samples, event.timeStamp) > FLICK_SPEED)) {
-        swiped.current = true;
-        onClose();
-        // The owner may refuse (unsaved changes): the sheet then goes back to rest.
+      window.cancelAnimationFrame(frame.current.id);
+      frame.current.id = 0;
+      const dismiss = d.dy > DISMISS_PX || (d.dy > FLICK_MIN_PX && releaseSpeed(d.samples, event.timeStamp) > FLICK_SPEED);
+      if (!dismiss) {
+        springBack();
+        return;
+      }
+      // The owner will ask a question (unsaved input): back to rest at once, then let it ask.
+      if (canCloseRef.current && !canCloseRef.current()) {
+        springBack();
+        onCloseRef.current();
+        return;
+      }
+      // Leave first, close afterwards: the exit runs on the compositor, so the re-render that follows
+      // the state change cannot hold up its first frame.
+      swiped.current = true;
+      paintFinal();
+      const exit = beginExit();
+      const close = () => {
+        onCloseRef.current();
+        // The owner refused after all: the sheet comes back.
         window.setTimeout(() => {
           if (!openRef.current) return;
+          exitRef.current?.cancel();
           swiped.current = false;
           springBack();
         }, REFUSED_CLOSE_MS);
-        return;
-      }
-      springBack();
+      };
+      if (exit) exit.ready.then(close, close);
+      else close();
     },
     onPointerCancel: () => {
       drag.current = { ...drag.current, id: -1 };
       springBack();
     },
+  };
+
+  /** Applies the last drag distance now, so the exit starts from where the finger left the sheet. */
+  const paintFinal = () => {
+    const dialog = dialogRef.current;
+    if (dialog) dialog.style.transform = `translate3d(0, ${drag.current.dy}px, 0)`;
   };
 
   return createPortal(
@@ -324,7 +398,7 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
         aria-labelledby={titleId}
         aria-describedby={subtitle ? `${titleId}-description` : undefined}
         tabIndex={-1}
-        className={`anim-dialog relative w-full ${maxWidth} max-h-full min-h-0 flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-3xl shadow-2xl shadow-black/20 overflow-hidden focus:outline-none`}
+        className={`anim-dialog will-change-transform relative w-full ${maxWidth} max-h-full min-h-0 flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-3xl shadow-2xl shadow-black/20 overflow-hidden focus:outline-none`}
       >
         <div className="shrink-0 touch-none flex justify-center pt-3 pb-2 sm:hidden" aria-hidden="true" {...dragHandlers}>
           <span className="h-1.5 w-11 rounded-full bg-[var(--border)]" />

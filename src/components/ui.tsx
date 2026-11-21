@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, useState, type ChangeEvent, type FocusEvent, type ReactNode } from 'react';
-import { ChevronDown, Minus, Plus, Trash2 } from 'lucide-react';
+import { createElement, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { Check, ChevronDown, Delete, Minus, Plus, Trash2 } from 'lucide-react';
 import { round2 } from '../lib/format';
-import { useApp } from '../lib/store';
+import { iconFor } from '../lib/icons';
+import { useApp, useToast } from '../lib/store';
 import { Modal } from './Modal';
 
 /** Segmented choice (theme, currency, kind): the selected one is a solid block of the text colour. */
@@ -13,6 +14,11 @@ export const seg = (active: boolean) =>
       : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)]'
   }`;
 
+/** One of the user-pickable icons (`ICON_CHOICES`) by its stored key. */
+export function KeyIcon({ name, size = 16, strokeWidth = 2, className, ...rest }: { name: string; size?: number; strokeWidth?: number; className?: string; 'aria-hidden'?: boolean | 'true' }) {
+  return createElement(iconFor(name), { size, strokeWidth, className, ...rest });
+}
+
 export function SectionLabel({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) {
   const cls = 'text-xs font-extrabold uppercase tracking-wider text-[var(--muted)] block mb-2';
   return htmlFor ? <label htmlFor={htmlFor} className={cls}>{children}</label> : <span className={cls}>{children}</span>;
@@ -21,90 +27,151 @@ export function SectionLabel({ children, htmlFor }: { children: ReactNode; htmlF
 export const textInput =
   'w-full bg-[var(--inset)] border border-[var(--border)] rounded-xl px-3.5 py-2.5 text-[var(--text)] placeholder:text-[var(--muted)]/60 text-base font-bold focus:outline-none focus:border-[var(--muted)] transition-colors';
 
-interface NumericInputProps {
-  value: number;
-  onChange: (value: number) => void;
-  min?: number;
-  max?: number;
-  unit?: string;
-  className?: string;
-  id?: string;
-  ariaLabel?: string;
-  autoFocus?: boolean;
-}
+/* ---------- Number pad: amounts are typed on screen, never with the phone's keyboard ---------- */
 
-/** Decimal field that accepts a comma, selects its content on focus and tidies up on blur. */
-export function NumericInput({ value, onChange, min = 0, max, unit, className = '', id, ariaLabel, autoFocus = false }: NumericInputProps) {
-  const [focused, setFocused] = useState(false);
-  const [local, setLocal] = useState(value === 0 ? '' : String(value));
+export type PadKey = string;
+const MAX_INTEGER_DIGITS = 9;
 
-  // The field follows changes made elsewhere (stepper, quick chips) unless it is being typed in.
-  const [seen, setSeen] = useState(value);
-  if (!focused && value !== seen) {
-    setSeen(value);
-    const parsed = parseFloat(local);
-    if ((Number.isNaN(parsed) && value !== 0) || (!Number.isNaN(parsed) && parsed !== value)) {
-      setLocal(value === 0 ? '' : String(value));
-    }
-  }
+/**
+ * The text behind an amount typed on a number pad. It keeps what the user typed ("12." while the
+ * next digit is still to come) and follows the value when something else changes it (a chip, a plus).
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAmountBuffer(value: number, onChange: (value: number) => void, { decimals = 2, max }: { decimals?: number; max?: number } = {}) {
+  const [text, setText] = useState(() => (value ? String(value) : ''));
+  const parsed = text === '' || text === '.' ? 0 : parseFloat(text);
+  if (parsed !== value) setText(value ? String(value) : '');
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const text = event.target.value.replace(',', '.');
-    if (text !== '' && !/^\d*\.?\d{0,2}$/.test(text)) return;
-    setLocal(text);
-    const num = parseFloat(text);
-    onChange(text === '' || Number.isNaN(num) ? 0 : num);
-  };
-
-  const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
-    setFocused(true);
-    const input = event.currentTarget;
-    requestAnimationFrame(() => {
-      try {
-        input.select();
-      } catch {
-        /* some keyboards refuse a programmatic selection */
-      }
-    });
-  };
-
-  const handleBlur = () => {
-    setFocused(false);
-    let num = parseFloat(local);
-    if (Number.isNaN(num)) num = 0;
-    if (num < min) num = min;
-    if (max !== undefined && num > max) num = max;
-    num = round2(num);
-    setLocal(num === 0 ? '' : String(num));
+  const press = (key: PadKey) => {
+    let next = text;
+    if (key === 'back') next = text.slice(0, -1);
+    else if (key === 'clear') next = '';
+    else if (key === '.') {
+      if (decimals === 0 || text.includes('.')) return;
+      next = `${text || '0'}.`;
+    } else if (/^\d$/.test(key)) {
+      if (text === '0') next = key;
+      else next = text + key;
+      const [whole, fraction = ''] = next.split('.');
+      if (fraction.length > decimals || whole.length > MAX_INTEGER_DIGITS) return;
+    } else return;
+    const num = next === '' || next === '.' ? 0 : parseFloat(next);
+    if (max !== undefined && num > max) return;
+    setText(next);
     onChange(num);
   };
 
-  const centered = className.includes('text-center');
-  const pad = unit ? (centered ? 'pl-11 pr-11' : 'pl-3.5 pr-11') : 'px-3.5';
+  return { text, press };
+}
+
+/** The figure of an amount being typed, with its unit in front. */
+export function AmountDisplay({ text, unit, className = '' }: { text: string; unit: string; className?: string }) {
+  return (
+    <span className={`inline-flex items-baseline justify-center gap-1.5 tabular-nums font-extrabold text-[var(--text)] ${className}`}>
+      <span className="text-[0.55em] text-[var(--muted)]">{unit}</span>
+      <span className={text ? '' : 'text-[var(--muted)]/50'}>{text || '0'}</span>
+    </span>
+  );
+}
+
+const PAD_KEY =
+  'pressable h-12 min-[400px]:h-[3.25rem] rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] text-xl font-extrabold tabular-nums flex items-center justify-center select-none touch-manipulation';
+
+interface NumPadProps {
+  onPress: (key: PadKey) => void;
+  onConfirm: () => void;
+  confirmLabel: ReactNode;
+  confirmDisabled?: boolean;
+  /** Colour of the confirm button, e.g. `bg-activity text-activity-ink`. */
+  confirmClass?: string;
+  /** Show the decimal point. */
+  decimal?: boolean;
+  /** Also answer the physical keyboard (digits, comma, Backspace, Enter). */
+  captureKeys?: boolean;
+}
+
+/** 3 x 4 keys and one wide confirm button. A long press on the backspace key clears everything. */
+export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, confirmClass = 'bg-[var(--text)] text-[var(--on-text)]', decimal = true, captureKeys = true }: NumPadProps) {
+  const latest = useRef({ onPress, onConfirm, confirmDisabled });
+  const holdTimer = useRef<number | null>(null);
+  const cleared = useRef(false);
+
+  useEffect(() => {
+    latest.current = { onPress, onConfirm, confirmDisabled };
+  });
+
+  // Desktop: the keyboard types into the open pad, unless a field or a button has the focus.
+  useEffect(() => {
+    if (!captureKeys) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      const { onPress: press, onConfirm: confirm, confirmDisabled: disabled } = latest.current;
+      if (/^\d$/.test(event.key)) press(event.key);
+      else if (event.key === '.' || event.key === ',') press('.');
+      else if (event.key === 'Backspace') press('back');
+      else if (event.key === 'Enter' && !target?.closest('button')) {
+        if (!disabled) confirm();
+      } else return;
+      event.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [captureKeys]);
+
+  useEffect(() => () => {
+    if (holdTimer.current) window.clearTimeout(holdTimer.current);
+  }, []);
+
+  const digit = (key: string) => (
+    <button key={key} type="button" className={PAD_KEY} onClick={() => onPress(key)}>
+      {key}
+    </button>
+  );
 
   return (
-    <div className="relative flex items-center w-full">
-      <input
-        id={id}
-        aria-label={ariaLabel}
-        type="text"
-        inputMode="decimal"
-        enterKeyHint="done"
-        autoComplete="off"
-        autoFocus={autoFocus}
-        value={local}
-        onChange={handleChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') event.currentTarget.blur();
-        }}
-        placeholder="0"
-        className={`w-full bg-[var(--inset)] border border-[var(--border)] rounded-xl py-2.5 text-[var(--text)] placeholder:text-[var(--muted)]/60 text-base font-bold tabular-nums focus:outline-none focus:border-[var(--muted)] transition-colors ${pad} ${className}`}
-      />
-      {unit && (
-        <span className="absolute right-3 text-xs font-bold text-[var(--muted)] pointer-events-none select-none">{unit}</span>
-      )}
+    <div className="space-y-2" role="group" aria-label="Number pad">
+      <div className="grid grid-cols-3 gap-1.5">
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(digit)}
+        {decimal ? (
+          <button type="button" className={PAD_KEY} onClick={() => onPress('.')} aria-label="Decimal point">.</button>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+        {digit('0')}
+        <button
+          type="button"
+          className={PAD_KEY}
+          aria-label="Delete the last digit (hold to clear)"
+          onPointerDown={() => {
+            cleared.current = false;
+            if (holdTimer.current) window.clearTimeout(holdTimer.current);
+            holdTimer.current = window.setTimeout(() => {
+              cleared.current = true;
+              onPress('clear');
+            }, 450);
+          }}
+          onPointerUp={() => holdTimer.current && window.clearTimeout(holdTimer.current)}
+          onPointerLeave={() => holdTimer.current && window.clearTimeout(holdTimer.current)}
+          onPointerCancel={() => holdTimer.current && window.clearTimeout(holdTimer.current)}
+          onClick={() => {
+            if (cleared.current) cleared.current = false;
+            else onPress('back');
+          }}
+        >
+          <Delete size={21} aria-hidden="true" />
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={onConfirm}
+        disabled={confirmDisabled}
+        className={`kc-primary-btn pressable pressable-soft w-full py-3 hover:brightness-95 font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm tabular-nums disabled:opacity-40 ${confirmClass}`}
+      >
+        <Check size={18} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
+        <span className="truncate">{confirmLabel}</span>
+      </button>
     </div>
   );
 }
@@ -117,19 +184,27 @@ interface AmountStepperProps {
   min?: number;
   max?: number;
   ariaLabel: string;
-  autoFocus?: boolean;
+  /** Show the number pad as soon as the field appears (otherwise a tap on the figure opens it). */
+  startOpen?: boolean;
+  /** Digits after the point. Whole numbers (days) pass 0. */
+  decimals?: number;
   /** Quick additions shown under the field. */
   chips?: number[];
   chipLabel?: (delta: number) => string;
 }
 
-/** Minus / field / plus, with hold-to-repeat on the buttons and optional quick-add chips. */
-export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, ariaLabel, autoFocus, chips, chipLabel }: AmountStepperProps) {
+/**
+ * Minus / figure / plus, with hold-to-repeat on the buttons and optional quick-add chips. Tapping
+ * the figure opens a number pad right below it: no keyboard ever covers the sheet.
+ */
+export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, ariaLabel, startOpen = false, decimals = 2, chips, chipLabel }: AmountStepperProps) {
   const valueRef = useRef(value);
   const onChangeRef = useRef(onChange);
   const holdTimeout = useRef<number | null>(null);
   const holdInterval = useRef<number | null>(null);
   const didHold = useRef(false);
+  const [open, setOpen] = useState(startOpen);
+  const { text, press } = useAmountBuffer(value, onChange, { decimals, max });
 
   useEffect(() => {
     valueRef.current = value;
@@ -168,6 +243,11 @@ export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, a
     onChange(clamp(value + delta));
   };
 
+  const done = () => {
+    if (value < min) onChange(min);
+    setOpen(false);
+  };
+
   const button =
     'pressable w-12 h-12 shrink-0 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center select-none disabled:opacity-35';
 
@@ -187,9 +267,15 @@ export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, a
         >
           <Minus size={19} />
         </button>
-        <div className="flex-1">
-          <NumericInput value={value} onChange={onChange} unit={unit} min={min} max={max} ariaLabel={ariaLabel} autoFocus={autoFocus} className="text-center text-lg h-12" />
-        </div>
+        <button
+          type="button"
+          onClick={() => (open ? done() : setOpen(true))}
+          aria-expanded={open}
+          aria-label={`${ariaLabel}: ${text || 0} ${unit}. ${open ? 'Close the number pad' : 'Open the number pad'}`}
+          className={`pressable flex-1 min-w-0 h-12 rounded-xl bg-[var(--inset)] border text-lg tabular-nums ${open ? 'border-[var(--muted)]' : 'border-[var(--border)]'} flex items-center justify-center`}
+        >
+          <AmountDisplay text={text} unit={unit} className="text-lg" />
+        </button>
         <button
           type="button"
           disabled={max !== undefined && value >= max}
@@ -204,6 +290,7 @@ export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, a
           <Plus size={19} />
         </button>
       </div>
+      {open && <NumPad onPress={press} onConfirm={done} confirmLabel="Done" decimal={decimals > 0} />}
       {chips && (
         <div className="flex gap-1.5">
           {chips.map((delta) => (
@@ -360,7 +447,8 @@ export function Bar({ value, max, track, fill, className = 'h-2' }: { value: num
 
 /** One confirmation line at the bottom of the screen, with Undo where it makes sense. */
 export function ToastHost() {
-  const { toast, dismissToast, activeTab } = useApp();
+  const { dismissToast, activeTab } = useApp();
+  const toast = useToast();
   if (!toast) return null;
   return (
     <div

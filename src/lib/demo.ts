@@ -1,6 +1,6 @@
 import { addMonths, daysInMonth, monthOf, pad, todayStr } from './dates';
 import { round2 } from './format';
-import type { Goal, Profile, Recurring, Tx } from './types';
+import type { Account, Goal, Profile, Recurring, Tx } from './types';
 
 /** Small deterministic generator, so the sample journal looks the same on every visit. */
 function mulberry32(seed: number) {
@@ -13,6 +13,13 @@ function mulberry32(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/** Starting balances only: sample entries carry no account, so these show the Accounts card at work. */
+export const SAMPLE_ACCOUNTS: Account[] = [
+  { id: 'a_current', name: 'Current account', icon: 'bank', opening: 1240 },
+  { id: 'a_cash', name: 'Cash', icon: 'cash', opening: 85 },
+  { id: 'a_savings', name: 'Savings account', icon: 'piggy', opening: 2500 },
+];
 
 export const SAMPLE_GOALS: Goal[] = [
   { id: 'g_safety', name: 'Emergency fund', target: 6000 },

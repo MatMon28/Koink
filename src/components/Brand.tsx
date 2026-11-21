@@ -11,7 +11,7 @@ interface BrandProps {
  */
 const WORDMARK_SVG =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${WORDMARK_BOX.x} ${WORDMARK_BOX.y} ${WORDMARK_BOX.width} ${WORDMARK_BOX.height}" aria-hidden="true">` +
-  `${wordmarkMarkup({ ink: 'currentColor', coin: 'var(--kk-coin)' })}</svg>`;
+  `${wordmarkMarkup({ ink: 'currentColor', coin: 'var(--kk-coin)', animated: true })}</svg>`;
 
 const ICON_SVG =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}"><rect width="${ICON_SIZE}" height="${ICON_SIZE}" rx="${TILE_RADIUS}" fill="var(--kk-tile)"/>` +

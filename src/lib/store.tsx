@@ -1,14 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { sortTxs } from './calc';
-import { currentMonth, daysInMonth, formatDay, pad } from './dates';
-import { buildSampleTxs, SAMPLE_GOALS, SAMPLE_PROFILE, SAMPLE_RECURRING } from './demo';
+import { syncCategories } from './categories';
+import { currentMonth, daysInMonth, formatDay, pad, todayStr } from './dates';
+import { buildSampleTxs, SAMPLE_ACCOUNTS, SAMPLE_GOALS, SAMPLE_PROFILE, SAMPLE_RECURRING } from './demo';
 import { whenIdle } from './idle';
-import { CURRENCIES, currencySymbol, formatMoney, formatMoneyFit, round2, type MoneyOptions } from './format';
+import { currencySymbol, exchangeRate, formatMoney, formatMoneyFit, isCurrency, round2, type MoneyOptions } from './format';
 import { normalizeNotificationSettings } from './reminders';
 import { syncLaunchBackground, syncSystemBars } from './platform';
 import { STORAGE_KEY } from './storage';
 import { applyThemeAttributes, applyUltraMinimal, DEFAULT_MONO_HUE, normalizeMonoHue, normalizeTheme, normalizeThemeStyle } from './themes';
-import type { ActiveTab, AppData, Goal, Profile, Recurring, Settings, Sheet, Tx } from './types';
+import type { Account, ActiveTab, AppData, CurrencyCode, CustomCategory, Goal, Profile, Recurring, Settings, Sheet, Tx } from './types';
 
 
 const defaultSettings = (): Settings => ({
@@ -17,6 +18,9 @@ const defaultSettings = (): Settings => ({
   monoHue: DEFAULT_MONO_HUE,
   ultraMinimal: false,
   currency: 'EUR',
+  hiddenCategories: [],
+  rates: {},
+  ratesDate: '',
   quickAdd: { income: true, expense: true, recurring: true, quick: true, saving: true },
   notifications: normalizeNotificationSettings(undefined),
   sampleData: false,
@@ -29,6 +33,8 @@ function sampleData(settings: Settings = defaultSettings()): AppData {
     txs: sortTxs(buildSampleTxs()),
     goals: SAMPLE_GOALS.map((g) => ({ ...g })),
     recurring: SAMPLE_RECURRING.map((r) => ({ ...r })),
+    accounts: SAMPLE_ACCOUNTS.map((a) => ({ ...a })),
+    categories: [],
     profile: { ...SAMPLE_PROFILE, rule: { ...SAMPLE_PROFILE.rule }, budgets: { ...SAMPLE_PROFILE.budgets } },
     settings: { ...settings, sampleData: true },
   };
@@ -36,6 +42,20 @@ function sampleData(settings: Settings = defaultSettings()): AppData {
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const isStr = (v: unknown): v is string => typeof v === 'string';
+
+const ID_PATTERN = /^[\w-]{1,64}$/;
+
+function cleanRates(raw: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (raw && typeof raw === 'object') for (const [code, rate] of Object.entries(raw)) if (isCurrency(code) && isNum(rate) && rate > 0) out[code] = rate;
+  return out;
+}
+
+function cleanForeign(raw: unknown): Tx['foreign'] {
+  const f = raw as Partial<NonNullable<Tx['foreign']>> | undefined;
+  if (!f || !isNum(f.amount) || !(f.amount > 0) || !isNum(f.rate) || !(f.rate > 0) || !isCurrency(f.currency)) return undefined;
+  return { amount: round2(f.amount), currency: f.currency, rate: f.rate };
+}
 
 /** Accepts anything (a stored journal, an imported backup) and returns a well-formed journal or null. */
 function sanitize(raw: unknown): AppData | null {
@@ -55,6 +75,9 @@ function sanitize(raw: unknown): AppData | null {
       amount: round2(t.amount),
       categoryId: t.categoryId,
       note: isStr(t.note) ? t.note : '',
+      details: isStr(t.details) && t.details.trim() ? t.details : undefined,
+      accountId: isStr(t.accountId) ? t.accountId : undefined,
+      foreign: cleanForeign(t.foreign),
       date: t.date,
       recurringId: isStr(t.recurringId) ? t.recurringId : undefined,
       ts: isNum(t.ts) ? t.ts : index,
@@ -76,6 +99,14 @@ function sanitize(raw: unknown): AppData | null {
       day: isNum(r.day) ? Math.min(28, Math.max(1, Math.round(r.day))) : 1,
     }));
 
+  const accounts: Account[] = (Array.isArray(src.accounts) ? src.accounts : [])
+    .filter((a): a is Account => !!a && isStr((a as Account).id) && ID_PATTERN.test((a as Account).id) && isStr((a as Account).name))
+    .map((a) => ({ id: a.id, name: a.name.slice(0, 40), icon: isStr(a.icon) ? a.icon : 'wallet', opening: isNum(a.opening) ? round2(a.opening) : 0 }));
+
+  const categories: CustomCategory[] = (Array.isArray(src.categories) ? src.categories : [])
+    .filter((c): c is CustomCategory => !!c && isStr((c as CustomCategory).id) && ID_PATTERN.test((c as CustomCategory).id) && isStr((c as CustomCategory).name))
+    .map((c) => ({ id: c.id, name: c.name.slice(0, 30), icon: isStr(c.icon) ? c.icon : 'tag', bucket: c.bucket === 'needs' ? 'needs' : 'wants' }));
+
   const p = (src.profile ?? {}) as Partial<Profile>;
   const rule = p.rule && isNum(p.rule.needs) && isNum(p.rule.wants) && isNum(p.rule.savings) ? p.rule : emptyProfile().rule;
   const budgets: Record<string, number> = {};
@@ -88,7 +119,10 @@ function sanitize(raw: unknown): AppData | null {
     themeStyle: normalizeThemeStyle(s.themeStyle),
     monoHue: normalizeMonoHue(s.monoHue),
     ultraMinimal: s.ultraMinimal === true,
-    currency: CURRENCIES.some((c) => c.code === s.currency) ? s.currency! : base.currency,
+    currency: isCurrency(s.currency) ? s.currency : base.currency,
+    hiddenCategories: Array.isArray(s.hiddenCategories) ? s.hiddenCategories.filter(isStr) : [],
+    rates: cleanRates(s.rates),
+    ratesDate: isStr(s.ratesDate) ? s.ratesDate : '',
     quickAdd: { ...base.quickAdd, ...(s.quickAdd && typeof s.quickAdd === 'object' ? s.quickAdd : {}) },
     // Journals and backups written before reminders existed load with everything off.
     notifications: normalizeNotificationSettings(s.notifications),
@@ -99,6 +133,8 @@ function sanitize(raw: unknown): AppData | null {
     txs: sortTxs(txs),
     goals,
     recurring,
+    accounts,
+    categories,
     profile: { name: isStr(p.name) ? p.name : '', rule: { needs: rule.needs, wants: rule.wants, savings: rule.savings }, budgets },
     settings,
   };
@@ -132,15 +168,16 @@ interface AppContextValue {
   setActiveTab: (tab: ActiveTab) => void;
   selectedMonth: string;
   setSelectedMonth: (month: string) => void;
-  sheet: Sheet | null;
-  /** Increases every time a sheet opens, so forms start fresh. */
-  sheetSeq: number;
   openSheet: (sheet: Sheet) => void;
   closeSheet: () => void;
   money: (amount: number, options?: MoneyOptions) => string;
   /** Whole units, shortened ("€1.2M") when longer than `maxChars`: for figures inside fixed-width cards. */
   moneyFit: (amount: number, maxChars: number, sign?: boolean) => string;
   symbol: string;
+  /** The journal's currency. */
+  currency: CurrencyCode;
+  /** How many journal-currency units one unit of `from` is worth right now (Settings rates, else the built-in table). */
+  rateFor: (from: CurrencyCode) => number;
   addTx: (input: Omit<Tx, 'id' | 'ts'>, options?: { quiet?: boolean }) => void;
   updateTx: (id: string, patch: Partial<Omit<Tx, 'id' | 'ts'>>) => void;
   removeTx: (id: string) => void;
@@ -149,6 +186,16 @@ interface AppContextValue {
   saveRecurring: (item: Omit<Recurring, 'id'> & { id?: string }) => void;
   removeRecurring: (id: string) => void;
   logRecurring: (item: Recurring, month: string) => void;
+  saveAccount: (account: { id?: string; name: string; icon: string; opening: number }) => void;
+  removeAccount: (id: string) => void;
+  /** Creates or edits one of the user's own expense categories; returns its id. */
+  saveCategory: (category: { id?: string; name: string; icon: string; bucket: CustomCategory['bucket'] }) => string;
+  /** Deletes one of the user's own categories (its entries stay, listed under \"Other\"). */
+  removeCategory: (id: string) => void;
+  /** Hides or shows a category (built-in or own) in the pickers and on the Month page. */
+  setCategoryHidden: (id: string, hidden: boolean) => void;
+  /** Fetches current exchange rates; resolves to whether it worked. */
+  refreshRates: () => Promise<boolean>;
   setBudget: (categoryId: string, amount: number) => void;
   updateProfile: (patch: Partial<Profile>) => void;
   updateSettings: (patch: Partial<Settings>) => void;
@@ -156,12 +203,24 @@ interface AppContextValue {
   loadSample: () => void;
   exportData: () => string;
   importData: (raw: string) => boolean;
-  toast: Toast | null;
   showToast: (message: string, action?: { label: string; run: () => void }) => void;
   dismissToast: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
+
+/**
+ * The open sheet and the toast live in their own context. They change on every open, close and
+ * save, and nothing but the sheets and the toast host needs to hear about it: the pages behind a
+ * closing sheet must not re-render while it is flying away (that was the lag of swiping a sheet down).
+ */
+interface UiState {
+  sheet: Sheet | null;
+  /** Increases every time a sheet opens, so forms start fresh. */
+  sheetSeq: number;
+  toast: Toast | null;
+}
+const UiContext = createContext<UiState>({ sheet: null, sheetSeq: 0, toast: null });
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(load);
@@ -181,6 +240,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [data]);
 
+  // Everything below reads the category list through categories.ts: bring it up to date first.
+  useMemo(() => syncCategories(data.categories, data.settings.hiddenCategories), [data.categories, data.settings.hiddenCategories]);
+
   const { theme, themeStyle, monoHue, currency, ultraMinimal } = data.settings;
   useEffect(() => {
     const background = applyThemeAttributes(theme, themeStyle, monoHue);
@@ -194,6 +256,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const money = useCallback((amount: number, options?: MoneyOptions) => formatMoney(amount, currency, options), [currency]);
   const moneyFit = useCallback((amount: number, maxChars: number, sign = false) => formatMoneyFit(amount, currency, maxChars, sign), [currency]);
+
+  const rates = data.settings.rates;
+  const rateFor = useCallback((from: CurrencyCode) => Number(exchangeRate(from, currency, rates).toPrecision(6)), [currency, rates]);
 
   const dismissToast = useCallback(() => {
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
@@ -228,7 +293,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addTx = useCallback<AppContextValue['addTx']>((input, options) => {
-    const tx: Tx = { ...input, amount: round2(input.amount), note: input.note.trim(), id: uid(), ts: Date.now() };
+    const tx: Tx = { ...input, amount: round2(input.amount), note: input.note.trim(), details: input.details?.trim() || undefined, id: uid(), ts: Date.now() };
     setData((prev) => ({ ...prev, txs: sortTxs([tx, ...prev.txs]) }));
     if (!options?.quiet) {
       const sign = tx.kind === 'income' ? '+' : tx.kind === 'expense' ? '-' : '';
@@ -241,7 +306,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData((prev) => ({
       ...prev,
       txs: sortTxs(prev.txs.map((tx) => (tx.id === id
-        ? { ...tx, ...patch, amount: round2(patch.amount ?? tx.amount), note: (patch.note ?? tx.note).trim() }
+        ? {
+          ...tx,
+          ...patch,
+          amount: round2(patch.amount ?? tx.amount),
+          note: (patch.note ?? tx.note).trim(),
+          details: ('details' in patch ? patch.details : tx.details)?.trim() || undefined,
+        }
         : tx))),
     }));
   }, []);
@@ -289,6 +360,68 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addTx({ kind: item.kind, categoryId: item.categoryId, note: item.name, amount: item.amount, date: `${month}-${pad(day)}`, recurringId: item.id });
   }, [addTx]);
 
+  const saveAccount = useCallback<AppContextValue['saveAccount']>((account) => {
+    const clean = { name: account.name.trim().slice(0, 40), icon: account.icon, opening: round2(account.opening) };
+    setData((prev) => ({
+      ...prev,
+      accounts: account.id
+        ? prev.accounts.map((a) => (a.id === account.id ? { ...a, ...clean } : a))
+        : [...prev.accounts, { id: `a_${uid()}`, ...clean }],
+    }));
+  }, []);
+
+  const removeAccount = useCallback((id: string) => {
+    // Entries keep their place in the journal; they just no longer point at an account.
+    setData((prev) => ({
+      ...prev,
+      accounts: prev.accounts.filter((a) => a.id !== id),
+      txs: prev.txs.map((tx) => (tx.accountId === id ? { ...tx, accountId: undefined } : tx)),
+    }));
+  }, []);
+
+  const saveCategory = useCallback<AppContextValue['saveCategory']>((category) => {
+    const id = category.id ?? `c_${uid()}`;
+    const clean = { name: category.name.trim().slice(0, 30), icon: category.icon, bucket: category.bucket };
+    setData((prev) => ({
+      ...prev,
+      categories: category.id
+        ? prev.categories.map((c) => (c.id === id ? { ...c, ...clean } : c))
+        : [...prev.categories, { id, ...clean }],
+    }));
+    return id;
+  }, []);
+
+  const removeCategory = useCallback((id: string) => {
+    setData((prev) => ({
+      ...prev,
+      categories: prev.categories.filter((c) => c.id !== id),
+      settings: { ...prev.settings, hiddenCategories: prev.settings.hiddenCategories.filter((x) => x !== id) },
+      profile: { ...prev.profile, budgets: Object.fromEntries(Object.entries(prev.profile.budgets).filter(([key]) => key !== id)) },
+      recurring: prev.recurring.map((r) => (r.categoryId === id ? { ...r, categoryId: 'bills' } : r)),
+    }));
+  }, []);
+
+  const setCategoryHidden = useCallback((id: string, hidden: boolean) => {
+    setData((prev) => {
+      const rest = prev.settings.hiddenCategories.filter((x) => x !== id);
+      return { ...prev, settings: { ...prev.settings, hiddenCategories: hidden ? [...rest, id] : rest } };
+    });
+  }, []);
+
+  const refreshRates = useCallback(async () => {
+    try {
+      const response = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' });
+      const body = (await response.json()) as { result?: string; rates?: Record<string, unknown> };
+      if (body.result !== 'success' || !body.rates) return false;
+      const fresh = cleanRates(body.rates);
+      if (Object.keys(fresh).length < 5) return false;
+      setData((prev) => ({ ...prev, settings: { ...prev.settings, rates: fresh, ratesDate: todayStr() } }));
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   const setBudget = useCallback((categoryId: string, amount: number) => {
     setData((prev) => {
       const budgets = { ...prev.profile.budgets };
@@ -307,7 +440,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const eraseAll = useCallback(() => {
-    setData((prev) => ({ txs: [], goals: [], recurring: [], profile: emptyProfile(), settings: { ...prev.settings, sampleData: false } }));
+    setData((prev) => ({
+      txs: [], goals: [], recurring: [], accounts: [], categories: [], profile: emptyProfile(),
+      settings: { ...prev.settings, hiddenCategories: [], sampleData: false },
+    }));
     setSelectedMonth(currentMonth());
   }, []);
 
@@ -331,17 +467,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<AppContextValue>(() => ({
-    data, activeTab, setActiveTab, selectedMonth, setSelectedMonth, sheet, sheetSeq, openSheet, closeSheet,
-    money, moneyFit, symbol: currencySymbol(currency), addTx, updateTx, removeTx, saveGoal, removeGoal, saveRecurring,
-    removeRecurring, logRecurring, setBudget, updateProfile, updateSettings, eraseAll, loadSample, exportData,
-    importData, toast, showToast, dismissToast,
+    data, activeTab, setActiveTab, selectedMonth, setSelectedMonth, openSheet, closeSheet,
+    money, moneyFit, symbol: currencySymbol(currency), currency, rateFor, addTx, updateTx, removeTx, saveGoal, removeGoal, saveRecurring,
+    removeRecurring, logRecurring, saveAccount, removeAccount, saveCategory, removeCategory, setCategoryHidden, refreshRates, setBudget, updateProfile, updateSettings, eraseAll, loadSample, exportData,
+    importData, showToast, dismissToast,
   }), [
-    data, activeTab, setActiveTab, selectedMonth, sheet, sheetSeq, openSheet, closeSheet, money, moneyFit, currency, addTx,
-    updateTx, removeTx, saveGoal, removeGoal, saveRecurring, removeRecurring, logRecurring, setBudget, updateProfile,
-    updateSettings, eraseAll, loadSample, exportData, importData, toast, showToast, dismissToast,
+    data, activeTab, setActiveTab, selectedMonth, openSheet, closeSheet, money, moneyFit, currency, addTx,
+    updateTx, removeTx, saveGoal, removeGoal, saveRecurring, removeRecurring, logRecurring, saveAccount, removeAccount, saveCategory,
+    removeCategory, setCategoryHidden, refreshRates, rateFor, setBudget, updateProfile,
+    updateSettings, eraseAll, loadSample, exportData, importData, showToast, dismissToast,
   ]);
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  const ui = useMemo<UiState>(() => ({ sheet, sheetSeq, toast }), [sheet, sheetSeq, toast]);
+
+  return (
+    <AppContext.Provider value={value}>
+      <UiContext.Provider value={ui}>{children}</UiContext.Provider>
+    </AppContext.Provider>
+  );
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -357,10 +500,16 @@ export function useApp(): AppContextValue {
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useSheet<T extends Sheet['type']>(type: T): { isOpen: boolean; sheet: Extract<Sheet, { type: T }> | null; seq: number } {
-  const { sheet, sheetSeq } = useApp();
+  const { sheet, sheetSeq } = useContext(UiContext);
   type Mine = Extract<Sheet, { type: T }>;
   const [last, setLast] = useState<{ sheet: Mine; seq: number } | null>(null);
   const isOpen = sheet?.type === type;
   if (isOpen && last?.seq !== sheetSeq) setLast({ sheet: sheet as Mine, seq: sheetSeq });
   return isOpen ? { isOpen, sheet: sheet as Mine, seq: sheetSeq } : { isOpen, sheet: last?.sheet ?? null, seq: last?.seq ?? 0 };
+}
+
+/** The toast on screen, if any. Kept apart from `useApp()` so a toast does not re-render the pages. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useToast(): Toast | null {
+  return useContext(UiContext).toast;
 }

@@ -1,13 +1,14 @@
 import { useMemo, type ReactNode } from 'react';
-import { ChevronRight, CircleHelp, Hourglass, Plus, ShieldCheck, Target } from 'lucide-react';
+import { ChevronRight, CircleHelp, Hourglass, ListChecks, Plus, ShieldCheck, Target } from 'lucide-react';
 import { HeroPair, NoteCard } from '../components/cards';
 import { MonthNavigator } from '../components/MonthNavigator';
 import { RecurringRow } from '../components/RecurringRow';
 import { Bar } from '../components/ui';
-import { budgetSummary, goalSaved, monthTotals } from '../lib/calc';
-import { BUCKET_LABEL, EXPENSE_CATEGORIES } from '../lib/categories';
+import { accountBalance, budgetSummary, goalSaved, monthTotals } from '../lib/calc';
+import { allExpenseCategories, BUCKET_LABEL, isCategoryHidden } from '../lib/categories';
 import { currentMonth, daysInMonth, elapsedDays } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
+import { iconFor } from '../lib/icons';
 import { useApp } from '../lib/store';
 import type { Bucket } from '../lib/types';
 
@@ -52,8 +53,11 @@ export function BudgetsView() {
   const unbudgeted = round2(totals.spent - summary.spent);
   const safePerDay = summary.budget > 0 && daysLeft > 0 ? Math.max(0, summary.left) / daysLeft : null;
 
+  const accountTotal = round2(data.accounts.reduce((sum, account) => sum + accountBalance(data.txs, account), 0));
+
   const bucketCard = (bucket: Bucket) => {
-    const categories = EXPENSE_CATEGORIES.filter((c) => c.bucket === bucket);
+    // Hidden categories stay here only while they still carry spending or a budget.
+    const categories = allExpenseCategories().filter((c) => c.bucket === bucket && (!isCategoryHidden(c.id) || (totals.byCategory[c.id]?.total ?? 0) > 0 || (data.profile.budgets[c.id] ?? 0) > 0));
     const spent = round2(categories.reduce((sum, c) => sum + (totals.byCategory[c.id]?.total ?? 0), 0));
     const limit = round2(categories.reduce((sum, c) => sum + (data.profile.budgets[c.id] ?? 0), 0));
     const tone = BUCKET_BAR[bucket];
@@ -121,6 +125,38 @@ export function BudgetsView() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-start">
+        <SectionCard
+          title={<><span className="size-2.5 rounded-full border bg-[#E8F3FF] border-[#183B5E]/30" aria-hidden="true" />Accounts</>}
+          aside={data.accounts.length > 1 ? <span className="text-xs font-bold tabular-nums text-[var(--muted)]">{money(accountTotal)} in total</span> : undefined}
+          onAdd={() => openSheet({ type: 'account' })}
+          addLabel="New account"
+        >
+          {data.accounts.length === 0 ? (
+            <p className="um-hide kc-section-empty text-xs font-medium text-[var(--muted)] pb-1">Cash, a bank account, a card: add them to see what each holds. Pick one when you log an entry.</p>
+          ) : (
+            <div className="space-y-2">
+              {data.accounts.map((account) => {
+                const Icon = iconFor(account.icon);
+                const balance = accountBalance(data.txs, account);
+                return (
+                  <button
+                    key={account.id}
+                    type="button"
+                    onClick={() => openSheet({ type: 'account', id: account.id })}
+                    className="pressable pressable-soft w-full text-left p-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] flex items-center gap-2.5 group"
+                    aria-label={`${account.name}: ${money(balance, { cents: true })}. Edit`}
+                  >
+                    <Icon size={16} strokeWidth={2.2} className="kc-meal-icon shrink-0 text-[var(--text)]" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 text-xs sm:text-sm font-extrabold text-[var(--text)] truncate">{account.name}</span>
+                    <span className={`text-xs sm:text-sm font-extrabold tabular-nums ${balance < 0 ? 'text-[#A3312F]' : 'text-[var(--text)]'}`}>{money(balance, { cents: true })}</span>
+                    <ChevronRight size={16} className="text-[var(--muted)] group-hover:translate-x-0.5 transition-transform shrink-0" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </SectionCard>
+
         {bucketCard('needs')}
         {bucketCard('wants')}
 
@@ -187,6 +223,17 @@ export function BudgetsView() {
             </div>
           )}
         </SectionCard>
+      </div>
+
+      <div className="um-hide flex justify-center">
+        <button
+          type="button"
+          onClick={() => openSheet({ type: 'categories' })}
+          className="pressable inline-flex items-center gap-2 rounded-full bg-[var(--surface)] hover:bg-[var(--inset)] border border-[var(--border)] px-4 py-2 text-xs font-extrabold text-[var(--text)]"
+        >
+          <ListChecks size={15} aria-hidden="true" />
+          Manage expense categories
+        </button>
       </div>
     </div>
   );

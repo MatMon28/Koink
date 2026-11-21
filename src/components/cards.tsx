@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Banknote, ChevronDown, CircleCheck, Edit2, House, PiggyBank, Plus, Receipt, Repeat, Sparkles, Trash2, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { Banknote, ChevronDown, CircleCheck, Edit2, House, PiggyBank, Plus, Receipt, Repeat, Sparkles, StickyNote, Trash2, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { formatDay } from '../lib/dates';
+import { formatMoney } from '../lib/format';
 import { useApp } from '../lib/store';
 import type { Tx } from '../lib/types';
 
@@ -185,35 +186,45 @@ export function NoteCard({ label, value, unit, title, icon: Icon }: { label: str
 
 /* ---------- Numeric pills ---------- */
 
+/*
+ * Neutral on purpose. These used to be blue, orange and purple: the colours of Needs, Wants and
+ * Savings above them, which made people read "3x" as a budget bucket. Now every pill is the same
+ * quiet grey; what it is says an icon and (when there is room) a word. Only "over budget" is red.
+ */
 const PILL_TONES = {
-  carbs: 'bg-[#CFE7FE] text-[#1A4670]',
-  protein: 'bg-[#FAE0B4] text-[#7D4E14]',
-  fat: 'bg-[#E2D6FF] text-[#4D3582]',
-  alert: 'kc-pill-alert bg-[#F6D0D0] text-[#7A2727]',
+  neutral: 'bg-[var(--inset)] text-[var(--text)] border border-[var(--border)]',
+  alert: 'kc-pill-alert bg-[#F6D0D0] text-[#7A2727] border border-transparent',
 };
 
 export interface PillItem {
   tone: keyof typeof PILL_TONES;
+  icon: LucideIcon;
   text: string;
+  /** A word after the figure, shown when `labels` is on: "entries", "of spending", "left". */
+  label?: string;
   title: string;
 }
 
-/** Short figures only; colour and order say what they are, the title spells it out. */
-export function Pills({ items, stretch = false }: { items: PillItem[]; stretch?: boolean }) {
+/** Short figures, each with its icon; the title spells them out. */
+export function Pills({ items, stretch = false, labels = false }: { items: PillItem[]; stretch?: boolean; labels?: boolean }) {
   return (
     <span className={`flex items-center gap-1.5 ${stretch ? 'min-w-0 flex-1 w-full' : 'shrink-0'}`}>
-      {items.map((item, index) => (
-        <span
-          key={index}
-          data-macro={item.tone === 'alert' ? undefined : item.tone}
-          role="img"
-          aria-label={item.title}
-          title={item.title}
-          className={`${PILL_TONES[item.tone]} ${stretch ? 'flex-auto' : 'min-w-8'} rounded-lg px-1.5 py-1.5 text-center text-[11px] font-extrabold tabular-nums leading-none whitespace-nowrap`}
-        >
-          {item.text}
-        </span>
-      ))}
+      {items.map((item, index) => {
+        const Icon = item.icon;
+        return (
+          <span
+            key={index}
+            role="img"
+            aria-label={item.title}
+            title={item.title}
+            className={`${PILL_TONES[item.tone]} ${stretch ? 'flex-auto min-w-0 justify-center' : 'min-w-8'} inline-flex items-center gap-1 rounded-lg px-1.5 py-1.5 text-[11px] font-extrabold tabular-nums leading-none whitespace-nowrap`}
+          >
+            <Icon size={11} strokeWidth={2.6} aria-hidden="true" className="shrink-0 opacity-70" />
+            <span className="truncate">{item.text}</span>
+            {labels && item.label && <span className="font-semibold opacity-70 truncate">{item.label}</span>}
+          </span>
+        );
+      })}
     </span>
   );
 }
@@ -379,11 +390,17 @@ export function TxRow({ tx, compact = false, sub }: { tx: Tx; compact?: boolean;
         <span className="text-xs sm:text-sm font-bold text-[var(--text)] group-hover:opacity-80 truncate block">{tx.note || 'Entry'}</span>
         <span className="text-[11px] font-medium tabular-nums text-[var(--muted)] flex items-center gap-1">
           {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label="Recurring" />}
+          {tx.details && <StickyNote size={10} strokeWidth={2.6} aria-label="Has a note" />}
           <span className="truncate">{sub ?? formatDay(tx.date)}</span>
         </span>
       </button>
       <div className="flex items-center gap-1 shrink-0">
-        <span className="text-xs sm:text-sm font-extrabold tabular-nums text-[var(--text)] mr-1">{amount}</span>
+        <span className="mr-1 text-right">
+          <span className="block text-xs sm:text-sm font-extrabold tabular-nums text-[var(--text)]">{amount}</span>
+          {tx.foreign && (
+            <span className="block text-[10px] font-bold tabular-nums text-[var(--muted)]">{formatMoney(tx.foreign.amount, tx.foreign.currency, { cents: true })}</span>
+          )}
+        </span>
         {!compact && (
           <button
             type="button"

@@ -16,6 +16,8 @@ import { BudgetsView } from './pages/BudgetsView';
 import { MonthView } from './pages/MonthView';
 import { StatsView } from './pages/StatsView';
 import { TransactionsView } from './pages/TransactionsView';
+import { AccountSheet } from './sheets/AccountSheet';
+import { CategoriesSheet } from './sheets/CategoriesSheet';
 import { BudgetSheet, GoalSheet, RecurringEditSheet } from './sheets/EditSheets';
 import { ProfileSheet } from './sheets/ProfileSheet';
 import { QuickSheet, RecurringSheet } from './sheets/QuickSheet';
@@ -104,6 +106,8 @@ function Shell() {
       <RecurringEditSheet />
       <GoalSheet />
       <BudgetSheet />
+      <AccountSheet />
+      <CategoriesSheet />
       <ProfileSheet />
       <SettingsSheet />
       <ToastHost />

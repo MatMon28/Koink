@@ -38,6 +38,7 @@
 | Ultra minimal mode | [features/ultra-minimal.md](features/ultra-minimal.md) |
 | Reminder notifications | [notifications.md](notifications.md) |
 | Launch animation | [launch-intro.md](launch-intro.md) |
+| Accounts, expense categories, currencies and exchange rates | [features/accounts.md](features/accounts.md), [features/categories.md](features/categories.md), [features/currencies.md](features/currencies.md) |
 | Backup, restore, sample journal, delete all data | [features/backup.md](features/backup.md) |
 | Installing the app, offline use, home-screen shortcuts | [pwa.md](pwa.md) |
 | Swipes and Back | [gestures.md](gestures.md) |
@@ -72,3 +73,5 @@ Written together with the PWA / Android / gestures round. Checked against the tr
 **Kakcal-features round (launch animation, page rail, reminders, Ultra minimal, sheet behaviour):** new documents `notifications.md`, `launch-intro.md`, `motion.md`, `features/ultra-minimal.md`; `gestures.md` rewritten; architecture, data-model, design-system, pwa, android, brand, prepare-apps, the feature documents and every file map updated. Checked: paths in the docs exist, storage keys and constants quoted match the source. What was run is in [verification.md](verification.md); Android was again not compiled.
 
 **Koink round (rename, new logo, light / dark versions, five launch animations, launch-screen colour, notification icon):** `brand.md` and `launch-intro.md` rewritten; android, the Android file map, notifications, known-gaps, verification, data-model, prepare-apps, design-system, pwa, architecture, the other file maps and both READMEs updated. Checked: every path named in the docs exists; no `Koins` left outside the two compatibility shims and the notes about them. Android was again not compiled: the three new Java files are untested.
+
+**Wallet round (number pad, title + long note, quick delete, own categories, accounts, many currencies, list / days view, smoother sheet drag and header scroll, logo animation):** new documents `features/accounts.md`, `features/categories.md`, `features/currencies.md`; entries, transactions, month, budgets, settings, data-model, gestures, motion, brand, known-gaps, the lib / sheets / components / pages file maps and the root README updated. Checked in headless Chromium at 390 px: the two-screen entry flow, foreign-currency entry and rate screen, category create / hide, Transactions list and days views and quick delete, sheet swipe-close, header fold, logo animation; `tsc -b`, `eslint` and the build are clean.

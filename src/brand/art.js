@@ -157,11 +157,12 @@ export const WORDMARK_BOX = { x: 51, y: 40, width: 448, height: 150 };
 /**
  * The wordmark's shapes. Nothing overlaps, so it has no background parts and works on any colour.
  * As in the reference wordmark, its pig has slightly lighter lines than the icon's and ears drawn
- * as closed triangles (their base shows inside the head).
+ * as closed triangles (their base shows inside the head). With `animated` the parts carry the `kk-*`
+ * classes, which is how the header logo plays its click animation (index.css, `.is-oinking`).
  */
-export function wordmarkMarkup({ ink, coin }) {
+export function wordmarkMarkup({ ink, coin, animated = false }) {
   const k = `<g transform="translate(8.94 19.44) scale(0.20374)" fill="${ink}"><rect x="${STEM.x}" y="${STEM.y}" width="${STEM.width}" height="${n(STEM.height)}" rx="${STEM.r}"/><path d="${ARM}"/><path d="${LEG}"/></g>`;
-  const pig = logoMarkup({ ink, bg: 'none', coin, thicken: 0.885, closedEars: true }).replace(/^<g[^>]*>.*?<\/g>/, ''); // without its K
+  const pig = logoMarkup({ ink, bg: 'none', coin, animated, thicken: 0.885, closedEars: true }).replace(/^<g[^>]*>.*?<\/g>/, ''); // without its K
   return `${k}<g transform="translate(-23.24 -89.45) scale(0.3462)">${pig}</g><path fill="${ink}" d="${INK_LETTERS}"/>`;
 }
 

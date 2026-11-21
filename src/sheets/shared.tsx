@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
 import { Check, Trash2, type LucideIcon } from 'lucide-react';
+import { SectionLabel } from '../components/ui';
+import { CURRENCIES } from '../lib/format';
+import { ICON_CHOICES } from '../lib/icons';
 
 export interface Choice {
   id: string;
@@ -8,12 +11,14 @@ export interface Choice {
 }
 
 /** Icon tiles to pick a category, an income source or a goal. The chosen one is a solid block. */
-export function ChoiceGrid({ choices, value, onChange, label, columns = 4 }: {
+export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra }: {
   choices: Choice[];
   value: string;
   onChange: (id: string) => void;
   label: string;
   columns?: 2 | 3 | 4;
+  /** A last tile that is an action rather than a choice ("New"). */
+  extra?: { label: string; icon: LucideIcon; onClick: () => void };
 }) {
   const cols = columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : 'grid-cols-4';
   return (
@@ -39,6 +44,16 @@ export function ChoiceGrid({ choices, value, onChange, label, columns = 4 }: {
           </button>
         );
       })}
+      {extra && (
+        <button
+          type="button"
+          onClick={extra.onClick}
+          className="pressable min-w-0 flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--border)] px-1 py-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]"
+        >
+          <extra.icon size={17} strokeWidth={2.2} aria-hidden="true" />
+          <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{extra.label}</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -110,6 +125,66 @@ export function SaveRow({ tone, label, disabled, onSave, onDelete, deleteLabel }
         <Check size={18} strokeWidth={2.5} className="shrink-0" />
         <span className="truncate">{label}</span>
       </button>
+    </div>
+  );
+}
+
+/** Every currency as a code tile: pick the one an entry was paid in, or the journal's own. */
+export function CurrencyGrid({ value, onChange, label = 'Currency' }: { value: string; onChange: (code: string) => void; label?: string }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="grid grid-cols-4 min-[400px]:grid-cols-5 gap-1.5 max-h-72 overflow-y-auto overscroll-contain pr-0.5">
+      {CURRENCIES.map((currency) => {
+        const active = currency.code === value;
+        return (
+          <button
+            key={currency.code}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            title={currency.name}
+            onClick={() => onChange(currency.code)}
+            className={`pressable min-w-0 rounded-xl border px-1 py-2 text-center ${
+              active
+                ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]'
+                : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'
+            }`}
+          >
+            <span className="block text-xs font-extrabold leading-tight">{currency.code}</span>
+            <span className="block truncate text-[10px] font-bold leading-tight opacity-70">{currency.symbol}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** The icons offered for categories and accounts. */
+export function IconPicker({ value, onChange }: { value: string; onChange: (key: string) => void }) {
+  return (
+    <div>
+      <SectionLabel>Icon</SectionLabel>
+      <div role="radiogroup" aria-label="Icon" className="grid grid-cols-6 min-[400px]:grid-cols-8 gap-1.5">
+        {ICON_CHOICES.map((choice) => {
+          const Icon = choice.icon;
+          const active = choice.key === value;
+          return (
+            <button
+              key={choice.key}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              aria-label={choice.label}
+              title={choice.label}
+              onClick={() => onChange(choice.key)}
+              className={`pressable aspect-square rounded-xl border flex items-center justify-center ${
+                active ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'
+              }`}
+            >
+              <Icon size={17} aria-hidden="true" />
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

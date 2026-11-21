@@ -8,13 +8,19 @@
 
 | Block | Behaviour |
 | --- | --- |
-| Search field | matches the note, the category / source / goal name, and the amount as typed with two decimals (`12.50`). Clear button inside the field |
+| Search field | matches the title, the long note, the account name, the category / source / goal name, and the amount as typed with two decimals (`12.50`). Clear button inside the field |
 | Filter | All / Expenses / Income / Savings. Remembered as `koink_tx_filter` |
 | Summary line | number of matching entries, and their income and expense totals |
+| Layout switch | **List** (one card, day headings inside, the default) or **Days** (one card per day, side by side). Remembered as `koink_tx_view` |
 | Day cards | newest day first: "Today", "Yesterday" or the date; a pill with the day's net (`income - expenses`; savings are not counted); one row per entry |
-| Row | icon, note, category (a small loop marks an entry logged from a recurring item), signed amount: green `+` for income, lilac for savings, plain `-` for expenses. Tapping it opens the edit sheet |
+| Row | icon, title (a note icon when the entry has a long note), category, account, a one-line preview of the long note, signed amount (green `+` income, lilac savings, plain `-` expenses; the original amount in grey when it was paid in another currency). Tapping the text opens the edit sheet |
+| Delete | the **bin** at the end of every row deletes at once; a toast offers **Undo** |
 | Show older days | 14 day groups are shown at a time |
 
 Empty states: "No entries yet" for an empty journal; "Nothing matches" with a **Show everything** button when a search or filter hides everything.
 
-The list is all months, not the month browsed on the other pages. Day cards are in two columns from 768 px. The bottom dock is available here, so entries can be added without leaving the page.
+The list is all months, not the month browsed on the other pages.
+
+### Days side by side
+
+`TransactionsView.tsx`, `view === 'days'`: a horizontal scroller (`snap-x`, `no-scrollbar`, `data-no-swipe`). On a phone a card is 85 % of the width, so the next day peeks in and a finger swipe moves from day to day; the page-to-page swipe is switched off over the scroller (`data-no-swipe`), the header pill still changes page. From 480 px a card is 22 rem wide; from 768 px two arrow buttons scroll by about one card. "Older days" is the last item of the scroller. The bottom dock is available here, so entries can be added without leaving the page.

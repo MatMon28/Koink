@@ -24,3 +24,9 @@ Every control applies at once (`updateSettings()`); there is no save button.
 Shared controls used here, all from `src/components/ui.tsx`: `seg()` (segmented buttons), `Switch`, `Collapsible`, `SectionLabel`, `ConfirmDialog`.
 
 The switches are `role="switch"` buttons with `aria-checked`; segmented choices use `aria-pressed`.
+
+## Currency, rates, categories (this version)
+
+- **Currency** is a grid of ~40 currencies (`CurrencyGrid` in `sheets/shared.tsx`), the journal's own. **Update exchange rates** fetches current rates; until then approximate built-in ones are used. Details: [currencies.md](currencies.md).
+- **Expense categories** opens the category manager ([categories.md](categories.md)).
+- The gestures list gained "Tap the logo".

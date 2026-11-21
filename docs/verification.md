@@ -84,3 +84,7 @@ In those reminder tests `Notification.permission` and the display call were **st
 - Lighthouse / installability audits were not run.
 
 The device checklist is in [prepare-apps.md](prepare-apps.md#first-run-on-a-device-check-these).
+
+## Wallet round
+
+Run in headless Chromium (390 x 800, touch): add expense through the number pad, foreign-currency entry with a corrected rate, new and hidden categories, Transactions in both layouts and quick delete, swipe-down close of a sheet, header fold on scroll and the logo animation (screenshots inspected). **Not measured:** real frame times on a phone, so the "laggy swipe" fix is by construction (compositor-only changes, no re-render during the exit), not by profiling. The rates download was not exercised (no network in the test run).

@@ -28,3 +28,9 @@ Opened from a row here or from the budget bar inside a category card. A banner s
 - Save calls `setBudget(categoryId, amount)`; budgets live in `profile.budgets`.
 
 A budget is one monthly figure per category: it applies to every month, past ones included. There is no per-month budget history.
+
+## Accounts and categories on this page
+
+- An **Accounts** card (first in the grid) lists every account with its balance; `+` makes one, a row edits it. See [accounts.md](accounts.md).
+- Needs / Wants cards list the live category list (hidden categories only while they carry spending or a budget). **Manage expense categories** under the grid opens the category manager: [categories.md](categories.md).
+- The budget sheet starts with the number pad open.

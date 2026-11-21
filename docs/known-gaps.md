@@ -44,3 +44,10 @@
 19. `index.html` ends with a large `<script data-element-picker>` block added by the preview tool the project was built in. It is not part of the app.
 20. **Standalone animation files** (`public/brand/koink-intro-*.svg`) clip at their 1024 canvas, so parts that fly in from outside (the rolling pig) enter at the edge. In the app the art overflows its box and nothing is clipped.
 21. **The name Koins** survives in two compatibility shims only (storage keys and cache names of builds from before the rename): [brand.md](brand.md#rename-koins---koink).
+
+## Added with accounts, categories and currencies
+
+- No transfers between accounts; entries without an account count nowhere in Accounts.
+- Exchange rates are approximate until **Update exchange rates** is used (online, one free public API); a foreign entry keeps the rate it was saved with.
+- Custom category and account names use the phone keyboard (text cannot come from a number pad).
+- Not run on a device: the sheet-drag and header-scroll smoothness was checked in headless Chromium only (no frame-time measurement on a phone).

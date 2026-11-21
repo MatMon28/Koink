@@ -2,7 +2,8 @@ import {
   Banknote, Briefcase, Car, Coins, Gift, HeartPulse, House, Laptop, PiggyBank, ShoppingBag,
   ShoppingBasket, Ticket, UtensilsCrossed, Zap, type LucideIcon,
 } from 'lucide-react';
-import type { Bucket, Goal, Kind } from './types';
+import { iconFor } from './icons';
+import type { Bucket, CustomCategory, Goal, Kind } from './types';
 
 export interface ExpenseCategory {
   id: string;
@@ -38,8 +39,32 @@ export const INCOME_SOURCES: IncomeSource[] = [
 
 export const BUCKET_LABEL: Record<Bucket, string> = { needs: 'Needs', wants: 'Wants' };
 
-const expenseById = new Map(EXPENSE_CATEGORIES.map((c) => [c.id, c]));
+/*
+ * The expense categories in use = the built-in list above + the user's own (`AppData.categories`).
+ * The store pushes the user's part in with `syncCategories()` whenever it changes, so the pure
+ * helpers in lib/ (`bucketOf` in calc.ts) and every page see the same list without passing it around.
+ */
+let expenseById = new Map(EXPENSE_CATEGORIES.map((c) => [c.id, c]));
+let everyCategory: ExpenseCategory[] = EXPENSE_CATEGORIES;
+let shownCategories: ExpenseCategory[] = EXPENSE_CATEGORIES;
+let hiddenIds = new Set<string>();
 const incomeById = new Map(INCOME_SOURCES.map((c) => [c.id, c]));
+
+export function syncCategories(custom: CustomCategory[], hidden: string[]): void {
+  const own: ExpenseCategory[] = custom.map((c) => ({ id: c.id, name: c.name, icon: iconFor(c.icon), bucket: c.bucket }));
+  // Needs first, then wants: the order of the cards on the Month page (the sort is stable).
+  everyCategory = [...EXPENSE_CATEGORIES, ...own].sort((a, b) => (a.bucket === b.bucket ? 0 : a.bucket === 'needs' ? -1 : 1));
+  expenseById = new Map(everyCategory.map((c) => [c.id, c]));
+  hiddenIds = new Set(hidden);
+  shownCategories = everyCategory.filter((c) => !hiddenIds.has(c.id));
+}
+
+/** Every expense category, hidden ones included: for looking an entry's category up. */
+export const allExpenseCategories = () => everyCategory;
+/** The categories offered in pickers and shown on the Month page. */
+export const visibleExpenseCategories = () => shownCategories;
+export const isCategoryHidden = (id: string) => hiddenIds.has(id);
+export const isBuiltInCategory = (id: string) => EXPENSE_CATEGORIES.some((c) => c.id === id);
 
 export const expenseCategory = (id: string) => expenseById.get(id);
 export const bucketOf = (id: string): Bucket => expenseById.get(id)?.bucket ?? 'wants';

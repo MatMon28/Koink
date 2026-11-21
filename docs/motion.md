@@ -53,3 +53,15 @@ A damped spring is sampled into a CSS `linear()` easing, so CSS transitions, key
 ## Reduced motion
 
 With `prefers-reduced-motion: reduce`: the launch animation is not shown, CSS animation classes are switched off (`index.css`), and the JS-driven animations (page swipe, sheet exit, month slide) apply their end state directly (`prefersReducedMotion()` checks in each file). Dragging still follows the finger.
+
+## Smoothness fixes (sheet drag, scrolling)
+
+What made swiping a sheet down and scrolling the page stutter, and what replaced it:
+
+- **Sheet drag** (`Modal.tsx`): pointer moves are applied once per frame (`requestAnimationFrame`), the dialog is a permanent compositor layer (`will-change: transform`), and the scrim fades with the drag. On release the exit animation is started *first* (it runs on the compositor) and the owner's `onClose` runs once it is playing, so the re-render cannot delay the first frame. A form with unsaved input says so through `canClose` and springs back instead.
+- **Sheet / toast state is its own context** (`store.tsx`): opening, closing and toasting no longer re-render Month, Transactions, Budgets or Statistics.
+- **Header on scroll** (`Header.tsx`, `index.css`): only `opacity` and `transform` change, once per frame. The old version animated the name row's height, the surface padding and the radius of a `backdrop-filter` blur on every scroll event. The background is now a separate fading layer (`.kc-header-bg`) and the surface never paints (the rule uses `!important` to beat the style presets).
+
+## Logo animation
+
+Tapping the header logo plays 1.1 s of CSS on the wordmark's `kk-*` parts (`animated` option of `wordmarkMarkup` in `art.js`): the coin hops, turns, drops into the pig; the pig squashes, jumps and oinks (ears, eyes, snout); a new coin pops back. Origins use `transform-box: fill-box` percentages. `prefers-reduced-motion` replaces it with a small nod.
