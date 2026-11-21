@@ -1,10 +1,15 @@
+# SAVE THIS FILE AS: .github/workflows/pages.yml  (overwrite the existing one)
+#
+# The file currently in your repo is TRUNCATED at line 30 — it ends mid-step at
+# "- uses: actions/setup-node@v4". It never builds, never uploads an artifact and
+# never deploys, which is why the run looks "successful" but the site 404s.
+# This is the complete version.
+
 name: Deploy PWA
 
 on:
   push:
     branches: [main]
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -17,14 +22,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
 
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The trailing slash and the capital K are required.
+      - name: Build for the /Koink/ sub-path
+        run: npm run build -- --base=/Koink/
+
+      - name: Assert the output is really Koink's PWA
+        run: |
+          test -f dist/index.html
+          test -f dist/manifest.webmanifest
+          test -f dist/offline-worker.js
+          test -f dist/icons/icon-192.png
+          echo "dist/ looks correct"
+
+      - name: Disable Jekyll processing
+        run: touch dist/.nojekyll
+
+      # Creates the Pages site if it does not exist yet (public repos),
+      # so you don't have to toggle it in Settings first.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - id: deployment
+        uses: actions/deploy-pages@v4
