@@ -76,7 +76,7 @@ Easing variables: `--ease-soft` / `--dur-soft` and `--ease-bounce` / `--dur-boun
 ## Conventions
 
 - **The full standard** (tokens to use instead of hex colours, type roles, control sizes, icon sizes and which icon means what, shared pieces, wording) is in [../guide to UI UX fixes.md](../guide%20to%20UI%20UX%20fixes.md), with the 28 places where the code does not follow it yet. New components follow its section 4.
-- Text sizes: labels `text-[11px] font-bold uppercase tracking-wider`, figures `font-extrabold tabular-nums`. (Most labels in the code are `font-extrabold`, and `SectionLabel` is 12px: finding F4 of the guide settles it on 11px `font-extrabold`; correct this line when F4 is fixed.)
+- Text sizes: labels `text-[11px] font-extrabold uppercase tracking-wider` (`SectionLabel`, the only field label), figures `font-extrabold tabular-nums`. 
 - Radii: `rounded-3xl` cards, `rounded-2xl` inner rows and buttons, `rounded-full` pills and icon buttons.
 - Money in fixed-width cards uses `moneyFit` so it can never be clipped.
 - Fonts: Plus Jakarta Sans (default), Space Grotesk and Chakra Petch (presets), declared in `index.css` with one latin `woff2` each. The wordmark needs no font: its letters are outlines ([brand.md](brand.md)).
@@ -85,3 +85,15 @@ Easing variables: `--ease-soft` / `--dur-soft` and `--ease-bounce` / `--dur-boun
 ## Border fade on scrolling fields
 
 `src/lib/scrollFade.ts` (started once in `src/main.tsx`) and the `[data-scroll-fade]` block at the end of `src/index.css`. Put `data-scroll-fade="y"` (vertical) or `"x"` (horizontal) on any element that scrolls and nothing else is needed: the script measures it (a capture-phase scroll listener, a `ResizeObserver` per element, a `MutationObserver` for new content and new marked elements, one animation frame per batch) and sets `data-fading` plus `--fade-start` / `--fade-end` (`0px`, or `--fade-size`, 22px). The CSS mask then fades the content out at the edge that still has more beyond it, and nothing at an edge already reached; a field that does not overflow has no mask at all. Sheet bodies (`data-sheet-scroll`) use 14px, so the fade stays inside the sticky save row's padding and never dims the button. The mask also clips a shadow of the scrolling element itself (the bottom bar, the chart settings popup) while a fade is on; accepted. Marked: `Modal` body, `InstallGuide`, `ChartPopup`, `ChartLargeView` (category list, chart scroller), `ExpenseChart` scroller, `ActionDock`, `CurrencyGrid`, `ModeChooser`, the widget preview, and the chips and list of `PersonalInflation`. A new scrolling field should carry the attribute (rule in [README.md](README.md#keeping-the-docs-current)).
+
+## Tokens added by the UI / UX fixes round
+
+| Token (`index.css`) | Value | Use |
+| --- | --- | --- |
+| `--color-needs`, `-ink`, `-accent`, `-soft` | `#CFE7FE`, `#183B5E`, `#436B94`, `#E8F3FF` | blue: Needs, Recurring, the Statistics tab |
+| `--color-wants`, `-ink`, `-accent`, `-soft` | `#FAE0B4`, `#7D4E14`, `#9B6E32`, `#FDF3E0` | amber: Wants, Log again |
+| `--color-gift`, `-ink`, `-accent`, `-soft` | `#FFD9E8`, `#7A1F4B`, `#9C4C73`, `#FFEDF4` | rose: gift cards |
+| `--color-danger`, `-ink`, `-hover` | `#F6D0D0`, `#7A2727`, `#F0BDBD` | solid destructive button, alert boxes |
+| `--text-ok` | `#1F6B3F` light, `#8FD6A8` dark | positive text on a surface (next to `--text-warn`) |
+
+A `.tsx` file uses these tokens, never their hex values. The shared controls (`Button`, `IconButton`, `chip`, `PillGroup` / `pillItem`, `DateField`, `ToggleRow`, `EmptyState`) and the icon scale `ICON` are listed in [file-map/components.md](file-map/components.md).

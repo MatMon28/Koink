@@ -46,7 +46,7 @@ function AccountForm({ sheet }: { sheet: Extract<Sheet, { type: 'account' }> }) 
 
   return (
     <div className="space-y-4">
-      <Banner tone="needs" icon={Icon} label={name.trim() || 'Account'} value={money(balance, { cents: true })} sub={original ? t('{length} entries', { length: data.txs.filter((tx) => tx.accountId === original.id).length }) : undefined} />
+      <Banner tone="needs" icon={Icon} label={name.trim() || t('Account')} value={money(balance, { cents: true })} sub={original ? t('{length} entries', { length: data.txs.filter((tx) => tx.accountId === original.id).length }) : undefined} />
 
       <div>
         <SectionLabel htmlFor="account-name">{t('Account name')}</SectionLabel>
@@ -61,7 +61,7 @@ function AccountForm({ sheet }: { sheet: Extract<Sheet, { type: 'account' }> }) 
           autoFocus={!original}
           aria-required="true"
           aria-invalid={!original && name.length > 0 && !valid}
-          className={`${textInput} text-sm`}
+          className={`${textInput}`}
         />
       </div>
 

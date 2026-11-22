@@ -1,4 +1,5 @@
 import { useId, useState, type ReactNode } from 'react';
+import { ICON } from '../lib/icons';
 import { ChevronDown, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { ConfirmDialog, SectionLabel, textInput } from '../components/ui';
@@ -41,7 +42,7 @@ function TypeGroup({ title, count, actions, defaultOpen = true, children }: { ti
           onClick={() => setOpen((v) => !v)}
           className="flex min-w-0 flex-1 items-center gap-2 px-3.5 py-3 text-left"
         >
-          <ChevronDown size={16} aria-hidden="true" className={`shrink-0 text-[var(--muted)] transition-transform duration-300 ${open ? '' : '-rotate-90'}`} />
+          <ChevronDown size={ICON.md} aria-hidden="true" className={`shrink-0 text-[var(--muted)] transition-transform duration-300 ${open ? '' : '-rotate-90'}`} />
           <span className="min-w-0 truncate text-xs font-extrabold uppercase tracking-wider text-[var(--text)]">{title}</span>
           <span className="shrink-0 rounded-full bg-[var(--inset)] px-2 py-0.5 text-[10px] font-extrabold text-[var(--muted)]">{count}</span>
         </button>
@@ -107,7 +108,7 @@ export function CategoriesBody() {
     const count = uses(id);
     return (
       <li key={id} className={`flex items-center gap-2 rounded-2xl bg-[var(--inset)] pl-3 pr-1.5 py-1.5 ${hidden ? 'opacity-60' : ''}`}>
-        <Icon size={16} strokeWidth={2.2} className="shrink-0 text-[var(--text)]" aria-hidden="true" />
+        <Icon size={ICON.md} strokeWidth={2.5} className="shrink-0 text-[var(--text)]" aria-hidden="true" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-extrabold text-[var(--text)]">{category.name}</span>
           <span className="block text-[11px] font-medium text-[var(--muted)]">
@@ -116,7 +117,7 @@ export function CategoriesBody() {
         </span>
         {own && (
           <button type="button" className={iconButton} onClick={() => startEdit(id)} aria-label={t('Edit {name}', { name: category.name })} title={t('Edit')}>
-            <Pencil size={15} />
+            <Pencil size={ICON.md} aria-hidden="true" />
           </button>
         )}
         <button
@@ -124,20 +125,20 @@ export function CategoriesBody() {
           className={iconButton}
           onClick={() => setCategoryHidden(id, !hidden)}
           disabled={!hidden && visibleCount <= 1}
-          aria-label={`${hidden ? 'Show' : 'Hide'} ${category.name}`}
+          aria-label={hidden ? t('Show {name}', { name: category.name }) : t('Hide {name}', { name: category.name })}
           title={hidden ? t('Show again') : t('Hide from the lists')}
         >
-          {hidden ? <Eye size={16} /> : <EyeOff size={16} />}
+          {hidden ? <Eye size={ICON.md} aria-hidden="true" /> : <EyeOff size={ICON.md} aria-hidden="true" />}
         </button>
         {own && (
           <button
             type="button"
-            className={`${iconButton} hover:!text-[#8C2D32] hover:!bg-[#F6D0D0]`}
+            className={`${iconButton} hover:!text-danger-ink hover:!bg-danger`}
             onClick={() => setDeleting(id)}
             aria-label={t('Delete {name}', { name: category.name })}
             title={t('Delete')}
           >
-            <Trash2 size={15} />
+            <Trash2 size={ICON.md} aria-hidden="true" />
           </button>
         )}
       </li>
@@ -164,10 +165,10 @@ export function CategoriesBody() {
               own ? (
                 <>
                   <button type="button" className={iconButton} onClick={() => { setTypeEditing(b.id); setTypeName(b.name); }} aria-label={t('Rename {name}', { name: b.name })} title={t('Rename')}>
-                    <Pencil size={15} />
+                    <Pencil size={ICON.md} aria-hidden="true" />
                   </button>
-                  <button type="button" className={`${iconButton} hover:!text-[#8C2D32] hover:!bg-[#F6D0D0]`} onClick={() => setTypeDeleting(b.id)} aria-label={t('Delete {name}', { name: b.name })} title={t('Delete')}>
-                    <Trash2 size={15} />
+                  <button type="button" className={`${iconButton} hover:!text-danger-ink hover:!bg-danger`} onClick={() => setTypeDeleting(b.id)} aria-label={t('Delete {name}', { name: b.name })} title={t('Delete')}>
+                    <Trash2 size={ICON.md} aria-hidden="true" />
                   </button>
                 </>
               ) : undefined
@@ -175,7 +176,7 @@ export function CategoriesBody() {
           >
             {typeEditing === b.id && (
               <div className="mb-2 flex items-center gap-1.5">
-                <input type="text" value={typeName} autoFocus maxLength={30} autoComplete="off" aria-label={t('Name of the type')} onChange={(event) => setTypeName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submitType(); }} className={`${textInput} min-w-0 flex-1 text-sm`} />
+                <input type="text" value={typeName} autoFocus maxLength={30} autoComplete="off" aria-label={t('Name of the type')} onChange={(event) => setTypeName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') submitType(); }} className={`${textInput} min-w-0 flex-1`} />
                 <button type="button" onClick={() => setTypeEditing(null)} className="pressable shrink-0 rounded-2xl bg-[var(--inset)] px-3 py-3 text-sm font-extrabold text-[var(--text)]">{t('Cancel')}</button>
                 <button type="button" disabled={!typeName.trim()} onClick={submitType} className="kc-primary-btn pressable shrink-0 rounded-2xl bg-activity px-3 py-3 text-sm font-extrabold text-activity-ink disabled:opacity-40">{t('Save')}</button>
               </div>
@@ -202,7 +203,7 @@ export function CategoriesBody() {
             placeholder={t('Investments, Family, Travel...')}
             onChange={(event) => setTypeName(event.target.value)}
             onKeyDown={(event) => { if (event.key === 'Enter') submitType(); }}
-            className={`${textInput} text-sm`}
+            className={`${textInput}`}
           />
           <p className="text-[11px] font-medium text-[var(--muted)]">{t('A type groups categories next to Needs and Wants. What goes in it is counted apart from both.')}</p>
           <div className="grid grid-cols-2 gap-2">
@@ -219,7 +220,7 @@ export function CategoriesBody() {
             onClick={() => startNew()}
             className="pressable pressable-soft w-full py-3 rounded-2xl bg-[var(--text)] text-[var(--on-text)] font-extrabold text-sm flex items-center justify-center gap-2"
           >
-            <Plus size={17} strokeWidth={2.5} />
+            <Plus size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
             {t('New category')}
           </button>
           {!basic && (
@@ -228,7 +229,7 @@ export function CategoriesBody() {
             onClick={() => { setTypeEditing(''); setTypeName(''); }}
             className="pressable pressable-soft w-full py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] font-extrabold text-sm flex items-center justify-center gap-2"
           >
-            <Plus size={17} strokeWidth={2.5} />
+            <Plus size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
             {t('New type')}
           </button>
           )}
@@ -249,7 +250,7 @@ export function CategoriesBody() {
               placeholder={t('Pets, Gym, Gifts...')}
               maxLength={30}
               autoComplete="off"
-              className={`${textInput} text-sm`}
+              className={`${textInput}`}
             />
           </div>
           <IconPicker value={icon} onChange={setIcon} />

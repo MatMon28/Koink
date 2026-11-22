@@ -1,4 +1,5 @@
-import { ListOrdered, Target, TrendingUp, Wallet } from 'lucide-react';
+import { ListOrdered, Target, ChartColumn, Wallet } from 'lucide-react';
+import { ICON } from '../lib/icons';
 import { useApp } from '../lib/store';
 import { tabOrder } from '../lib/tabs';
 import { usePillTab } from '../lib/pillTab';
@@ -7,10 +8,10 @@ import { t } from '../lib/i18n';
 
 // Each page has its own pastel when it is the active one (the style presets replace it with theirs).
 const NAV_META: Record<ActiveTab, { label: string; icon: typeof Wallet; activeClass: string }> = {
-  month: { label: 'Month', icon: Wallet, activeClass: 'bg-[#F6D0D0] text-[#6E2326]' },
-  transactions: { label: 'Transactions', icon: ListOrdered, activeClass: 'bg-[#FAE0B4] text-[#6E4412]' },
-  budgets: { label: 'Budgets', icon: Target, activeClass: 'bg-[#E2D6FF] text-[#49346F]' },
-  stats: { label: 'Statistics', icon: TrendingUp, activeClass: 'bg-[#CFE7FE] text-[#1A4670]' },
+  month: { label: 'Month', icon: Wallet, activeClass: 'bg-danger text-activity-ink' },
+  transactions: { label: 'Transactions', icon: ListOrdered, activeClass: 'bg-wants text-wants-ink' },
+  budgets: { label: 'Budgets', icon: Target, activeClass: 'bg-weight text-weight-ink' },
+  stats: { label: 'Statistics', icon: ChartColumn, activeClass: 'bg-needs text-needs-ink' },
 };
 export function Tabs() {
   const { activeTab, setActiveTab, data } = useApp();
@@ -49,7 +50,7 @@ export function Tabs() {
                   : 'w-8 h-8 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
               }`}
             >
-              <Icon size={16} />
+              <Icon size={ICON.md} aria-hidden="true" />
               {isActive && !ultra && <span>{t(item.label)}</span>}
             </button>
           );

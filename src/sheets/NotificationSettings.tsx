@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { BellRing, CalendarDays, Receipt, Repeat, TrendingUp } from 'lucide-react';
-import { Collapsible, Switch } from '../components/ui';
+import { ICON } from '../lib/icons';
+import { BellRing, CalendarDays, Receipt, Repeat, ChartColumn } from 'lucide-react';
+import { Collapsible, ToggleRow, textInput } from '../components/ui';
 import { getNotificationPermission, requestNotificationPermission, sendTestNotification, type NotificationPermission } from '../lib/notifications';
 import { isNativeApp } from '../lib/platform';
 import { WEEKDAYS } from '../lib/reminders';
@@ -18,7 +19,7 @@ function TimeField({ label, value, onChange }: { label: string; value: string; o
         onChange={(event) => {
           if (event.target.value) onChange(event.target.value);
         }}
-        className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-2.5 py-1.5 text-sm font-bold text-[var(--text)] tabular-nums normal-case tracking-normal focus:outline-none focus:border-[var(--muted)]"
+        className={`${textInput} !w-auto !min-h-9 !px-2.5 tabular-nums normal-case tracking-normal`}
       />
     </label>
   );
@@ -35,31 +36,9 @@ interface RowProps {
   children?: ReactNode;
 }
 
-/** A switch row; its controls (time, weekday) open below it while it is on. */
-function Row({ icon, tone, title, desc, on, onToggle, disabled, children }: RowProps) {
-  return (
-    <div className="bg-[var(--inset)] border border-[var(--border)] rounded-2xl">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        aria-label={title}
-        disabled={disabled}
-        onClick={onToggle}
-        className="w-full min-h-[52px] flex items-center justify-between gap-3 px-3 py-2.5 text-left rounded-2xl hover:bg-[var(--hover)] transition-colors disabled:opacity-50"
-      >
-        <span className="flex items-center gap-2.5 min-w-0">
-          <span className={`size-8 rounded-full flex items-center justify-center shrink-0 ${tone}`}>{icon}</span>
-          <span className="min-w-0">
-            <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{title}</span>
-            <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{t(desc)}</span>
-          </span>
-        </span>
-        <Switch on={on} />
-      </button>
-      {on && children && <div className="px-3 pb-3 pt-1 space-y-2.5">{children}</div>}
-    </div>
-  );
+/** A switch row of the shared `ToggleRow`; `desc` is the English description (translated by the row). */
+function Row({ desc, ...rest }: Omit<RowProps, 'children'> & { children?: ReactNode }) {
+  return <ToggleRow description={desc} {...rest} />;
 }
 
 /**
@@ -110,7 +89,7 @@ export function NotificationSettings() {
       </p>
 
       {permission === 'denied' && (
-        <p role="alert" className="text-[11px] font-bold rounded-xl px-3 py-2 bg-[#FAE0B4] text-[#7D4E14]">
+        <p role="alert" className="text-[11px] font-bold rounded-xl px-3 py-2 bg-wants text-wants-ink">
           {t('Notifications are blocked for Koink. Allow them in your')} {isNativeApp() ? t('phone') : t('browser')} {t('settings to receive reminders.')}
         </p>
       )}
@@ -129,7 +108,7 @@ export function NotificationSettings() {
 
       <div className="space-y-1.5">
         <Row
-          icon={<Receipt size={15} />}
+          icon={<Receipt size={ICON.md} aria-hidden="true" />}
           tone="bg-activity text-activity-ink"
           title={t('Daily reminder')}
           desc="Log the day's spending while you remember it"
@@ -141,8 +120,8 @@ export function NotificationSettings() {
 
         {!basic && (
         <Row
-          icon={<Repeat size={15} />}
-          tone="bg-[#CFE7FE] text-[#183F66]"
+          icon={<Repeat size={ICON.md} aria-hidden="true" />}
+          tone="bg-needs text-needs-ink"
           title={t('Recurring items')}
           desc={data.recurring.length === 0 ? 'Set up a recurring item first.' : 'On the day each one is due'}
           on={n.recurring.enabled}
@@ -157,7 +136,7 @@ export function NotificationSettings() {
         )}
 
         <Row
-          icon={<TrendingUp size={15} />}
+          icon={<ChartColumn size={ICON.md} aria-hidden="true" />}
           tone="bg-weight text-weight-ink"
           title={t('Weekly review')}
           desc="A look at where the week's money went"
@@ -174,7 +153,7 @@ export function NotificationSettings() {
                   aria-pressed={active}
                   aria-label={t(day.long)}
                   onClick={() => patch('weeklyReview', { weekday: day.id })}
-                  className={`pressable min-w-0 py-1.5 rounded-lg text-[11px] font-extrabold border ${
+                  className={`pressable min-w-0 py-1.5 rounded-xl text-[11px] font-extrabold border ${
                     active
                       ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]'
                       : 'bg-[var(--surface)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)]'
@@ -189,7 +168,7 @@ export function NotificationSettings() {
         </Row>
 
         <Row
-          icon={<CalendarDays size={15} />}
+          icon={<CalendarDays size={ICON.md} aria-hidden="true" />}
           tone="bg-nutrient text-nutrient-ink"
           title={t('New month')}
           desc={basic ? 'On the 1st: a fresh month to log' : 'On the 1st: check budgets, log what repeats'}
@@ -206,7 +185,7 @@ export function NotificationSettings() {
         disabled={permission === 'unsupported'}
         className="pressable pressable-soft w-full py-2.5 px-3 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] text-xs font-extrabold inline-flex items-center justify-center gap-1.5 disabled:opacity-40"
       >
-        <BellRing size={14} />
+        <BellRing size={ICON.sm} aria-hidden="true" />
         {t('Send a test notification')}
       </button>
     </Collapsible>

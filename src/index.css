@@ -62,6 +62,11 @@
   --color-weight-ink: #49346F;
   --color-weight-accent: #6B518F;
   --color-weight-soft: #F0E9FF;
+  /* Needs / wants / gift cards and the destructive pink: one pastel, one ink (guide to UI UX fixes, 1.1) */
+  --color-needs: #CFE7FE;  --color-needs-ink: #183B5E;  --color-needs-accent: #436B94;  --color-needs-soft: #E8F3FF;
+  --color-wants: #FAE0B4;  --color-wants-ink: #7D4E14;  --color-wants-accent: #9B6E32;  --color-wants-soft: #FDF3E0;
+  --color-gift: #FFD9E8;   --color-gift-ink: #7A1F4B;   --color-gift-accent: #9C4C73;   --color-gift-soft: #FFEDF4;
+  --color-danger: #F6D0D0; --color-danger-ink: #7A2727; --color-danger-hover: #F0BDBD;
 }
 
 /*
@@ -102,6 +107,7 @@
   --muted: #736B62;
   --hover: #E6DECF;
   --text-warn: #7A2727;
+  --text-ok: #1F6B3F;
   /* Ink for text drawn on a solid var(--text) fill (selected segments, toasts). */
   --on-text: var(--bg);
 }
@@ -116,6 +122,7 @@
   --muted: #BBC1D0;
   --hover: #414655;
   --text-warn: #F2A7A7;
+  --text-ok: #8FD6A8;
 }
 
 [data-theme="dark"] {
@@ -128,6 +135,7 @@
   --muted: #9AA0AE;
   --hover: #2C3140;
   --text-warn: #F2A7A7;
+  --text-ok: #8FD6A8;
 }
 
 @layer base {
@@ -220,6 +228,10 @@
   from { opacity: 0.2; transform: translate3d(0, 7px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
+@keyframes kc-toast-out {
+  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  to { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.97); }
+}
 @keyframes kc-toast-in {
   from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.96); }
   to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
@@ -230,6 +242,7 @@
 .anim-page { animation: kc-fade-in 200ms ease-out; }
 .anim-pop { animation: kc-pop-in var(--dur-soft) var(--ease-soft) backwards; }
 .anim-toast { animation: kc-toast-in var(--dur-soft) var(--ease-bounce) backwards; }
+.anim-toast-out { animation: kc-toast-out 160ms cubic-bezier(0.4, 0, 1, 1) forwards; }
 .anim-dock {
   animation: kc-dock-in 130ms var(--ease-bounce) backwards;
   transition: opacity 85ms ease-out;
@@ -292,13 +305,18 @@ html.kc-sheet-open, .kc-sheet-open body { overscroll-behavior: none; }
 .accordion-grid {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: grid-template-rows 320ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .accordion-grid[data-open="true"] { grid-template-rows: 1fr; }
+/* The content fades with the height, so it is never cut off hard by the moving edge. Both are plain
+   transitions: a tap while one runs simply turns it round from where it is. */
 .accordion-inner {
   overflow: hidden;
   min-height: 0;
+  opacity: 0;
+  transition: opacity 200ms ease;
 }
+.accordion-grid[data-open="true"] > .accordion-inner { opacity: 1; transition-duration: 280ms; }
 
 /* Pressed controls: a quick shrink while the finger is down, then a springy return. */
 .pressable {
@@ -327,6 +345,7 @@ html.kc-sheet-open, .kc-sheet-open body { overscroll-behavior: none; }
   .anim-page,
   .anim-pop,
   .anim-toast,
+  .anim-toast-out,
   .anim-dock,
   .anim-dock .kc-dock-btn,
   .anim-value {
@@ -338,6 +357,7 @@ html.kc-sheet-open, .kc-sheet-open body { overscroll-behavior: none; }
     visibility: hidden;
   }
   .accordion-grid,
+  .accordion-inner,
   .pressable,
   .kc-dock-wrap {
     transition: none !important;

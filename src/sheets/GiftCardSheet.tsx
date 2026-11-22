@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { ICON } from '../lib/icons';
 import { Gift, Receipt } from 'lucide-react';
 import { Modal } from '../components/Modal';
-import { AmountStepper, ConfirmDialog, SectionLabel, textInput } from '../components/ui';
+import { AmountStepper, ConfirmDialog, DateField, SectionLabel, buttonClass, textInput } from '../components/ui';
 import { categoryMeta } from '../lib/categories';
 import { formatDay, todayStr } from '../lib/dates';
 import { giftCardBalance, giftCardEntries, giftCardExpired } from '../lib/giftcards';
@@ -47,7 +48,7 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
 
   return (
     <div className="space-y-4">
-      <Banner tone="gift" icon={Gift} label={name.trim() || 'Gift card'} value={money(shownLeft, { cents: true })} sub={original ? t('of {v} · {v2}', { v: money(initial, { cents: true }), v2: expired ? t('expired') : t('left') }) : t('Value')} />
+      <Banner tone="gift" icon={Gift} label={name.trim() || t('Gift card')} value={money(shownLeft, { cents: true })} sub={original ? t('of {v} · {v2}', { v: money(initial, { cents: true }), v2: expired ? t('expired') : t('left') }) : t('Value')} />
 
       <div>
         <SectionLabel htmlFor="gift-name">{t('Name')}</SectionLabel>
@@ -60,22 +61,20 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
           placeholder={t('Bookshop, Amazon, Spa voucher')}
           maxLength={40}
           autoComplete="off"
-          className={`${textInput} text-sm`}
+          className={`${textInput}`}
         />
       </div>
 
       <div>
         <SectionLabel htmlFor="gift-expires">{t('Valid until')} <span className="normal-case tracking-normal font-bold opacity-70">{t('· optional')}</span></SectionLabel>
         <div className="flex items-center gap-1.5">
-          <input
+          <DateField
             id="gift-expires"
-            type="date"
             value={expires}
             onChange={(event) => setExpires(event.target.value)}
-            className="min-w-0 flex-1 bg-[var(--inset)] border border-[var(--border)] rounded-xl px-2.5 py-2.5 text-sm font-bold text-[var(--text)] tabular-nums focus:outline-none focus:border-[var(--muted)]"
           />
           {expires && (
-            <button type="button" onClick={() => setExpires('')} className="pressable px-3 py-2.5 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-xs font-extrabold text-[var(--muted)]">
+            <button type="button" onClick={() => setExpires('')} className={`${buttonClass({ variant: 'secondary' })} shrink-0 text-[var(--muted)]`}>
               {t('No limit')}
             </button>
           )}
@@ -99,7 +98,7 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
           placeholder={t('Card number, where it can be used...')}
           maxLength={500}
           rows={2}
-          className={`${textInput} text-sm font-medium resize-none leading-snug`}
+          className={`${textInput} py-2.5 font-medium resize-none leading-snug`}
         />
       </div>
 
@@ -117,7 +116,7 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
                       <span className="block truncate text-xs font-extrabold text-[var(--text)]">{tx.note || categoryMeta('expense', tx.categoryId, []).name}</span>
                       <span className="block text-[11px] font-medium text-[var(--muted)]">{formatDay(tx.date)}</span>
                     </span>
-                    <span className="text-xs font-extrabold tabular-nums text-[#7A2727] shrink-0">-{money(tx.giftCard?.amount ?? 0, { cents: true })}</span>
+                    <span className="text-xs font-extrabold tabular-nums text-[var(--text-warn)] shrink-0">-{money(tx.giftCard?.amount ?? 0, { cents: true })}</span>
                   </button>
                 </li>
               ))}
@@ -129,7 +128,7 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
               onClick={() => openSheet({ type: 'tx', kind: 'expense', giftCardId: original.id })}
               className="pressable mt-2 w-full py-2.5 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-xs font-extrabold text-[var(--text)] inline-flex items-center justify-center gap-1.5"
             >
-              <Receipt size={14} aria-hidden="true" />
+              <Receipt size={ICON.sm} aria-hidden="true" />
               {t('Spend from this card')}
             </button>
           )}

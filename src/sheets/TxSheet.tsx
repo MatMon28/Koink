@@ -2,13 +2,13 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { ChevronDown, Gift, Plus, RefreshCw } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { Modal } from '../components/Modal';
-import { AmountDisplay, NumPad, SaveBeforeCloseDialog, SectionLabel, textInput, useAmountBuffer } from '../components/ui';
+import { AmountDisplay, DateField, NumPad, SaveBeforeCloseDialog, SectionLabel, textInput, useAmountBuffer } from '../components/ui';
 import { accountBalance, goalSaved } from '../lib/calc';
 import { allExpenseCategories, categoryMeta, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
 import { addDays, defaultDateFor, formatDay, formatMonth, monthOf, todayStr } from '../lib/dates';
 import { giftCardBalance, giftCardCover, giftCardExpired } from '../lib/giftcards';
 import { currencyDecimals, currencySymbol, formatRate, percent, round2 } from '../lib/format';
-import { iconFor } from '../lib/icons';
+import { iconFor, ICON } from '../lib/icons';
 import { useApp, useSheet } from '../lib/store';
 import type { Bucket, Kind, Sheet } from '../lib/types';
 import { Banner, BucketPicker, ChoiceGrid, CurrencyGrid, IconPicker, SaveRow, type Choice } from './shared';
@@ -161,7 +161,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
       const goal = data.goals.find((g) => g.id === categoryId);
       const saved = round2((goal ? goalSaved(others, goal) : 0) + converted);
       return {
-        label: goal?.name ?? 'Savings',
+        label: goal?.name ?? t('Savings'),
         value: money(saved),
         sub: goal && goal.target > 0 ? `${percent(saved, goal.target)}% of ${money(goal.target)}` : undefined,
       };
@@ -259,7 +259,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
           onClick={() => openSheet({ type: 'goal' })}
           className="pressable pressable-soft w-full py-3 bg-weight hover:brightness-95 text-weight-ink font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm"
         >
-          <Plus size={18} strokeWidth={2.5} />
+          <Plus size={ICON.lg} strokeWidth={2.5} aria-hidden="true" />
           {t('New savings goal')}
         </button>
       </div>
@@ -343,13 +343,12 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
         <div className="flex flex-wrap items-center gap-1.5">
           {dateChip(today, 'Today')}
           {dateChip(yesterday, 'Yesterday')}
-          <input
+          <DateField
             id="tx-date"
-            type="date"
+            compact
             value={date}
             onChange={(event) => setDate(event.target.value || date)}
             aria-label={t('Date: {v}', { v: formatDay(date, false) })}
-            className="min-w-0 flex-1 bg-[var(--inset)] border border-[var(--border)] rounded-xl px-2.5 py-[0.4375rem] text-xs font-bold text-[var(--text)] tabular-nums focus:outline-none focus:border-[var(--muted)]"
           />
         </div>
       </div>
@@ -391,7 +390,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
             <span className="min-w-0 truncate">
               = <span className="text-[var(--text)] font-extrabold">{money(converted, { cents: true })}</span> {t('at 1')} {currency} = {formatRate(rate)} {mainCurrency}
             </span>
-            <RefreshCw size={13} aria-hidden="true" className="shrink-0" />
+            <RefreshCw size={ICON.sm} aria-hidden="true" className="shrink-0" />
           </button>
         )}
       </div>
@@ -428,7 +427,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
                   onClick={() => setAccountId(a.id)}
                   className={`${pill} inline-flex items-center gap-1.5 ${active ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'}`}
                 >
-                  <Icon size={14} aria-hidden="true" />
+                  <Icon size={ICON.sm} aria-hidden="true" />
                   <span className="truncate">{a.name}</span>
                 </button>
               );
@@ -436,7 +435,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
           </div>
           {account && converted > 0 && (
             <p className="mt-1.5 text-[11px] font-bold text-[var(--muted)] tabular-nums">
-              {account.name} {t('afterwards:')} <span className={accountAfter < 0 ? 'text-[#A3312F]' : 'text-[var(--text)]'}>{money(accountAfter, { cents: true })}</span>
+              {account.name} {t('afterwards:')} <span className={accountAfter < 0 ? 'text-[var(--text-warn)]' : 'text-[var(--text)]'}>{money(accountAfter, { cents: true })}</span>
             </p>
           )}
         </div>
@@ -460,7 +459,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
                   onClick={() => setGiftCardId(card.id)}
                   className={`${pill} inline-flex items-center gap-1.5 tabular-nums ${active ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'}`}
                 >
-                  <Gift size={14} aria-hidden="true" />
+                  <Gift size={ICON.sm} aria-hidden="true" />
                   <span className="truncate">{card.name}</span>
                   <span className="opacity-70">{money(left, { cents: true })}</span>
                 </button>
@@ -491,7 +490,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
           placeholder={t('Why, with whom, what exactly...')}
           maxLength={1000}
           rows={3}
-          className={`${textInput} text-sm font-medium resize-none leading-snug`}
+          className={`${textInput} py-2.5 font-medium resize-none leading-snug`}
         />
       </div>
 
@@ -539,7 +538,7 @@ function AmountStep({ kind, amount, onAmount, currency, picking, onPicking, onCu
           title={t('Pay in another currency')}
         >
           {currency}
-          <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${picking ? 'rotate-180' : ''}`} />
+          <ChevronDown size={ICON.sm} aria-hidden="true" className={`transition-transform ${picking ? 'rotate-180' : ''}`} />
         </button>
       </div>
 
@@ -592,7 +591,7 @@ function RateStep({ currency, mainCurrency, rate, amount, onRate, onReset, onDon
         onClick={onReset}
         className="pressable inline-flex items-center gap-1.5 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] px-3 py-1.5 text-xs font-extrabold text-[var(--muted)] hover:text-[var(--text)]"
       >
-        <RefreshCw size={13} aria-hidden="true" />
+        <RefreshCw size={ICON.sm} aria-hidden="true" />
         {t('Use the current rate')}
       </button>
       <NumPad onPress={press} onConfirm={onDone} confirmDisabled={rate <= 0} confirmLabel={t('Use this rate')} />
@@ -624,7 +623,7 @@ function NewCategoryStep({ onCancel, onCreate }: { onCancel: () => void; onCreat
           placeholder={t('Pets, Gym, Gifts...')}
           maxLength={30}
           autoComplete="off"
-          className={`${textInput} text-sm`}
+          className={`${textInput}`}
         />
       </div>
       <IconPicker value={icon} onChange={setIcon} />

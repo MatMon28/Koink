@@ -17,7 +17,16 @@ git apply --3way changes.patch
 
 To make the next one: commit or stash nothing, edit, `git add -A`, then `git diff --cached --binary > changes.patch` and unstage with `git reset`. Keep the docs of every changed file in the same patch (rule in [README.md](README.md#keeping-the-docs-current)).
 
-## What the Latest round changed (UI / UX coherence audit)
+## What the Latest round changed (UI / UX fixes and interruptible animations)
+
+This patch is `git diff --binary` against **`e90c431`** ("Removed tracking", the head of `main` when the round started). It changes code, so apply it on that commit (or with `--3way`).
+
+- Edited code: `src/index.css`, `src/App.tsx`, `src/lib/{icons,i18n.it}.ts`, `src/components/{PageSwiper,Modal,ui,cards,Tabs,DataStatus,StorageBanner,MonthNavigator,InstallApp,ProjectDownload,RecurringRow,PersonalInflation,ExpenseChart}.tsx`, `src/pages/{MonthView,TransactionsView,StatsView,BudgetsView}.tsx`, `src/sheets/*.tsx` (hex to tokens, icon scale, shared controls, wording).
+- Edited docs: `README.md`, `guide to UI UX fixes.md` (section 6), `docs/{design-system,gestures,motion,known-gaps,changes-patch}.md`, `docs/file-map/{components,lib}.md`, `docs/features/{transactions,settings,language}.md`.
+- No new file, dependency, schema or binary change. No stored data changes (icon keys in `ICON_CHOICES` are untouched).
+- Verification: `git apply --check changes.patch`, `npx tsc -b`, `npm run build`. `eslint` is not a dependency of the repository, so the guide's `npm run lint` step could not run.
+
+## What the previous round changed (UI / UX coherence audit)
 
 - New: `guide to UI UX fixes.md` (root; the file name has spaces, so quote it on a command line).
 - Edited docs: `README.md`, `docs/README.md`, `docs/design-system.md`, `docs/known-gaps.md`, `docs/changes-patch.md`, `docs/file-map/config-scripts-public.md`.

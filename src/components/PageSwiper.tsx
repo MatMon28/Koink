@@ -31,10 +31,14 @@ const FLICK_MIN_PX = 24;
 /** The neighbouring page rides this far beside the current one. */
 const RAIL_GAP_PX = 24;
 /** A committed swipe finishes its travel in this time (shorter when the finger already did most of it). */
-const COMMIT_MS = 170;
 const COMMIT_MIN_MS = 90;
 /** A page reached without a swipe (the header pill, Back) slides in from this far on its side. */
 const ENTER_OFFSET_PX = 28;
+/** The finish of a committed swipe never takes longer / shorter than this, and follows the release speed (px per ms, at least). */
+const EXIT_MAX_MS = 220;
+const EXIT_MIN_SPEED = 1.4;
+/** A caught rail that the finger did not move afterwards just rests (it is not a swipe to commit). */
+const CATCH_TAP_PX = 4;
 
 /** Controls that need horizontal drags themselves, or must never start a page change. */
 const OWN_GESTURE = '[data-no-swipe], input, textarea, select, [contenteditable="true"], [role="slider"]';
@@ -60,6 +64,26 @@ interface Gesture {
   samples: Sample[];
   locked: boolean;
   dx: number;
+  /** Where the rail was when the finger caught it mid-animation (0 for a rail at rest). */
+  base: number;
+  /** Where the rail is now: base plus the finger's travel. */
+  pos: number;
+}
+
+/** What is running on the rail and how a new touch ends or takes it over. */
+interface RailRun {
+  /** Ends it at once: the animation's own end state is in place afterwards. */
+  end: () => void;
+  /** The last stretch of a committed swipe: a touch lands the new page, then swipes from it. */
+  commit?: boolean;
+  /** Stops it where it is and returns the rail's offset, so a finger can pick it up with no jump. */
+  grab?: () => number;
+}
+
+/** The sideways offset of an element in the middle of a transform animation. */
+function railOffset(el: HTMLElement): number {
+  const matrix = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+  return Number.isFinite(matrix.m41) ? matrix.m41 : 0;
 }
 
 interface Peek {
@@ -93,7 +117,7 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
    * `commit` marks the last stretch of a committed swipe: a touch that ends it lands the page and
    * then swipes normally (a quick second swipe goes on to the next page).
    */
-  const running = useRef<{ end: () => void; commit?: boolean } | null>(null);
+  const running = useRef<RailRun | null>(null);
   const [peek, setPeek] = useState<Peek | null>(null);
   /** Pages kept mounted but hidden, ready to ride along. */
   const [warm, setWarm] = useState<ActiveTab[]>([]);
@@ -131,7 +155,16 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
       ],
       { duration: SPRING.soft.duration, easing: SPRING.soft.easing },
     );
-    const mine = { end: () => enter.cancel() }; // no fill: cancelling is the finished state
+    const mine: RailRun = {
+      end: () => enter.cancel(), // no fill: cancelling is the finished state
+      grab: () => {
+        const at = railOffset(el);
+        enter.cancel();
+        el.style.transform = at ? `translate3d(${at.toFixed(1)}px, 0, 0)` : '';
+        running.current = null;
+        return at;
+      },
+    };
     running.current = mine;
     enter.onfinish = enter.oncancel = () => {
       if (running.current === mine) running.current = null;
@@ -141,11 +174,15 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
   // A new touch (or key) ends whatever the rail is doing at once: the slide-in, the spring back, or
   // the last stretch of a committed swipe (the new page is then simply in place). Kakcal's rule.
   useEffect(() => {
-    const endNow = () => {
-      // A second swipe started while the first was still travelling: the first lands now (this runs
-      // in the capture phase, before the page's own pointerdown), and the new touch then starts a
-      // normal swipe from the page that has just arrived. One touch still changes one page at most.
-      running.current?.end();
+    const endNow = (event: Event) => {
+      const run = running.current;
+      if (!run) return;
+      // A finger that lands on the rail itself catches a slide-in or a spring-back where it is (the
+      // page's own pointerdown below does that, with no jump). Everything else, and every key,
+      // ends the animation at once. A committed swipe is never caught: its new page lands now (this
+      // runs in the capture phase, before the page's own pointerdown) and the touch swipes from it.
+      if (run.grab && event.type !== 'keydown' && ref.current?.contains(event.target as Node)) return;
+      run.end();
     };
     (['pointerdown', 'touchstart', 'keydown'] as const).forEach((type) => document.addEventListener(type, endNow, { capture: true, passive: true }));
     return () => (['pointerdown', 'touchstart', 'keydown'] as const).forEach((type) => document.removeEventListener(type, endNow, true));
@@ -157,41 +194,79 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     if (!el) return;
     const from = el.style.transform || 'translate3d(0, 0, 0)';
     el.style.transform = '';
+    const rest = () => {
+      el.style.willChange = '';
+      setPeek(null); // the neighbour leaves once it is out of sight again
+    };
     if (prefersReducedMotion() || typeof el.animate !== 'function') {
-      setPeek(null);
+      rest();
       return;
     }
     const back = el.animate([{ transform: from }, { transform: 'translate3d(0, 0, 0)' }], { duration: SPRING.soft.duration, easing: SPRING.soft.easing });
-    const mine = {
+    const mine: RailRun = {
       end: () => {
         back.onfinish = null;
         back.cancel(); // at rest at once
         running.current = null;
-        setPeek(null);
+        rest();
+      },
+      // A new swipe starts from where the page is now, not from the rest position.
+      grab: () => {
+        const at = railOffset(el);
+        back.onfinish = null;
+        back.cancel();
+        el.style.transform = `translate3d(${at.toFixed(1)}px, 0, 0)`;
+        running.current = null;
+        return at;
       },
     };
     running.current = mine;
     back.onfinish = () => {
       if (running.current === mine) running.current = null;
-      setPeek(null); // the neighbour leaves once it is out of sight again
+      rest();
     };
   };
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     swallowClick.current = false;
     gesture.current = null;
-    if (event.pointerType === 'mouse' || !event.isPrimary || document.documentElement.classList.contains('kc-sheet-open') || leaving.current) return;
-    if (event.clientX < EDGE_RESERVED_PX || event.clientX > window.innerWidth - EDGE_RESERVED_PX) return;
     const target = event.target as Element;
-    if (target.closest(OWN_GESTURE) || hasHorizontalScroller(target, event.currentTarget)) return;
+    const eligible =
+      event.pointerType !== 'mouse' &&
+      event.isPrimary &&
+      !document.documentElement.classList.contains('kc-sheet-open') &&
+      event.clientX >= EDGE_RESERVED_PX &&
+      event.clientX <= window.innerWidth - EDGE_RESERVED_PX &&
+      !target.closest(OWN_GESTURE) &&
+      !hasHorizontalScroller(target, event.currentTarget);
+    // A new touch never waits for an animation: it ends it, or (a slide-in or spring-back that this
+    // touch can swipe) catches the page exactly where it is and carries on from there.
+    const run = running.current;
+    let base = 0;
+    if (run) {
+      if (eligible && run.grab) base = run.grab();
+      else run.end();
+    }
+    if (!eligible || leaving.current) return;
+    const caught = Math.abs(base) > 1;
     gesture.current = {
       id: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
       samples: [{ pos: event.clientX, at: event.timeStamp }],
-      locked: false,
+      locked: caught,
       dx: 0,
+      base: caught ? base : 0,
+      pos: caught ? base : 0,
     };
+    if (caught) {
+      // The finger has the page: no dead zone before it follows, and the touch is not a tap.
+      swallowClick.current = true;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      const side = base < 0 ? 1 : -1;
+      const neighbour = neighbourTab(activeTab, side);
+      if (neighbour && (peek?.tab !== neighbour || peek.side !== side)) setPeek({ tab: neighbour, side, top: Math.max(0, window.scrollY) });
+    }
   };
 
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -213,13 +288,17 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
       event.currentTarget.setPointerCapture?.(event.pointerId);
     }
 
+    el.style.willChange = 'transform'; // its own layer for the length of the drag
     trackSample(g.samples, event.clientX, event.timeStamp);
     g.dx = dx;
-    const side = dx < 0 ? 1 : -1;
+    // The side follows where the rail is (a page that was caught off-centre may be dragged back across rest).
+    const lead = g.base + dx * FOLLOW;
+    const side = (lead === 0 ? dx : lead) < 0 ? 1 : -1;
     const neighbour = neighbourTab(activeTab, side);
     // The page on the side being revealed joins the rail (and changes if the finger turns round).
     if (neighbour && (peek?.tab !== neighbour || peek.side !== side)) setPeek({ tab: neighbour, side, top: Math.max(0, window.scrollY) });
-    el.style.transform = `translate3d(${(dx * (neighbour ? FOLLOW : RUBBER)).toFixed(1)}px, 0, 0)`;
+    g.pos = neighbour ? lead : g.base + dx * RUBBER;
+    el.style.transform = `translate3d(${g.pos.toFixed(1)}px, 0, 0)`;
   };
 
   const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -228,13 +307,15 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     gesture.current = null;
     if (!g || !el || g.id !== event.pointerId || !g.locked) return;
 
-    const step = g.dx < 0 ? 1 : -1;
+    const step = g.pos < 0 ? 1 : -1;
     const next = neighbourTab(activeTab, step);
-    const distance = Math.abs(g.dx);
+    const distance = Math.abs(g.pos) / FOLLOW;
     const commitAt = Math.min(COMMIT_MAX_PX, Math.max(COMMIT_MIN_PX, window.innerWidth * COMMIT_SHARE));
     const speed = releaseSpeed(g.samples, event.timeStamp);
-    const flick = Math.abs(speed) > FLICK_SPEED && Math.sign(speed) === Math.sign(g.dx) && distance > FLICK_MIN_PX;
-    if (!next || (distance < commitAt && !flick)) {
+    const flick = Math.abs(speed) > FLICK_SPEED && Math.sign(speed) === Math.sign(g.pos) && distance > FLICK_MIN_PX;
+    // A page that was only caught (the finger hardly moved) rests where it belongs.
+    const justCaught = g.base !== 0 && Math.abs(g.dx) < CATCH_TAP_PX;
+    if (!next || justCaught || (distance < commitAt && !flick)) {
       settle();
       return;
     }
@@ -245,6 +326,7 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     // One render: the neighbour's element is kept (same key) and becomes the current page.
     const promote = () => {
       running.current = null;
+      el.style.willChange = '';
       // Synchronous, so the rail is back at rest in the very frame the new page is current: there
       // is no moment in which a new touch could meet the old page, a stale rail or a stuck `leaving`.
       flushSync(() => {
@@ -263,10 +345,12 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     leaving.current = true;
     setPillTab(next); // the pill changes the moment the swipe is committed, not after the page has travelled
     const travel = el.offsetWidth + RAIL_GAP_PX;
-    const done = Math.min(1, (distance * FOLLOW) / travel);
+    // The exit carries on at the speed the finger let go with: a hard flick is quick, a slow drag is not hurried.
+    const remaining = Math.max(0, travel - Math.abs(g.pos));
+    const duration = Math.min(EXIT_MAX_MS, Math.max(COMMIT_MIN_MS, remaining / Math.max(Math.abs(speed), EXIT_MIN_SPEED)));
     const exit = el.animate(
-      [{ transform: `translate3d(${-step * travel}px, 0, 0)` }],
-      { duration: Math.max(COMMIT_MIN_MS, COMMIT_MS * (1 - done)), easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' },
+      [{ transform: `translate3d(${g.pos.toFixed(1)}px, 0, 0)` }, { transform: `translate3d(${-step * travel}px, 0, 0)` }],
+      { duration, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' },
     );
     exit.onfinish = promote;
     exit.oncancel = () => {
@@ -278,6 +362,7 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     running.current = {
       commit: true,
       end: () => {
+        el.style.willChange = '';
         exit.onfinish = null;
         exit.oncancel = null;
         promote();

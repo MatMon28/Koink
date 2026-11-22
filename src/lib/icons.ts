@@ -44,3 +44,6 @@ export const ICON_CHOICES: { key: string; label: string; icon: LucideIcon }[] = 
 const byKey = new Map(ICON_CHOICES.map((choice) => [choice.key, choice.icon]));
 
 export const iconFor = (key: string | undefined, fallback: LucideIcon = Tag): LucideIcon => (key ? byKey.get(key) : undefined) ?? fallback;
+
+/** The icon scale (guide to UI UX fixes, 1.4): mark = inside a text line, sm = chips, md = default, lg = sheet close / save, xl = header and dock. */
+export const ICON = { mark: 12, sm: 14, md: 16, lg: 18, xl: 22 } as const;

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { ICON } from '../lib/icons';
 import { Settings, User } from 'lucide-react';
 import { PRESS_ANIMATIONS } from '../brand/art.js';
 import { useApp } from '../lib/store';
@@ -143,7 +144,7 @@ export function Header() {
           >
             <div className="flex items-center">
               <button type="button" onClick={() => openSheet({ type: 'profile' })} className={iconButton} title={t('Profile')} aria-label={t('Profile')}>
-                <User size={21} />
+                <User size={ICON.xl} aria-hidden="true" />
               </button>
             </div>
 
@@ -153,14 +154,14 @@ export function Header() {
               onClick={onTitle}
               aria-label={t('Koink: go to the Month page')}
               title={t('Koink')}
-              className="kc-logo-btn flex justify-self-center rounded-md transition-opacity hover:opacity-80"
+              className="kc-logo-btn flex justify-self-center rounded-xl transition-opacity hover:opacity-80"
             >
               <Wordmark className="h-10 sm:h-11" />
             </button>
 
             <div className="flex items-center justify-end">
               <button type="button" onClick={() => openSheet({ type: 'settings' })} className={iconButton} title={t('Settings')} aria-label={t('Settings')}>
-                <Settings size={22} />
+                <Settings size={ICON.xl} aria-hidden="true" />
               </button>
             </div>
           </div>

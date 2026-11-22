@@ -35,3 +35,7 @@ Everywhere an entry is listed with its category (this page, the Income and Savin
 ## Basic mode
 
 In [Basic mode](basic-mode.md) the chips are All / Expenses / Income (a stored *Savings* filter counts as All), rows never name an account, and the filter panel has no Account block. The list comes from `txs` (savings entries stay in the journal but are not listed).
+
+## Empty state (UI / UX fixes round)
+
+With no entries at all the page says *Log your first expense or income on the Month page.* and offers an **Add expense** button (the button bar exists on the Month page only). The kind chips and the layout switch use the shared `PillGroup` / `pillItem`; the search field is 44 px high with 16 px text on touch; the amount filters are text fields with the decimal keypad.

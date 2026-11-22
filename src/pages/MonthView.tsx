@@ -1,11 +1,12 @@
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Banknote, CalendarDays, Gift, ChartPie, Columns2, LayoutList, ListTree, PenLine, Plus, Receipt, Repeat, Sparkles, Tag, Target, Wallet, X, type LucideIcon } from 'lucide-react';
+import { ICON } from '../lib/icons';
+import { Banknote, CalendarDays, Gift, ChartPie, Grid2x2, LayoutList, ListTree, Pencil, Plus, Receipt, Repeat, FlaskConical, Tag, Target, Wallet, X, type LucideIcon } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { EmptyRow, FoldCard, Headline, HeroPair, NoteCard, Pills, ShareCard, TxRow, type PillItem } from '../components/cards';
 import { MonthNavigator } from '../components/MonthNavigator';
 import { WidgetStrip } from '../components/WidgetStrip';
 import { RecurringRow } from '../components/RecurringRow';
-import { Bar, ConfirmDialog } from '../components/ui';
+import { Bar, ConfirmDialog, pillGroup, pillItem } from '../components/ui';
 import { budgetSummary, goalSaved, monthTotals, recurringSlots, ruleShares, slotEntry } from '../lib/calc';
 import { allExpenseCategories, categoryMeta, isCategoryHidden } from '../lib/categories';
 import { elapsedDays, formatDay, todayStr } from '../lib/dates';
@@ -124,9 +125,9 @@ export function MonthView() {
   };
 
   const layouts: { id: Layout; label: string; icon: ReactNode }[] = [
-    { id: 'compact', label: 'Compact', icon: <Columns2 size={15} aria-hidden="true" /> },
-    { id: 'normal', label: 'Normal', icon: <LayoutList size={15} aria-hidden="true" /> },
-    { id: 'expanded', label: 'Expanded', icon: <ListTree size={15} aria-hidden="true" /> },
+    { id: 'compact', label: 'Compact', icon: <Grid2x2 size={ICON.md} aria-hidden="true" /> },
+    { id: 'normal', label: 'Normal', icon: <LayoutList size={ICON.md} aria-hidden="true" /> },
+    { id: 'expanded', label: 'Expanded', icon: <ListTree size={ICON.md} aria-hidden="true" /> },
   ];
 
   const days = elapsedDays(selectedMonth);
@@ -150,17 +151,17 @@ export function MonthView() {
 
     // Grey on purpose (see Pills in cards.tsx): the colours belong to Needs / Wants / Savings.
     const pills: PillItem[] = [
-      { tone: 'neutral', icon: Receipt, text: String(count), label: count === 1 ? 'entry' : 'entries', title: `${count} ${count === 1 ? 'entry' : 'entries'} this month` },
-      { tone: 'neutral', icon: ChartPie, text: `${share}%`, label: 'of spending', title: `${share}% of this month's spending` },
+      { tone: 'neutral', icon: Receipt, text: String(count), label: count === 1 ? 'entry' : 'entries', title: count === 1 ? t('1 entry this month') : t('{n} entries this month', { n: count }) },
+      { tone: 'neutral', icon: ChartPie, text: `${share}%`, label: 'of spending', title: t("{share}% of this month's spending", { share }) },
     ];
     // The budget pill does not exist in Basic mode.
     if (!basic) {
       pills.push(
         limit > 0
           ? left >= 0
-            ? { tone: 'neutral', icon: Wallet, text: moneyFit(left, 6), label: 'left', title: `${money(left)} of the ${money(limit)} budget left` }
-            : { tone: 'alert', icon: Wallet, text: moneyFit(left, 6), label: 'over', title: `${money(-left)} over the ${money(limit)} budget` }
-          : { tone: 'neutral', icon: Wallet, text: '–', label: 'no budget', title: 'No budget set' },
+            ? { tone: 'neutral', icon: Wallet, text: moneyFit(left, 6), label: 'left', title: t('{left} of the {limit} budget left', { left: money(left), limit: money(limit) }) }
+            : { tone: 'alert', icon: Wallet, text: moneyFit(left, 6), label: 'over', title: t('{over} over the {limit} budget', { over: money(-left), limit: money(limit) }) }
+          : { tone: 'neutral', icon: Wallet, text: '–', label: 'no budget', title: t('No budget set') },
       );
     }
 
@@ -169,7 +170,7 @@ export function MonthView() {
         <FoldCard
           variant="slot"
           id={category.id}
-          icon={<Icon size={compact ? 15 : 16} strokeWidth={2.2} />}
+          icon={<Icon size={compact ? 15 : 16} strokeWidth={2.5} />}
           title={category.name}
           headline={<Headline text={moneyFit(total, compact ? 7 : 11)} compact={compact} />}
           summary={count > 0 ? <Pills items={pills} stretch labels={!compact} /> : muted('Nothing yet', true)}
@@ -188,13 +189,13 @@ export function MonthView() {
             >
               <span className="flex items-center justify-between gap-2 text-[11px] tabular-nums">
                 <span className="font-bold text-[var(--muted)] group-hover:text-[var(--text)]">{t('Budget')}</span>
-                <span className="font-extrabold text-[var(--text)]">{money(total)} <span className="font-semibold text-[var(--muted)]">{t('of')} {money(limit)}</span></span>
+                <span className="font-extrabold text-[var(--text)]">{money(total)} <span className="font-bold text-[var(--muted)]">{t('of')} {money(limit)}</span></span>
               </span>
               <Bar
                 value={total}
                 max={limit}
                 track="kc-water-track bg-[var(--inset)]"
-                fill={left < 0 ? 'bg-activity-accent' : category.bucket === 'needs' ? 'kc-water-fill bg-[#1A4670]' : 'kc-water-fill bg-[#7D4E14]'}
+                fill={left < 0 ? 'bg-activity-accent' : category.bucket === 'needs' ? 'kc-water-fill bg-needs-ink' : 'kc-water-fill bg-wants-ink'}
               />
             </button>
           )}
@@ -225,7 +226,7 @@ export function MonthView() {
       return (
         <FoldCard
           {...shared}
-          icon={<Banknote size={compact ? 15 : 16} strokeWidth={2.2} />}
+          icon={<Banknote size={compact ? 15 : 16} strokeWidth={2.5} />}
           title={t('Income')}
           headline={<Headline text={moneyFit(totals.income, compact ? 7 : 11)} compact={compact} />}
           summary={muted(incomeItems.length ? sources.join(' · ') : 'Nothing yet', incomeItems.length === 0)}
@@ -244,14 +245,14 @@ export function MonthView() {
       return (
         <FoldCard
           {...shared}
-          icon={<PigIcon size={compact ? 15 : 16} strokeWidth={2.2} />}
+          icon={<PigIcon size={compact ? 15 : 16} strokeWidth={2.5} />}
           title={t('Savings')}
           headline={<Headline text={moneyFit(totals.saved, compact ? 7 : 11)} compact={compact} />}
-          summary={muted(data.goals.length ? `${data.goals.length} ${data.goals.length === 1 ? 'goal' : 'goals'}` : 'No goals yet')}
+          summary={muted(data.goals.length ? (data.goals.length === 1 ? t('1 goal') : t('{n} goals', { n: data.goals.length })) : t('No goals yet'))}
           onAdd={add}
           addLabel={data.goals.length ? t('Move money to savings') : t('New savings goal')}
         >
-          {data.goals.length === 0 && <EmptyRow text={t('No goals yet')} action={t('New goal')} onAdd={add} />}
+          {data.goals.length === 0 && <EmptyRow text={t('No goals yet')} action={t('New savings goal')} onAdd={add} />}
           {data.goals.map((goal) => {
             const saved = goalSaved(data.txs, goal);
             return (
@@ -261,7 +262,7 @@ export function MonthView() {
                     <span className="font-bold text-[var(--text)] truncate group-hover:opacity-80">{goal.name}</span>
                     <span className="font-extrabold text-[var(--text)] shrink-0">
                       {money(saved)}
-                      {goal.target > 0 && <span className="font-semibold text-[var(--muted)]"> {t('of')} {money(goal.target)}</span>}
+                      {goal.target > 0 && <span className="font-bold text-[var(--muted)]"> {t('of')} {money(goal.target)}</span>}
                     </span>
                   </span>
                   <Bar value={saved} max={goal.target || saved || 1} track="kc-water-track bg-[var(--inset)]" fill="kc-water-fill bg-[var(--muted)]" />
@@ -273,7 +274,7 @@ export function MonthView() {
                   aria-label={t('Add to {name}', { name: goal.name })}
                   title={t('Add to {name}', { name: goal.name })}
                 >
-                  <Plus size={15} strokeWidth={2.5} />
+                  <Plus size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
                 </button>
               </div>
             );
@@ -294,7 +295,7 @@ export function MonthView() {
       return (
         <FoldCard
           {...shared}
-          icon={<Gift size={compact ? 15 : 16} strokeWidth={2.2} />}
+          icon={<Gift size={compact ? 15 : 16} strokeWidth={2.5} />}
           title={t('Gift cards')}
           headline={<Headline text={moneyFit(totalLeft, compact ? 7 : 11)} compact={compact} />}
           summary={muted(rows.length === 0 ? 'None yet' : `${usable.length} ${usable.length === 1 ? 'card' : 'cards'} left to use`, rows.length === 0)}
@@ -309,12 +310,12 @@ export function MonthView() {
                   <span className="font-bold text-[var(--text)] truncate group-hover:opacity-80">{card.name}</span>
                   <span className="font-extrabold text-[var(--text)] shrink-0">
                     {money(left, { cents: true })}
-                    <span className="font-semibold text-[var(--muted)]"> {t('of')} {money(card.initial, { cents: true })}</span>
+                    <span className="font-bold text-[var(--muted)]"> {t('of')} {money(card.initial, { cents: true })}</span>
                   </span>
                 </span>
                 <Bar value={left} max={card.initial || 1} track="kc-water-track bg-[var(--inset)]" fill="kc-water-fill bg-[var(--muted)]" />
                 {(expired || card.expires) && (
-                  <span className="block text-[11px] font-semibold text-[var(--muted)]">{expired ? t('Expired') : t('Valid until')} {card.expires && formatDay(card.expires)}</span>
+                  <span className="block text-[11px] font-bold text-[var(--muted)]">{expired ? t('Expired') : t('Valid until')} {card.expires && formatDay(card.expires)}</span>
                 )}
               </button>
               {left > 0 && !expired && (
@@ -325,7 +326,7 @@ export function MonthView() {
                   aria-label={t('Spend from {name}', { name: card.name })}
                   title={t('Spend from {name}', { name: card.name })}
                 >
-                  <Receipt size={15} strokeWidth={2.4} />
+                  <Receipt size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -338,11 +339,11 @@ export function MonthView() {
     return (
       <FoldCard
         {...shared}
-        icon={<Repeat size={compact ? 15 : 16} strokeWidth={2.2} />}
+        icon={<Repeat size={compact ? 15 : 16} strokeWidth={2.5} />}
         title={t('Recurring')}
         headline={<Headline text={`${logged.length}/${monthRecurring.length}`} compact={compact} unit={t('logged')} />}
         summary={muted(
-          data.recurring.length === 0 ? 'Nothing set up' : due.length === 0 ? 'All done' : dueTotal > 0 ? `${money(dueTotal)} still due` : `${due.length} to come`,
+          data.recurring.length === 0 ? t('Nothing set up') : due.length === 0 ? t('All done') : dueTotal > 0 ? t('{v} still due', { v: money(dueTotal) }) : t('{n} to come', { n: due.length }),
         )}
         onAdd={add}
         addLabel={t('New recurring item')}
@@ -362,7 +363,7 @@ export function MonthView() {
 
       {data.settings.sampleData && (
         <div className="flex items-center gap-2.5 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]/60 pl-3.5 pr-1.5 py-1.5">
-          <Sparkles size={15} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
+          <FlaskConical size={ICON.md} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
           <p className="min-w-0 flex-1 text-xs font-medium text-[var(--muted)]">
             <span className="font-extrabold text-[var(--text)]">{t('Sample data.')}</span><span className="max-[374px]:hidden"> {t('Look around.')}</span>
           </p>
@@ -380,14 +381,14 @@ export function MonthView() {
             aria-label={t('Keep the sample data and hide this note')}
             title={t('Keep the sample data')}
           >
-            <X size={15} />
+            <X size={ICON.md} aria-hidden="true" />
           </button>
         </div>
       )}
 
       {data.txs.length === 0 && !data.settings.sampleData && (
         <div className="flex items-center gap-2.5 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--surface)]/60 px-3.5 py-2.5">
-          <PenLine size={15} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
+          <Pencil size={ICON.md} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
           <p className="min-w-0 flex-1 text-xs font-medium text-[var(--muted)]">
             <span className="font-extrabold text-[var(--text)]">{t('An empty journal.')}</span> {t('Log your first income or expense with the bar at the bottom.')}
           </p>
@@ -467,7 +468,7 @@ export function MonthView() {
         </div>
 
         <div className={`um-hide flex flex-wrap items-center justify-center gap-2 px-1 ${basic ? 'hidden' : ''}`}>
-          <div role="group" aria-label={t('Card layout')} className="inline-flex items-center gap-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] p-1">
+          <div role="group" aria-label={t('Card layout')} className={pillGroup}>
             {layouts.map((item) => (
               <button
                 key={item.id}
@@ -476,11 +477,7 @@ export function MonthView() {
                 aria-pressed={layout === item.id}
                 aria-label={t(item.label)}
                 title={t(item.label)}
-                className={`pressable inline-flex min-h-8 min-w-10 items-center justify-center rounded-full px-3 text-[11px] font-extrabold ${
-                  layout === item.id
-                    ? 'bg-[var(--text)] text-[var(--on-text)]'
-                    : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
-                }`}
+                className={pillItem(layout === item.id, true)}
               >
                 {item.icon}
               </button>

@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
+import { ICON } from '../lib/icons';
 import { ChevronDown, ChevronRight, CircleHelp, Hourglass, ListChecks, Plus, ShieldCheck, Target } from 'lucide-react';
 import { HeroPair, NoteCard } from '../components/cards';
 import { MonthNavigator } from '../components/MonthNavigator';
@@ -15,10 +16,10 @@ import { t } from '../lib/i18n';
 
 // Track and fill follow the pill colours of the active style (blue for needs, peach for wants).
 const BUCKET_BAR: Record<string, { track: string; fill: string; dot: string }> = {
-  needs: { track: 'bg-[var(--pill-c-bg,#CFE7FE)]', fill: 'bg-[var(--pill-c-text,#1A4670)]', dot: 'bg-[#CFE7FE] border-[#1A4670]/30' },
-  wants: { track: 'bg-[var(--pill-p-bg,#FAE0B4)]', fill: 'bg-[var(--pill-p-text,#7D4E14)]', dot: 'bg-[#FAE0B4] border-[#7D4E14]/30' },
+  needs: { track: 'bg-[var(--pill-c-bg,var(--color-needs))]', fill: 'bg-[var(--pill-c-text,var(--color-needs-ink))]', dot: 'bg-needs border-needs-ink/30' },
+  wants: { track: 'bg-[var(--pill-p-bg,var(--color-wants))]', fill: 'bg-[var(--pill-p-text,var(--color-wants-ink))]', dot: 'bg-wants border-wants-ink/30' },
   // The user's own types.
-  other: { track: 'bg-[#C9EFD3]', fill: 'bg-[#1A5632]', dot: 'bg-[#C9EFD3] border-[#1A5632]/30' },
+  other: { track: 'bg-intake', fill: 'bg-intake-ink', dot: 'bg-intake border-intake-ink/30' },
 };
 
 /**
@@ -34,7 +35,7 @@ function SectionCard({ id, title, aside, children, onAdd, addLabel }: { id: stri
           <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">{title}</h3>
           <span className="flex items-center gap-2">
             {aside}
-            <ChevronDown size={16} className={`text-[var(--muted)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+            <ChevronDown size={ICON.md} className={`text-[var(--muted)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
           </span>
         </button>
         {onAdd && (
@@ -45,7 +46,7 @@ function SectionCard({ id, title, aside, children, onAdd, addLabel }: { id: stri
             title={addLabel}
             className="pressable size-8 shrink-0 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] flex items-center justify-center"
           >
-            <Plus size={16} strokeWidth={2.5} />
+            <Plus size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -99,7 +100,7 @@ export function BudgetsView() {
               >
                 <span className="flex items-center justify-between gap-2">
                   <span className="flex items-center gap-2 min-w-0">
-                    <Icon size={15} strokeWidth={2.2} className="kc-meal-icon shrink-0 text-[var(--text)]" />
+                    <Icon size={ICON.md} strokeWidth={2.5} className="kc-meal-icon shrink-0 text-[var(--text)]" aria-hidden="true" />
                     <span className="text-xs sm:text-sm font-extrabold text-[var(--text)] truncate">{category.name}</span>
                   </span>
                   <span className="flex items-center gap-1.5 tabular-nums shrink-0">
@@ -112,7 +113,7 @@ export function BudgetsView() {
                     ) : (
                       <span className="text-[11px] font-bold text-[var(--muted)]">{t('Set a budget')}</span>
                     )}
-                    <ChevronRight size={16} className="text-[var(--muted)] group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight size={ICON.md} className="text-[var(--muted)] group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
                   </span>
                 </span>
                 <span className="flex items-center justify-between text-[11px] tabular-nums">
@@ -182,13 +183,13 @@ export function BudgetsView() {
         onClick={() => openSheet({ type: 'profile' })}
         className="um-hide pressable pressable-soft mx-auto flex max-w-full items-center gap-2 rounded-full bg-[var(--surface)] hover:bg-[var(--inset)] border border-[var(--border)] px-3.5 py-1.5 text-[11px] font-extrabold text-[var(--text)]"
       >
-        <Target size={13} aria-hidden="true" className="shrink-0 text-[var(--muted)]" />
+        <Target size={ICON.sm} aria-hidden="true" className="shrink-0 text-[var(--muted)]" />
         <span className="truncate">
           {summary.generic
             ? t('Monthly budget {v} (from your profile)', { v: money(data.profile.monthlyBudget) })
             : t('Set one monthly budget for everything')}
         </span>
-        <ChevronRight size={13} aria-hidden="true" className="shrink-0 text-[var(--muted)]" />
+        <ChevronRight size={ICON.sm} aria-hidden="true" className="shrink-0 text-[var(--muted)]" />
       </button>
 
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
@@ -202,7 +203,7 @@ export function BudgetsView() {
 
         <SectionCard
           id="goals"
-          title={<><span className="size-2.5 rounded-full border bg-[#E2D6FF] border-[#49346F]/30" aria-hidden="true" />{t('Savings goals')}</>}
+          title={<><span className="size-2.5 rounded-full border bg-weight border-weight-ink/30" aria-hidden="true" />{t('Savings goals')}</>}
           onAdd={() => openSheet({ type: 'goal' })}
           addLabel={t('New savings goal')}
         >
@@ -231,7 +232,7 @@ export function BudgetsView() {
                         <span className="font-extrabold text-[var(--text)]">{money(saved)}</span>
                         {goal.target > 0 && <span className="font-bold text-[var(--muted)]">{t('of')} {money(goal.target)}</span>}
                       </span>
-                      <Bar value={saved} max={goal.target || saved || 1} track="bg-[var(--pill-f-bg,#E2D6FF)]" fill="bg-[var(--pill-f-text,#49346F)]" />
+                      <Bar value={saved} max={goal.target || saved || 1} track="bg-[var(--pill-f-bg,var(--color-weight))]" fill="bg-[var(--pill-f-text,var(--color-weight-ink))]" />
                     </button>
                     <button
                       type="button"
@@ -240,7 +241,7 @@ export function BudgetsView() {
                       title={t('Add money to {name}', { name: goal.name })}
                       className="pressable w-11 shrink-0 rounded-2xl bg-weight hover:brightness-95 text-weight-ink flex items-center justify-center"
                     >
-                      <Plus size={18} strokeWidth={2.5} />
+                      <Plus size={ICON.lg} strokeWidth={2.5} aria-hidden="true" />
                     </button>
                   </div>
                 );
@@ -251,7 +252,7 @@ export function BudgetsView() {
 
         <SectionCard
           id="recurring"
-          title={<><span className="size-2.5 rounded-full border bg-[#CFE7FE] border-[#183B5E]/30" aria-hidden="true" />{t('Recurring')}</>}
+          title={<><span className="size-2.5 rounded-full border bg-needs border-needs-ink/30" aria-hidden="true" />{t('Recurring')}</>}
           onAdd={() => openSheet({ type: 'recurringEdit' })}
           addLabel={t('New recurring item')}
         >
@@ -273,7 +274,7 @@ export function BudgetsView() {
           onClick={() => openSheet({ type: 'categories' })}
           className="pressable inline-flex items-center gap-2 rounded-full bg-[var(--surface)] hover:bg-[var(--inset)] border border-[var(--border)] px-4 py-2 text-xs font-extrabold text-[var(--text)]"
         >
-          <ListChecks size={15} aria-hidden="true" />
+          <ListChecks size={ICON.md} aria-hidden="true" />
           {t('Manage expense categories')}
         </button>
       </div>

@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { ICON } from '../lib/icons';
 import { isWeekly, nextDueDate, nextDueMonth, recurringDue, slotEntry } from '../lib/calc';
 import { categoryMeta } from '../lib/categories';
 import { formatDay, formatMonth, ordinal } from '../lib/dates';
@@ -36,11 +37,11 @@ export function RecurringRow({ item, month, monthItems, date }: { item: Recurrin
         <button
           type="button"
           onClick={() => removeTx(entry.id)}
-          className="kc-done pressable h-8 w-[4rem] shrink-0 rounded-full bg-[#C9EFD3] text-[#1A5632] text-[11px] font-extrabold inline-flex items-center justify-center gap-1"
+          className="kc-done pressable h-8 w-[4rem] shrink-0 rounded-full bg-intake text-intake-ink text-[11px] font-extrabold inline-flex items-center justify-center gap-1"
           aria-label={t('{name} is logged for {v}. Remove the entry', { name: item.name, v: formatMonth(month) })}
           title={t('Logged. Tap to remove the entry')}
         >
-          <Check size={13} strokeWidth={3} />
+          <Check size={ICON.sm} strokeWidth={2.5} aria-hidden="true" />
           {t('Done')}
         </button>
       ) : !due ? (

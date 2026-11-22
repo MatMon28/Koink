@@ -1,4 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { ICON } from '../lib/icons';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { pushBackLayer } from '../lib/back';
@@ -419,9 +420,10 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
             type="button"
             onClick={onClose}
             aria-label={t('Close')}
-            className="pressable w-10 h-10 shrink-0 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] hover:text-[var(--text)] flex items-center justify-center"
+            title={t('Close')}
+            className="pressable size-10 shrink-0 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] hover:text-[var(--text)] flex items-center justify-center"
           >
-            <X size={18} />
+            <X size={ICON.lg} aria-hidden="true" />
           </button>
         </div>
         <div data-sheet-scroll data-scroll-fade="y" className="p-4 sm:p-5 overflow-y-auto overscroll-contain min-h-0 flex-1 text-[var(--text)]">{children}</div>

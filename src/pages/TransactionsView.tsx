@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Columns2, List, Repeat, Search, SlidersHorizontal, StickyNote, Trash2, X } from 'lucide-react';
+import { ICON } from '../lib/icons';
+import { Receipt, Columns2, LayoutList, Repeat, Search, SlidersHorizontal, StickyNote, Trash2, X } from 'lucide-react';
 import { categoryMeta } from '../lib/categories';
 import { formatDay, formatMonth, monthOf } from '../lib/dates';
 import { formatMoney, round2 } from '../lib/format';
-import { KeyIcon, textInput } from '../components/ui';
+import { Button, DateField, KeyIcon, SectionLabel, pillGroup, pillItem, textInput } from '../components/ui';
 import { useApp } from '../lib/store';
 import type { Kind, Tx } from '../lib/types';
 import { usePersistentState } from '../lib/usePersistentState';
@@ -21,8 +22,8 @@ const FILTERS: { id: Filter; label: string }[] = [
  * two columns on every screen ('pair'). Months are always told apart by a heading.
  */
 type View = 'list' | 'pair';
-const VIEWS: { id: View; label: string; icon: typeof List; hint: string }[] = [
-  { id: 'list', label: 'List', icon: List, hint: 'One list, newest first' },
+const VIEWS: { id: View; label: string; icon: typeof LayoutList; hint: string }[] = [
+  { id: 'list', label: 'List', icon: LayoutList, hint: 'One list, newest first' },
   { id: 'pair', label: '2 days', icon: Columns2, hint: 'Two days next to each other' },
 ];
 const PAGE = 14;
@@ -68,7 +69,7 @@ function EntryRow({ tx, narrow = false }: { tx: Tx; narrow?: boolean }) {
   const account = tx.accountId && !basic ? data.accounts.find((a) => a.id === tx.accountId) : undefined;
   const amount = money(tx.amount, { cents: true });
   const title = tx.note || meta.name;
-  const noteMark = tx.details ? <StickyNote size={11} strokeWidth={2.4} className="shrink-0 text-[var(--muted)]" aria-label={t('Has a note')} /> : null;
+  const noteMark = tx.details ? <StickyNote size={ICON.mark} strokeWidth={2.5} className="shrink-0 text-[var(--muted)]" aria-label={t('Has a note')} /> : null;
   const amountText = tx.kind === 'income' ? `+${amount}` : tx.kind === 'expense' ? `-${amount}` : amount;
   const amountTone = tx.kind === 'income' ? 'text-[var(--intake-on-surface)]' : tx.kind === 'saving' ? 'text-[var(--weight-on-surface)]' : 'text-[var(--text)]';
   const foreign = tx.foreign ? formatMoney(tx.foreign.amount, tx.foreign.currency, { cents: true }) : null;
@@ -81,26 +82,26 @@ function EntryRow({ tx, narrow = false }: { tx: Tx; narrow?: boolean }) {
       >
         {!narrow && (
           <span className="kc-meal-icon size-9 rounded-full flex items-center justify-center shrink-0 text-[var(--text)]">
-            <Icon size={16} strokeWidth={2.2} />
+            <Icon size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
           </span>
         )}
         <span className="min-w-0 w-full flex-1">
           {/* 1. the category */}
           <span className="text-xs sm:text-sm font-bold text-[var(--text)] truncate flex items-center gap-1">
-            {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label={t('Recurring')} className="shrink-0 text-[var(--muted)]" />}
+            {tx.recurringId && <Repeat size={ICON.mark} strokeWidth={2.5} aria-label={t('Recurring')} className="shrink-0 text-[var(--muted)]" />}
             <span className="truncate">{meta.name}</span>
             {!tx.note && noteMark}
           </span>
           {/* 2. the title, below the category */}
           {tx.note && (
-            <span className="text-[11px] sm:text-xs font-semibold text-[var(--text)]/80 truncate flex items-center gap-1 min-w-0">
+            <span className="text-[11px] sm:text-xs font-bold text-[var(--text)]/80 truncate flex items-center gap-1 min-w-0">
               <span className="truncate">{tx.note}</span>
               {noteMark}
             </span>
           )}
           {account && (
             <span className="um-hide text-[11px] font-medium text-[var(--muted)] flex items-center gap-1 min-w-0">
-              <KeyIcon name={account.icon} size={10} strokeWidth={2.6} className="shrink-0" aria-hidden="true" />
+              <KeyIcon name={account.icon} size={ICON.mark} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
               <span className="truncate">{account.name}</span>
             </span>
           )}
@@ -114,7 +115,7 @@ function EntryRow({ tx, narrow = false }: { tx: Tx; narrow?: boolean }) {
       <button
         type="button"
         onClick={() => removeTx(tx.id)}
-        className={`pressable shrink-0 rounded-full text-[var(--muted)] hover:text-[#8C2D32] hover:bg-[#F6D0D0] flex items-center justify-center ${narrow ? 'mr-0.5 size-8' : 'mr-1 size-9'}`}
+        className={`pressable shrink-0 rounded-full text-[var(--muted)] hover:text-danger-ink hover:bg-danger flex items-center justify-center ${narrow ? 'mr-0.5 size-8' : 'mr-1 size-9'}`}
         title={t('Delete')}
         aria-label={t('Delete {title}', { title })}
       >
@@ -158,7 +159,7 @@ function MonthHeading({ block, band }: { block: MonthBlock; band: boolean }) {
 }
 
 export function TransactionsView() {
-  const { data, basic, txs, money } = useApp();
+  const { data, basic, txs, money, openSheet } = useApp();
   const [query, setQuery] = useState('');
   const [storedFilter, setFilter] = usePersistentState<Filter>('koink_tx_filter', 'all');
   // Basic mode has no Savings chip: a Savings filter chosen in Full mode counts as All.
@@ -180,7 +181,7 @@ export function TransactionsView() {
 
   // Categories offered in the panel: only the ones that carry entries of the kind being shown.
   const catOptions = useMemo(() => {
-    const seen = new Map<string, { key: string; kind: Kind; name: string; icon: typeof List }>();
+    const seen = new Map<string, { key: string; kind: Kind; name: string; icon: typeof LayoutList }>();
     for (const tx of txs) {
       if (filter !== 'all' && tx.kind !== filter) continue;
       const key = catKey(tx);
@@ -267,7 +268,7 @@ export function TransactionsView() {
     <div className="um-stack space-y-3.5">
       {/* Kind filter: above the search bar */}
       <div className="flex justify-center">
-        <div role="group" aria-label={t('Show')} className="inline-flex w-fit max-w-full items-center justify-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
+        <div role="group" aria-label={t('Show')} className={`${pillGroup}`}>
           {FILTERS.filter((item) => !basic || item.id !== 'saving').map((item) => (
             <button
               key={item.id}
@@ -278,11 +279,7 @@ export function TransactionsView() {
                 setExtra((prev) => ({ ...prev, cats: [] })); // the category list changes with the kind
                 setLimit(PAGE);
               }}
-              className={`pressable px-3.5 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap ${
-                filter === item.id
-                  ? 'bg-[var(--text)] text-[var(--on-text)]'
-                  : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
-              }`}
+              className={pillItem(filter === item.id)}
             >
               {t(item.label)}
             </button>
@@ -293,7 +290,7 @@ export function TransactionsView() {
       {/* Search bar with the filter button next to it */}
       <div className="flex items-center gap-2">
         <div className="relative min-w-0 flex-1">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none" aria-hidden="true" />
+          <Search size={ICON.md} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none" aria-hidden="true" />
           <input
             type="search"
             value={query}
@@ -304,16 +301,16 @@ export function TransactionsView() {
             placeholder={t('Search titles, notes, categories, amounts')}
             aria-label={t('Search entries')}
             enterKeyHint="search"
-            className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-full pl-11 pr-11 py-2.5 text-sm font-bold text-[var(--text)] placeholder:text-[var(--muted)]/70 placeholder:font-medium focus:outline-none focus:border-[var(--muted)] transition-colors [&::-webkit-search-cancel-button]:hidden"
+            className="w-full min-h-11 bg-[var(--surface)] border border-[var(--border)] rounded-full pl-11 pr-11 text-base [@media(pointer:fine)]:text-sm font-bold text-[var(--text)] placeholder:text-[var(--muted)] placeholder:font-medium focus:outline-none focus:border-[var(--muted)] transition-colors [&::-webkit-search-cancel-button]:hidden"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
               aria-label={t('Clear search')}
-              className="pressable absolute right-1.5 top-1/2 -translate-y-1/2 size-8 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
+              className="pressable absolute right-1.5 top-1/2 -translate-y-1/2 size-8 after:absolute after:-inset-1.5 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
             >
-              <X size={15} />
+              <X size={ICON.md} aria-hidden="true" />
             </button>
           )}
         </div>
@@ -329,9 +326,9 @@ export function TransactionsView() {
               : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text)] hover:bg-[var(--inset)]'
           }`}
         >
-          <SlidersHorizontal size={17} aria-hidden="true" />
+          <SlidersHorizontal size={ICON.md} aria-hidden="true" />
           {activeExtra > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-[#F6D0D0] text-[#7A2727] text-[10px] font-extrabold flex items-center justify-center tabular-nums">{activeExtra}</span>
+            <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-danger text-danger-ink text-[10px] font-extrabold flex items-center justify-center tabular-nums">{activeExtra}</span>
           )}
         </button>
       </div>
@@ -349,7 +346,7 @@ export function TransactionsView() {
                   setLimit(PAGE);
                 }}
                 disabled={activeExtra === 0}
-                className="pressable px-2.5 py-1 rounded-lg text-[11px] font-extrabold border bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)] disabled:opacity-40"
+                className="pressable px-2.5 py-1 rounded-xl text-[11px] font-extrabold border bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)] disabled:opacity-40"
               >
                 {t('Clear filters')}
               </button>
@@ -357,7 +354,7 @@ export function TransactionsView() {
 
             {catOptions.length > 0 && (
               <div>
-                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Category')}</span>
+                <SectionLabel>{t('Category')}</SectionLabel>
                 <div className="flex flex-wrap gap-1.5">
                   {catOptions.map((option) => {
                     const Icon = option.icon;
@@ -372,7 +369,7 @@ export function TransactionsView() {
                           on ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] text-[var(--text)] border-[var(--border)] hover:bg-[var(--hover)]'
                         }`}
                       >
-                        <Icon size={12} strokeWidth={2.4} aria-hidden="true" />
+                        <Icon size={ICON.mark} strokeWidth={2.5} aria-hidden="true" />
                         {option.name}
                       </button>
                     );
@@ -383,7 +380,7 @@ export function TransactionsView() {
 
             {data.accounts.length > 0 && !basic && (
               <div>
-                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Account')}</span>
+                <SectionLabel>{t('Account')}</SectionLabel>
                 <div className="flex flex-wrap gap-1.5">
                   {[...data.accounts.map((a) => ({ id: a.id, name: a.name, icon: a.icon })), { id: '_none', name: t('No account'), icon: '' }].map((account) => {
                     const on = extra.accounts.includes(account.id);
@@ -397,7 +394,7 @@ export function TransactionsView() {
                           on ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] text-[var(--text)] border-[var(--border)] hover:bg-[var(--hover)]'
                         }`}
                       >
-                        {account.icon && <KeyIcon name={account.icon} size={12} strokeWidth={2.4} aria-hidden="true" />}
+                        {account.icon && <KeyIcon name={account.icon} size={ICON.mark} strokeWidth={2.5} aria-hidden="true" />}
                         {account.name}
                       </button>
                     );
@@ -408,20 +405,20 @@ export function TransactionsView() {
 
             <div className="grid grid-cols-2 gap-2.5">
               <label className="block min-w-0">
-                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('From')}</span>
-                <input type="date" value={extra.from} max={extra.to || undefined} onChange={(event) => patch({ from: event.target.value })} className={`${textInput} text-sm`} />
+                <SectionLabel>{t('From')}</SectionLabel>
+                <DateField value={extra.from} max={extra.to || undefined} onChange={(event) => patch({ from: event.target.value })} />
               </label>
               <label className="block min-w-0">
-                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('To')}</span>
-                <input type="date" value={extra.to} min={extra.from || undefined} onChange={(event) => patch({ to: event.target.value })} className={`${textInput} text-sm`} />
+                <SectionLabel>{t('To')}</SectionLabel>
+                <DateField value={extra.to} min={extra.from || undefined} onChange={(event) => patch({ to: event.target.value })} />
               </label>
               <label className="block min-w-0">
-                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Amount from')}</span>
-                <input type="number" inputMode="decimal" min={0} value={extra.min} onChange={(event) => patch({ min: event.target.value })} placeholder="0" className={`${textInput} text-sm`} />
+                <SectionLabel>{t('Amount from')}</SectionLabel>
+                <input type="text" inputMode="decimal" value={extra.min} onChange={(event) => patch({ min: event.target.value })} placeholder="0" className={`${textInput}`} />
               </label>
               <label className="block min-w-0">
-                <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Amount to')}</span>
-                <input type="number" inputMode="decimal" min={0} value={extra.max} onChange={(event) => patch({ max: event.target.value })} placeholder="∞" className={`${textInput} text-sm`} />
+                <SectionLabel>{t('Amount to')}</SectionLabel>
+                <input type="text" inputMode="decimal" value={extra.max} onChange={(event) => patch({ max: event.target.value })} placeholder="∞" className={`${textInput}`} />
               </label>
             </div>
           </div>
@@ -435,7 +432,7 @@ export function TransactionsView() {
           {sums.in > 0 && <> {t('· in')} {money(sums.in)}</>}
           {sums.out > 0 && <> {t('· out')} {money(sums.out)}</>}
         </p>
-        <div role="group" aria-label={t('Layout')} className="um-hide inline-flex shrink-0 items-center gap-0.5 p-0.5 bg-[var(--surface)] border border-[var(--border)] rounded-full">
+        <div role="group" aria-label={t('Layout')} className={`${pillGroup} um-hide`}>
           {VIEWS.map((item) => {
             const Icon = item.icon;
             return (
@@ -446,13 +443,9 @@ export function TransactionsView() {
                 aria-label={t(item.label)}
                 onClick={() => setView(item.id)}
                 title={t(item.hint)}
-                className={`pressable inline-flex size-7 items-center justify-center rounded-full ${
-                  view === item.id
-                    ? 'bg-[var(--text)] text-[var(--on-text)]'
-                    : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
-                }`}
+                className={pillItem(view === item.id, true)}
               >
-                <Icon size={14} aria-hidden="true" />
+                <Icon size={ICON.sm} aria-hidden="true" />
               </button>
             );
           })}
@@ -463,8 +456,13 @@ export function TransactionsView() {
         <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl px-5 py-8 text-center">
           <p className="text-sm font-extrabold text-[var(--text)]">{txs.length === 0 ? t('No entries yet') : t('Nothing matches')}</p>
           <p className="kc-section-empty mt-1 text-xs font-medium text-[var(--muted)]">
-            {txs.length === 0 ? t('Use the buttons at the bottom to log your first expense or income.') : t('Try another word, or show all kinds of entries.')}
+            {txs.length === 0 ? t('Log your first expense or income on the Month page.') : t('Try another word, or show all kinds of entries.')}
           </p>
+          {txs.length === 0 && (
+            <Button size="sm" variant="secondary" icon={Receipt} className="mt-4" onClick={() => openSheet({ type: 'tx', kind: 'expense' })}>
+              {t('Add expense')}
+            </Button>
+          )}
           {txs.length > 0 && (query || filter !== 'all' || activeExtra > 0) && (
             <button
               type="button"

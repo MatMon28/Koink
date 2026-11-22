@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ICON } from '../lib/icons';
 import { ChartColumn, ChevronDown, Maximize2, SlidersHorizontal, Tag } from 'lucide-react';
 import { ChartLargeView } from './ChartLargeView';
 import { ChartPlot, type ChartType, type PlotLine } from './ChartPlot';
 import { ChartPopup } from './ChartPopup';
-import { textInput } from './ui';
+import { textInput, DateField } from './ui';
 import { addDays, formatMonth, monthOf, todayStr } from '../lib/dates';
 import {
   bucketTitle,
@@ -320,11 +321,11 @@ export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Pr
             <div className="grid grid-cols-2 gap-2.5">
               <label className="block min-w-0">
                 <span className={fieldLabel}>{t('From')}</span>
-                <input type="date" value={otherFrom} max={otherTo || undefined} onChange={(event) => event.target.value && setOtherFrom(event.target.value)} className={`${textInput} text-sm`} />
+                <DateField value={otherFrom} max={otherTo || undefined} onChange={(event) => event.target.value && setOtherFrom(event.target.value)} />
               </label>
               <label className="block min-w-0">
                 <span className={fieldLabel}>{t('To')}</span>
-                <input type="date" value={otherTo} min={otherFrom || undefined} onChange={(event) => event.target.value && setOtherTo(event.target.value)} className={`${textInput} text-sm`} />
+                <DateField value={otherTo} min={otherFrom || undefined} onChange={(event) => event.target.value && setOtherTo(event.target.value)} />
               </label>
             </div>
           )}
@@ -347,7 +348,7 @@ export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Pr
               const color = byCategory ? lines.find((line) => line.key === category.id)?.color : undefined;
               return (
                 <button key={category.id} type="button" aria-pressed={on} onClick={() => pickCategory(category.id)} className={chip(on)}>
-                  {color ? <span className="size-2 shrink-0 rounded-full" style={{ background: color }} aria-hidden="true" /> : <Icon size={12} strokeWidth={2.4} aria-hidden="true" />}
+                  {color ? <span className="size-2 shrink-0 rounded-full" style={{ background: color }} aria-hidden="true" /> : <Icon size={ICON.mark} strokeWidth={2.5} aria-hidden="true" />}
                   {t(category.name)}
                 </button>
               );
@@ -374,19 +375,19 @@ export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Pr
         <div className="flex items-center gap-1">
           <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="min-w-0 flex-1 flex items-center justify-between gap-2 text-left">
             <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
-              <ChartColumn size={16} className="text-[var(--muted)]" aria-hidden="true" />
+              <ChartColumn size={ICON.md} className="text-[var(--muted)]" aria-hidden="true" />
               {t('Expenses over time')}
             </h3>
             <span className="flex items-center gap-2 tabular-nums">
               <span className="text-xs font-bold text-[var(--muted)]">{money(headTotal)}</span>
-              <ChevronDown size={16} className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+              <ChevronDown size={ICON.md} className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
             </span>
           </button>
           <button type="button" onClick={() => setSettingsOpen(true)} aria-label={t('Chart settings')} title={t('Chart settings')} className={roundButton}>
-            <SlidersHorizontal size={15} aria-hidden="true" />
+            <SlidersHorizontal size={ICON.md} aria-hidden="true" />
           </button>
           <button type="button" onClick={() => setExpanded(true)} aria-label={expandLabel} title={expandLabel} className={roundButton}>
-            <Maximize2 size={15} aria-hidden="true" />
+            <Maximize2 size={ICON.md} aria-hidden="true" />
           </button>
         </div>
         <div className="accordion-grid" data-open={open} inert={!open || expanded}>

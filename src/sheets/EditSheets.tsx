@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
+import { ICON } from '../lib/icons';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { Modal } from '../components/Modal';
-import { AmountStepper, ConfirmDialog, SectionLabel, seg, textInput } from '../components/ui';
+import { AmountStepper, ConfirmDialog, SectionLabel, seg, textInput, DateField } from '../components/ui';
 import { goalSaved, monthsBack, monthTotals, totalsByMonth } from '../lib/calc';
 import { allExpenseCategories, expenseCategory, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
 import { addMonths, currentMonth, defaultDateFor, formatDay, formatMonth, ordinal } from '../lib/dates';
@@ -97,7 +98,7 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
           placeholder={kind === 'expense' ? t('Rent, gym, phone plan') : t('Salary, pension')}
           maxLength={40}
           autoComplete="off"
-          className={`${textInput} text-sm`}
+          className={`${textInput}`}
         />
       </div>
 
@@ -130,7 +131,7 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
       {weekly ? (
         <div>
           <SectionLabel htmlFor="rec-anchor">{t('First due on')}</SectionLabel>
-          <input id="rec-anchor" type="date" value={anchor} onChange={(event) => setAnchor(event.target.value)} className={`${textInput} text-sm`} />
+          <DateField id="rec-anchor" value={anchor} onChange={(event) => setAnchor(event.target.value)} />
           <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">
             {/^\d{4}-\d{2}-\d{2}$/.test(anchor)
               ? safeEvery === 1
@@ -149,14 +150,14 @@ function RecurringForm({ sheet }: { sheet: Extract<Sheet, { type: 'recurringEdit
           {safeEvery > 1 && (
             <div className="flex items-center justify-between gap-2 rounded-2xl bg-[var(--inset)] border border-[var(--border)] px-2 py-1.5">
               <button type="button" onClick={() => setStart(addMonths(start, -1))} className="pressable size-9 rounded-full hover:bg-[var(--hover)] flex items-center justify-center" aria-label={t('Earlier month')}>
-                <ChevronLeft size={16} />
+                <ChevronLeft size={ICON.md} aria-hidden="true" />
               </button>
               <span className="min-w-0 text-center">
                 <span className="block text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('First due in')}</span>
                 <span className="block text-sm font-extrabold text-[var(--text)]">{formatMonth(start)}</span>
               </span>
               <button type="button" onClick={() => setStart(addMonths(start, 1))} className="pressable size-9 rounded-full hover:bg-[var(--hover)] flex items-center justify-center" aria-label={t('Later month')}>
-                <ChevronRight size={16} />
+                <ChevronRight size={ICON.md} aria-hidden="true" />
               </button>
             </div>
           )}
@@ -249,7 +250,7 @@ function GoalForm({ sheet }: { sheet: Extract<Sheet, { type: 'goal' }> }) {
           placeholder={t('Emergency fund, trip, new bike')}
           maxLength={40}
           autoComplete="off"
-          className={`${textInput} text-sm`}
+          className={`${textInput}`}
         />
       </div>
 
@@ -273,7 +274,7 @@ function GoalForm({ sheet }: { sheet: Extract<Sheet, { type: 'goal' }> }) {
         tone="saving"
         disabled={!valid}
         onSave={save}
-        label={original ? t('Save changes') : t('Create goal')}
+        label={original ? t('Save changes') : t('Add savings goal')}
         onDelete={original ? () => setConfirm(true) : undefined}
         deleteLabel={t('Delete this goal')}
       />
@@ -300,7 +301,7 @@ export function BudgetSheet() {
   const { closeSheet } = useApp();
   const category = sheet ? expenseCategory(sheet.categoryId) : undefined;
   return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={t('{v} budget', { v: category?.name ?? 'Category' })} subtitle={t('Per month')} maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={closeSheet} title={t('{v} budget', { v: category?.name ?? t('Category') })} subtitle={t('Per month')} maxWidth="max-w-md">
       {sheet && <BudgetForm key={seq} sheet={sheet} />}
     </Modal>
   );

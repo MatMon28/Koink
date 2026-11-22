@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ICON } from '../lib/icons';
 import { Plus, Repeat } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { RecurringRow } from '../components/RecurringRow';
@@ -34,7 +35,7 @@ export function QuickSheet() {
                 aria-label={t('Log {note}, {amount}, today', { note: entry.note, amount })}
               >
                 <span className="size-9 rounded-full flex items-center justify-center shrink-0 text-[var(--text)]">
-                  <Icon size={16} strokeWidth={2.2} />
+                  <Icon size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="text-xs sm:text-sm font-bold text-[var(--text)] truncate block">{entry.note}</span>
@@ -44,7 +45,7 @@ export function QuickSheet() {
                   {entry.kind === 'income' ? '+' : ''}{amount}
                 </span>
                 <span className="size-8 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center shrink-0" aria-hidden="true">
-                  <Plus size={15} strokeWidth={2.5} />
+                  <Plus size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
                 </span>
               </button>
             );
@@ -89,9 +90,9 @@ export function RecurringSheet() {
         <button
           type="button"
           onClick={() => openSheet({ type: 'recurringEdit' })}
-          className="pressable pressable-soft w-full py-3 bg-[#CFE7FE] hover:brightness-95 text-[#183B5E] font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm"
+          className="pressable pressable-soft w-full py-3 bg-needs hover:brightness-95 text-needs-ink font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm"
         >
-          <Plus size={18} strokeWidth={2.5} />
+          <Plus size={ICON.lg} strokeWidth={2.5} aria-hidden="true" />
           {t('New recurring item')}
         </button>
       </div>

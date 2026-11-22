@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ICON } from '../lib/icons';
 import { Compass, CircleCheck, Download, Smartphone } from 'lucide-react';
 import { navigateToView, openInstallGuide } from './InstallGuide';
 import { promptInstall, useInstallState, type InstallState } from '../lib/pwa';
@@ -32,8 +33,8 @@ export function InstallApp() {
     <section aria-label={t('Install app')} className="bg-[var(--inset)] border border-[var(--border)] rounded-2xl p-3 space-y-2.5">
       <h3 className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Install app')}</h3>
       <div className="flex items-start gap-2.5">
-        <span className="w-8 h-8 rounded-full bg-[#C9EFD3] text-[#174A2B] flex items-center justify-center shrink-0">
-          {state === 'installed' ? <CircleCheck size={15} /> : <Smartphone size={15} />}
+        <span className="w-8 h-8 rounded-full bg-intake text-intake-ink flex items-center justify-center shrink-0">
+          {state === 'installed' ? <CircleCheck size={ICON.md} aria-hidden="true" /> : <Smartphone size={ICON.md} aria-hidden="true" />}
         </span>
         <p className="flex-1 text-[11px] font-medium leading-relaxed text-[var(--muted)]" aria-live="polite">
           {message ?? t(COPY[state])}
@@ -46,7 +47,7 @@ export function InstallApp() {
             onClick={() => void install()}
             className="kc-primary-btn pressable pressable-soft flex-1 py-2.5 px-3 rounded-xl bg-intake hover:brightness-95 text-intake-ink font-extrabold text-xs flex items-center justify-center gap-1.5"
           >
-            <Download size={15} />
+            <Download size={ICON.md} aria-hidden="true" />
             {t('Install Koink')}
           </button>
         )}
@@ -55,7 +56,7 @@ export function InstallApp() {
           onClick={() => openInstallGuide()}
           className="pressable pressable-soft flex-1 py-2.5 px-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--hover)] text-[var(--text)] font-extrabold text-xs flex items-center justify-center gap-1.5"
         >
-          <Smartphone size={15} />
+          <Smartphone size={ICON.md} aria-hidden="true" />
           {state === 'installed' ? t('Other devices') : t('How to install')}
         </button>
         {state !== 'installed' && !inTourFrame && (
@@ -64,7 +65,7 @@ export function InstallApp() {
             onClick={(event) => navigateToView('tour', event)}
             className="pressable pressable-soft py-2.5 px-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--hover)] text-[var(--muted)] hover:text-[var(--text)] font-extrabold text-xs flex items-center justify-center gap-1.5"
           >
-            <Compass size={15} />
+            <Compass size={ICON.md} aria-hidden="true" />
             {t('Guided tour')}
           </a>
         )}

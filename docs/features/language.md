@@ -28,3 +28,7 @@ Add its code to `Language` and `LANGUAGES` in `i18n.ts`, normalise it in `normal
 ## Not translated
 
 Reminder notification titles and bodies, the sample journal's entry names, the PWA manifest and the Android launcher widget names (`strings.xml`: Koink: Button / Buttons / Expense types). See [../known-gaps.md](../known-gaps.md).
+
+## Strings with values (UI / UX fixes round)
+
+A value is never put into the English text before `t()`: use `t('{n} entries this month', { n })`, with singular and plural as two keys (`1 entry this month`). The Month page pill titles, the goal and recurring summaries, the screen-reader labels of the share cards and of the category visibility button follow this; their Italian entries are in `src/lib/i18n.it.ts`.

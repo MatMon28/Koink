@@ -210,7 +210,7 @@ export function ChartPlot({ lines, slots, peak, type, resolution, labelPoints, a
       </div>
       <div className="relative h-5 shrink-0" aria-hidden="true">
         {labels.map(({ index, text }) => (
-          <span key={index} className="absolute top-1 -translate-x-1/2 whitespace-nowrap text-[9.5px] font-bold text-[var(--muted)]" style={{ left: `${((index + 0.5) / slots) * 100}%` }}>
+          <span key={index} className="absolute top-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold text-[var(--muted)]" style={{ left: `${((index + 0.5) / slots) * 100}%` }}>
             {text}
           </span>
         ))}

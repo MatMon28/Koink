@@ -47,7 +47,7 @@ export function TitleField({ value, onChange, placeholder, suggestions, format }
         aria-expanded={open}
         aria-controls={listId}
         aria-autocomplete="list"
-        className={`${textInput} text-sm`}
+        className={`${textInput}`}
       />
       <div className="accordion-grid" data-open={open}>
         <div className="accordion-inner">

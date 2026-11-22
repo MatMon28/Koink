@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { ICON } from '../lib/icons';
 import { Check, LayoutGrid, Sprout, type LucideIcon } from 'lucide-react';
 import { t } from '../lib/i18n';
 import { inTourEmbed } from '../lib/mode';
@@ -63,17 +64,17 @@ function ModeCards({ value, onPick }: { value: Mode | null; onPick: (mode: Mode)
           >
             <span className="flex items-center gap-3">
               <span className={`size-10 shrink-0 rounded-full flex items-center justify-center ${option.tone}`} aria-hidden="true">
-                <Icon size={18} />
+                <Icon size={ICON.lg} aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-extrabold text-[var(--text)] leading-tight">{t(option.title)}</span>
                 <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{t(option.tagline)}</span>
               </span>
-              {on && <Check size={16} strokeWidth={3} className="shrink-0 text-[var(--text)]" aria-hidden="true" />}
+              {on && <Check size={ICON.md} strokeWidth={2.5} className="shrink-0 text-[var(--text)]" aria-hidden="true" />}
             </span>
             <span className="block space-y-1">
               {option.points.map((point) => (
-                <span key={point} className="block text-[11px] font-semibold text-[var(--muted)] leading-snug">· {t(point)}</span>
+                <span key={point} className="block text-[11px] font-bold text-[var(--muted)] leading-snug">· {t(point)}</span>
               ))}
             </span>
           </button>

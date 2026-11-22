@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ICON } from '../lib/icons';
 import { ChevronDown, TrendingUp } from 'lucide-react';
 import { allExpenseCategories, expenseCategory } from '../lib/categories';
 import { currentMonth, formatDay, formatMonth } from '../lib/dates';
@@ -92,12 +93,12 @@ export function PersonalInflation() {
     <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-4 sm:p-5">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="w-full flex items-center justify-between gap-2 text-left">
         <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
-          <TrendingUp size={16} className="text-[var(--muted)]" aria-hidden="true" />
+          <TrendingUp size={ICON.md} className="text-[var(--muted)]" aria-hidden="true" />
           {t('Personal inflation')}
         </h3>
         <span className="flex items-center gap-2 tabular-nums">
           <span className={`text-xs font-extrabold ${tone(headline)}`}>{enough ? pct(headline) : '–'}</span>
-          <ChevronDown size={16} className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+          <ChevronDown size={ICON.md} className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
         </span>
       </button>
 
@@ -150,9 +151,9 @@ export function PersonalInflation() {
                           const height = value == null ? 0 : Math.max(3, (Math.abs(value) / peak) * 50);
                           return (
                             <div key={point.month} role="listitem" title={`${formatMonth(point.month, 'short')}: ${pct(value)}`} className="flex min-w-0 flex-1 flex-col">
-                              <div className="flex flex-1 items-end justify-center">{value != null && value > 0 && <span className="w-full max-w-5 rounded-t-md bg-[#F6D0D0]" style={{ height: `${height}%` }} />}</div>
-                              <div className="flex flex-1 items-start justify-center border-t border-[var(--border)]">{value != null && value < 0 && <span className="w-full max-w-5 rounded-b-md bg-[#C9EFD3]" style={{ height: `${height}%` }} />}</div>
-                              <span className="pt-1 text-center text-[9px] font-bold text-[var(--muted)]">{formatMonth(point.month, 'short', false)}</span>
+                              <div className="flex flex-1 items-end justify-center">{value != null && value > 0 && <span className="w-full max-w-5 rounded-t-md bg-activity" style={{ height: `${height}%` }} />}</div>
+                              <div className="flex flex-1 items-start justify-center border-t border-[var(--border)]">{value != null && value < 0 && <span className="w-full max-w-5 rounded-b-md bg-intake" style={{ height: `${height}%` }} />}</div>
+                              <span className="pt-1 text-center text-[10px] font-bold text-[var(--muted)]">{formatMonth(point.month, 'short', false)}</span>
                             </div>
                           );
                         })}
@@ -182,7 +183,7 @@ export function PersonalInflation() {
                 <span className="text-xs font-extrabold text-[var(--text)]">{t('Leave expenses out')}</span>
                 <span className="flex items-center gap-2 text-[11px] font-extrabold text-[var(--muted)]">
                   {excluded.size > 0 ? t('{n} left out', { n: excluded.size }) : t('None')}
-                  <ChevronDown size={14} className={`transition-transform ${picking ? 'rotate-180' : ''}`} aria-hidden="true" />
+                  <ChevronDown size={ICON.sm} className={`transition-transform ${picking ? 'rotate-180' : ''}`} aria-hidden="true" />
                 </span>
               </button>
               <div className="accordion-grid" data-open={picking} inert={!picking}>

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Banknote, Download, EyeOff, FileSpreadsheet, Gift, Lock, Minimize2, Receipt, RefreshCw, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
+import { ICON } from '../lib/icons';
+import { Banknote, Download, EyeOff, FileSpreadsheet, Gift, Lock, Minimize2, Receipt, RefreshCw, Repeat, Trash2, Upload, Zap, type LucideIcon, FlaskConical } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { AppIcon } from '../components/Brand';
 import { ModeSetting } from '../components/ModeChooser';
@@ -7,7 +8,7 @@ import { DataStatus } from '../components/DataStatus';
 import { InstallApp } from '../components/InstallApp';
 import { Modal } from '../components/Modal';
 import { ProjectDownload } from '../components/ProjectDownload';
-import { Collapsible, ConfirmDialog, SectionLabel, seg, Switch } from '../components/ui';
+import { Collapsible, ConfirmDialog, SectionLabel, seg, ToggleRow } from '../components/ui';
 import { LANGUAGES, t } from '../lib/i18n';
 import { currencyLocked, type BackupPreview } from '../lib/journal';
 import { currencySymbol } from '../lib/format';
@@ -31,14 +32,14 @@ const THEME_CHOICES: [Theme, string][] = [
 const QUICK_ROWS: { key: QuickAddKey; label: string; icon: LucideIcon; tone: string }[] = [
   { key: 'income', label: 'Income', icon: Banknote, tone: 'bg-intake text-intake-ink' },
   { key: 'expense', label: 'Expense', icon: Receipt, tone: 'bg-activity text-activity-ink' },
-  { key: 'recurring', label: 'Recurring', icon: Repeat, tone: 'bg-[#CFE7FE] text-[#183F66]' },
-  { key: 'quick', label: 'Log again', icon: Zap, tone: 'bg-[#FAE0B4] text-[#7D4E14]' },
+  { key: 'recurring', label: 'Recurring', icon: Repeat, tone: 'bg-needs text-needs-ink' },
+  { key: 'quick', label: 'Log again', icon: Zap, tone: 'bg-wants text-wants-ink' },
   { key: 'saving', label: 'Savings', icon: PigIcon, tone: 'bg-weight text-weight-ink' },
-  { key: 'giftcard', label: 'Gift cards', icon: Gift, tone: 'bg-[#FFD9E8] text-[#7A1F4B]' },
+  { key: 'giftcard', label: 'Gift cards', icon: Gift, tone: 'bg-gift text-gift-ink' },
 ];
 
 const dataButton =
-  'pressable pressable-soft flex-1 min-w-0 py-2.5 px-3 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] text-xs font-extrabold inline-flex items-center justify-center gap-1.5';
+  'pressable pressable-soft flex-1 min-w-0 min-h-11 px-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] text-xs font-extrabold inline-flex items-center justify-center gap-1.5';
 
 export function SettingsSheet() {
   const { isOpen } = useSheet('settings');
@@ -136,7 +137,7 @@ export function SettingsSheet() {
                 type="button"
                 aria-pressed={settings.themeStyle === 'classic'}
                 onClick={() => updateSettings({ themeStyle: 'classic' })}
-                className={`pressable px-2.5 py-1 rounded-lg text-[11px] font-extrabold border ${
+                className={`pressable px-2.5 py-1 rounded-xl text-[11px] font-extrabold border ${
                   settings.themeStyle === 'classic'
                     ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]'
                     : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)]'
@@ -163,7 +164,7 @@ export function SettingsSheet() {
                   >
                     <span className="min-w-0">
                       <span className="block text-xs font-extrabold leading-tight truncate">{preset.name}</span>
-                      <span className={`block text-[10px] font-semibold leading-tight truncate mt-0.5 ${active ? 'opacity-80' : 'text-[var(--muted)]'}`}>{t(preset.tag)}</span>
+                      <span className={`block text-[10px] font-bold leading-tight truncate mt-0.5 ${active ? 'opacity-80' : 'text-[var(--muted)]'}`}>{t(preset.tag)}</span>
                     </span>
                     <span className="inline-flex items-center -space-x-1 shrink-0" aria-hidden="true">
                       {swatches.map((hex, index) => (
@@ -199,64 +200,13 @@ export function SettingsSheet() {
             </div>
           )}
 
-          <button
-            type="button"
-            role="switch"
-            aria-checked={settings.ultraMinimal}
-            onClick={() => updateSettings({ ultraMinimal: !settings.ultraMinimal })}
-            className="w-full flex items-center justify-between gap-3 bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-2xl px-3 py-2.5 transition-colors text-left"
-          >
-            <span className="flex items-center gap-2.5 min-w-0">
-              <span className="size-8 rounded-full bg-[#E2D6FF] text-[#4D3582] flex items-center justify-center shrink-0">
-                <Minimize2 size={15} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{t('Ultra minimal')}</span>
-                <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{t('Icons instead of labels, tighter cards')}</span>
-              </span>
-            </span>
-            <Switch on={settings.ultraMinimal} />
-          </button>
+          <ToggleRow on={settings.ultraMinimal} onToggle={() => updateSettings({ ultraMinimal: !settings.ultraMinimal })} tone="bg-weight text-weight-ink" icon={<Minimize2 size={ICON.md} aria-hidden="true" />} title={t('Ultra minimal')} description={t('Icons instead of labels, tighter cards')} />
 
           {!basic && (
             <>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={settings.hideSplit}
-            onClick={() => updateSettings({ hideSplit: !settings.hideSplit })}
-            className="w-full flex items-center justify-between gap-3 bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-2xl px-3 py-2.5 transition-colors text-left"
-          >
-            <span className="flex items-center gap-2.5 min-w-0">
-              <span className="size-8 rounded-full bg-[#CFE7FE] text-[#1A4670] flex items-center justify-center shrink-0">
-                <EyeOff size={15} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{t('Hide needs, wants and savings')}</span>
-                <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{t('Takes the three cards off the Month page')}</span>
-              </span>
-            </span>
-            <Switch on={settings.hideSplit} />
-          </button>
+          <ToggleRow on={settings.hideSplit} onToggle={() => updateSettings({ hideSplit: !settings.hideSplit })} tone="bg-needs text-needs-ink" icon={<EyeOff size={ICON.md} aria-hidden="true" />} title={t('Hide needs, wants and savings')} description={t('Takes the three cards off the Month page')} />
 
-          <button
-            type="button"
-            role="switch"
-            aria-checked={settings.hideBudgets}
-            onClick={() => updateSettings({ hideBudgets: !settings.hideBudgets })}
-            className="w-full flex items-center justify-between gap-3 bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] rounded-2xl px-3 py-2.5 transition-colors text-left"
-          >
-            <span className="flex items-center gap-2.5 min-w-0">
-              <span className="size-8 rounded-full bg-[#E2D6FF] text-[#49346F] flex items-center justify-center shrink-0">
-                <EyeOff size={15} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{t('Hide the Budgets page')}</span>
-                <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{t('Takes Budgets out of the page bar. Your budgets are kept')}</span>
-              </span>
-            </span>
-            <Switch on={settings.hideBudgets} />
-          </button>
+          <ToggleRow on={settings.hideBudgets} onToggle={() => updateSettings({ hideBudgets: !settings.hideBudgets })} tone="bg-weight text-weight-ink" icon={<EyeOff size={ICON.md} aria-hidden="true" />} title={t('Hide the Budgets page')} description={t('Takes Budgets out of the page bar. Your budgets are kept')} />
             </>
           )}
         </Collapsible>
@@ -268,7 +218,7 @@ export function SettingsSheet() {
             <div className="rounded-2xl bg-[var(--inset)] border border-[var(--border)] p-3 space-y-2.5">
               <div className="flex items-center gap-2.5">
                 <span className="size-9 rounded-full bg-[var(--text)] text-[var(--on-text)] flex items-center justify-center shrink-0" aria-hidden="true">
-                  <Lock size={15} />
+                  <Lock size={ICON.md} aria-hidden="true" />
                 </span>
                 <span className="min-w-0">
                   <span className="block text-[10px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Currency of the journal')}</span>
@@ -300,7 +250,7 @@ export function SettingsSheet() {
               }}
               className={`${dataButton} flex-none disabled:opacity-60`}
             >
-              <RefreshCw size={14} aria-hidden="true" className={updatingRates ? 'animate-spin' : ''} />
+              <RefreshCw size={ICON.sm} aria-hidden="true" className={updatingRates ? 'animate-spin' : ''} />
               {t('Update exchange rates')}
             </button>
             <span className="min-w-0 text-[11px] font-medium text-[var(--muted)]">
@@ -324,24 +274,7 @@ export function SettingsSheet() {
               const Icon = row.icon;
               const on = settings.quickAdd[row.key];
               return (
-                <button
-                  key={row.key}
-                  type="button"
-                  role="switch"
-                  aria-checked={on}
-                  onClick={() => updateSettings({ quickAdd: { ...settings.quickAdd, [row.key]: !on } })}
-                  className="w-full flex items-center justify-between gap-2 rounded-xl bg-[var(--inset)] border border-[var(--border)] px-3 py-2 text-left"
-                >
-                  <span className="flex items-center gap-2 text-xs font-extrabold text-[var(--text)] min-w-0">
-                    <span className={`size-7 rounded-full flex items-center justify-center shrink-0 ${row.tone}`}>
-                      <Icon size={13} />
-                    </span>
-                    <span className="truncate">{t(row.label)}</span>
-                  </span>
-                  <span className="scale-[0.82] origin-right shrink-0">
-                    <Switch on={on} />
-                  </span>
-                </button>
+                <ToggleRow key={row.key} on={on} onToggle={() => updateSettings({ quickAdd: { ...settings.quickAdd, [row.key]: !on } })} tone={row.tone} icon={<Icon size={ICON.md} aria-hidden="true" />} title={t(row.label)} />
               );
             })}
           </div>
@@ -361,29 +294,42 @@ export function SettingsSheet() {
           <DataStatus lastBackup={lastBackup} />
           <div className="flex flex-wrap gap-1.5">
             <button type="button" onClick={() => void saveBackup()} className={dataButton}>
-              <Download size={14} />
+              <Download size={ICON.sm} aria-hidden="true" />
               {t('Save backup')}
             </button>
             <button type="button" onClick={() => fileInput.current?.click()} className={dataButton}>
-              <Upload size={14} />
+              <Upload size={ICON.sm} aria-hidden="true" />
               {t('Restore backup')}
             </button>
             <input ref={fileInput} type="file" accept="application/json,.json" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(event) => void onFile(event.target.files?.[0])} />
           </div>
           <button type="button" disabled={exporting} onClick={() => void exportExcel()} className={`${dataButton} w-full disabled:opacity-60`}>
-            <FileSpreadsheet size={14} />
+            <FileSpreadsheet size={ICON.sm} aria-hidden="true" />
             {t('Export to Excel')}
           </button>
           <p className="text-[11px] font-medium text-[var(--muted)] -mt-1">
             {basic ? t('A readable spreadsheet of your entries. It is for reading and sharing: it cannot be restored. Use Save backup for that.') : t('A readable spreadsheet of your entries, budgets, goals and accounts. It is for reading and sharing: it cannot be restored. Use Save backup for that.')}
           </p>
           <button type="button" onClick={() => (hasEntries ? setConfirmSample(true) : loadSample())} className={`${dataButton} w-full`}>
-            <Sparkles size={14} />
+            <FlaskConical size={ICON.sm} aria-hidden="true" />
             {t('Load the sample journal')}
           </button>
         </Collapsible>
 
         <ProjectDownload />
+
+        {/* As big as the other fields, in the muted red of a danger action. Two confirmations follow. */}
+        <button
+          type="button"
+          onClick={() => setEraseStep(1)}
+          className="pressable w-full flex items-center justify-between gap-3 rounded-2xl bg-[var(--inset)] hover:bg-danger hover:text-danger-ink border border-[var(--border)] px-4 py-3 text-left text-[var(--text-warn)]"
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-extrabold">{t('Delete all data')}</span>
+            <span className="block text-[11px] font-medium">{basic ? t('Erase every entry in this browser') : t('Erase every entry, goal, budget and account in this browser')}</span>
+          </span>
+          <Trash2 size={ICON.lg} className="shrink-0" aria-hidden="true" />
+        </button>
 
         <div className="flex items-center justify-center gap-2.5 pt-1">
           <AppIcon className="size-8" />
@@ -392,19 +338,6 @@ export function SettingsSheet() {
             {t('A local-first money journal')}
           </p>
         </div>
-
-        {/* As big as the other fields, in the muted red of a danger action. Two confirmations follow. */}
-        <button
-          type="button"
-          onClick={() => setEraseStep(1)}
-          className="pressable w-full flex items-center justify-between gap-3 rounded-2xl bg-[#D93636]/10 hover:bg-[#D93636]/20 border border-[#D93636]/25 px-4 py-3 text-left text-[#C94444]"
-        >
-          <span className="min-w-0">
-            <span className="block text-sm font-extrabold">{t('Delete all data')}</span>
-            <span className="block text-[11px] font-medium opacity-80">{basic ? t('Erase every entry in this browser') : t('Erase every entry, goal, budget and account in this browser')}</span>
-          </span>
-          <Trash2 size={18} className="shrink-0" aria-hidden="true" />
-        </button>
       </div>
 
       <RestoreDialog

@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
+import { ICON } from '../lib/icons';
 import { CalendarDays, CalendarRange, ChartPie, ChevronDown, ChevronRight, HandCoins, LineChart, Tag } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { HeroPair, NoteCard, ShareCard } from '../components/cards';
 import { ExpenseChart } from '../components/ExpenseChart';
 import { PersonalInflation } from '../components/PersonalInflation';
-import { Bar, textInput } from '../components/ui';
+import { Bar, DateField, SectionLabel, pillGroup, pillItem, textInput } from '../components/ui';
 import { monthsBack, ruleShares, totalsByMonth } from '../lib/calc';
 import { allExpenseCategories } from '../lib/categories';
 import { addDays, addMonths, currentMonth, daysBetween, daysInMonth, elapsedDays, formatDay, formatMonth, monthOf, todayStr } from '../lib/dates';
@@ -142,7 +143,7 @@ export function StatsView() {
   return (
     <div className="um-stack space-y-4">
       <div className="flex justify-center">
-        <div role="group" aria-label={t('Period')} className="inline-flex w-fit max-w-full items-center justify-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
+        <div role="group" aria-label={t('Period')} className={`${pillGroup}`}>
           {RANGES.filter((item) => !basic || item.id !== 'custom').map((item) => (
             <button
               key={item.id}
@@ -154,11 +155,7 @@ export function StatsView() {
                 setRange(item.id);
                 setSelectedPoint(null);
               }}
-              className={`pressable px-2.5 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-extrabold whitespace-nowrap ${
-                range === item.id
-                  ? 'bg-[var(--text)] text-[var(--on-text)]'
-                  : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
-              }`}
+              className={pillItem(range === item.id)}
             >
               {t(item.label)}
             </button>
@@ -169,12 +166,12 @@ export function StatsView() {
       {custom && (
         <div className="grid grid-cols-2 gap-2.5">
           <label className="block min-w-0">
-            <span className="block mb-1.5 px-1 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('From')}</span>
-            <input type="date" value={customFrom} max={customTo || undefined} onChange={(event) => event.target.value && setCustomFrom(event.target.value)} className={`${textInput} text-sm`} />
+            <SectionLabel>{t('From')}</SectionLabel>
+            <DateField value={customFrom} max={customTo || undefined} onChange={(event) => event.target.value && setCustomFrom(event.target.value)} />
           </label>
           <label className="block min-w-0">
-            <span className="block mb-1.5 px-1 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('To')}</span>
-            <input type="date" value={customTo} min={customFrom || undefined} onChange={(event) => event.target.value && setCustomTo(event.target.value)} className={`${textInput} text-sm`} />
+            <SectionLabel>{t('To')}</SectionLabel>
+            <DateField value={customTo} min={customFrom || undefined} onChange={(event) => event.target.value && setCustomTo(event.target.value)} />
           </label>
         </div>
       )}
@@ -224,7 +221,7 @@ export function StatsView() {
           <button type="button" onClick={() => setTrendOpen(!trendOpen)} aria-expanded={trendOpen} className="w-full flex items-center justify-between gap-2 text-left">
             <span className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
               <span className="w-7 h-7 rounded-full bg-transparent text-[var(--weight-on-surface)] flex items-center justify-center shrink-0">
-                <LineChart size={16} />
+                <LineChart size={ICON.md} aria-hidden="true" />
               </span>
               <span className="um-sr">{t('Balance trend')}</span>
             </span>
@@ -232,7 +229,7 @@ export function StatsView() {
               {trend.length > 1 && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-weight text-weight-ink">{money(trendDelta, { sign: true })}</span>
               )}
-              <ChevronDown size={16} className={`text-[var(--muted)] transition-transform duration-200 ${trendOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={ICON.md} className={`text-[var(--muted)] transition-transform duration-200 ${trendOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
             </span>
           </button>
           <div className="accordion-grid" data-open={trendOpen} inert={!trendOpen}>
@@ -295,12 +292,12 @@ export function StatsView() {
         <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-4 sm:p-5">
           <button type="button" onClick={() => setWhereOpen(!whereOpen)} aria-expanded={whereOpen} className="w-full flex items-center justify-between gap-2 text-left">
             <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
-              <ChartPie size={16} className="um-only text-[var(--muted)]" aria-hidden="true" />
+              <ChartPie size={ICON.md} className="um-only text-[var(--muted)]" aria-hidden="true" />
               <span className="um-sr">{t('Where it went')}</span>
             </h3>
             <span className="flex items-center gap-2 tabular-nums">
               <span className="text-xs font-bold text-[var(--muted)]">{money(period.spent)}</span>
-              <ChevronDown size={16} className={`text-[var(--muted)] transition-transform duration-200 ${whereOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={ICON.md} className={`text-[var(--muted)] transition-transform duration-200 ${whereOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
             </span>
           </button>
           <div className="accordion-grid" data-open={whereOpen} inert={!whereOpen}>
@@ -318,7 +315,7 @@ export function StatsView() {
                   <div key={category.id}>
                     <div className="flex items-center justify-between gap-2 text-[11px] mb-1 tabular-nums">
                       <span className="flex items-center gap-1.5 min-w-0 font-bold text-[var(--text)]">
-                        <Icon size={13} strokeWidth={2.2} className="shrink-0" />
+                        <Icon size={ICON.sm} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
                         <span className="truncate">{category.name}</span>
                       </span>
                       <span className="shrink-0">
@@ -329,15 +326,15 @@ export function StatsView() {
                     <Bar
                       value={total}
                       max={maxCategory}
-                      track={plain ? 'bg-[var(--inset)]' : needs ? 'bg-[var(--pill-c-bg,#CFE7FE)]' : 'bg-[var(--pill-p-bg,#FAE0B4)]'}
-                      fill={plain ? 'bg-activity-accent' : needs ? 'bg-[var(--pill-c-text,#1A4670)]' : 'bg-[var(--pill-p-text,#7D4E14)]'}
+                      track={plain ? 'bg-[var(--inset)]' : needs ? 'bg-[var(--pill-c-bg,var(--color-needs))]' : 'bg-[var(--pill-p-bg,var(--color-wants))]'}
+                      fill={plain ? 'bg-activity-accent' : needs ? 'bg-[var(--pill-c-text,var(--color-needs-ink))]' : 'bg-[var(--pill-p-text,var(--color-wants-ink))]'}
                     />
                   </div>
                 );
               })}
               <p className={`items-center gap-3 pt-0.5 text-[11px] font-bold text-[var(--muted)] ${basic ? 'hidden' : 'flex'}`}>
-                <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-c-text,#1A4670)]" />{t('Needs')}</span>
-                <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-p-text,#7D4E14)]" />{t('Wants')}</span>
+                <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-c-text,var(--color-needs-ink))]" />{t('Needs')}</span>
+                <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-p-text,var(--color-wants-ink))]" />{t('Wants')}</span>
               </p>
             </div>
           )}
@@ -350,12 +347,12 @@ export function StatsView() {
       <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-4 sm:p-5">
         <button type="button" onClick={() => setMonthsOpen(!monthsOpen)} aria-expanded={monthsOpen} className="w-full flex items-center justify-between gap-2 text-left">
           <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
-            <CalendarRange size={16} className="um-only text-[var(--muted)]" aria-hidden="true" />
+            <CalendarRange size={ICON.md} className="um-only text-[var(--muted)]" aria-hidden="true" />
             <span className="um-sr">{t('Month by month')}</span>
           </h3>
           <span className="flex items-center gap-2">
             <span className="um-hide hidden sm:inline text-[11px] font-medium text-[var(--muted)]">{t('Tap a month to open it')}</span>
-            <ChevronDown size={16} className={`text-[var(--muted)] transition-transform duration-200 ${monthsOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={ICON.md} className={`text-[var(--muted)] transition-transform duration-200 ${monthsOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
           </span>
         </button>
         <div className="accordion-grid" data-open={monthsOpen} inert={!monthsOpen}>
@@ -377,7 +374,7 @@ export function StatsView() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${m.net > 0 ? 'bg-intake text-intake-ink' : 'bg-activity text-activity-ink'}`}>
                         {money(m.net, { sign: true })}
                       </span>
-                      <ChevronRight size={16} className="text-[var(--muted)] group-hover:translate-x-0.5 transition-transform" />
+                      <ChevronRight size={ICON.md} className="text-[var(--muted)] group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 pt-0.5 tabular-nums">

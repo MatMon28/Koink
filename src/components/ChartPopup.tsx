@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { ICON } from '../lib/icons';
 import { createPortal } from 'react-dom';
 import { RotateCcw, X } from 'lucide-react';
 import { useBackLayer } from '../lib/back';
@@ -221,7 +222,7 @@ export function ChartPopup({ open, onClose, title, inline = false, onReset, rese
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-sm font-extrabold">{title}</h3>
               <button type="button" onClick={onClose} aria-label={t('Close')} className="pressable flex size-8 items-center justify-center rounded-full bg-[var(--inset)] text-[var(--muted)] hover:text-[var(--text)]">
-                <X size={15} aria-hidden="true" />
+                <X size={ICON.md} aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -234,7 +235,7 @@ export function ChartPopup({ open, onClose, title, inline = false, onReset, rese
                 disabled={resetDisabled}
                 className="pressable pressable-soft flex shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--inset)] px-4 py-3 text-sm font-extrabold text-[var(--text)] hover:bg-[var(--hover)] disabled:opacity-40"
               >
-                <RotateCcw size={14} aria-hidden="true" />
+                <RotateCcw size={ICON.sm} aria-hidden="true" />
                 {t('Reset')}
               </button>
             )}

@@ -25,7 +25,7 @@ export function WidgetTile({ actionKey, onPress, size = 'md' }: { actionKey: str
       style={{ backgroundColor: action.bg, color: action.fg }}
       className={`${size === 'lg' ? 'size-12' : 'size-10'} shrink-0 rounded-full flex items-center justify-center border border-black/5`}
     >
-      <Icon size={size === 'lg' ? 24 : 20} strokeWidth={2.2} aria-hidden="true" />
+      <Icon size={size === 'lg' ? 24 : 20} strokeWidth={2.5} aria-hidden="true" />
     </span>
   );
   // A tray tile is a slot of at least 48 px that grows with the tray (`grow`): its circle stays in the middle.

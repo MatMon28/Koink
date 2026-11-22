@@ -39,3 +39,7 @@ The switches are `role="switch"` buttons with `aria-checked`; segmented choices 
 ## Mode (Basic / Full)
 
 **Mode** sits right under Language: two cards, Basic and Full (`ModeSetting` in `src/components/ModeChooser.tsx`), applied at once; the same choice is asked on the first launch. In [Basic mode](basic-mode.md) Settings drops *Hide needs, wants and savings*, *Hide the Budgets page*, *Buttons in the bottom bar* and *Widgets*, and the texts that mention budgets, goals or accounts use a Basic wording.
+
+## Switch rows and order (UI / UX fixes round)
+
+Every switch row (Ultra minimal, hide needs / wants / savings, hide Budgets, the bottom-bar buttons, the reminders) is the shared `ToggleRow` of `src/components/ui.tsx`. *Delete all data* comes before the brand footer and uses `--text-warn`, so it reads on the dark themes.

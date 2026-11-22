@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { Check, MoreHorizontal, Plus, Trash2, type LucideIcon } from 'lucide-react';
-import { SectionLabel, seg, textInput } from '../components/ui';
+import { Button, SectionLabel, chip, seg, textInput } from '../components/ui';
 import { allBuckets } from '../lib/categories';
 import { useApp } from '../lib/store';
 import { CURRENCIES } from '../lib/format';
-import { ICON_CHOICES } from '../lib/icons';
+import { ICON_CHOICES, ICON } from '../lib/icons';
 import { t } from '../lib/i18n';
 
 export interface Choice {
@@ -52,7 +52,7 @@ export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra
             : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'
         }`}
       >
-        <Icon size={17} strokeWidth={2.2} aria-hidden="true" />
+        <Icon size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
         <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{choice.name}</span>
       </button>
     );
@@ -65,7 +65,7 @@ export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra
       onClick={extra.onClick}
       className="pressable min-w-0 flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-[var(--border)] px-1 py-2.5 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]"
     >
-      <extra.icon size={17} strokeWidth={2.2} aria-hidden="true" />
+      <extra.icon size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
       <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{t(extra.label)}</span>
     </button>
   );
@@ -104,7 +104,7 @@ export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra
           : 'border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
       }`}
     >
-      <MoreHorizontal size={17} strokeWidth={2.4} aria-hidden="true" />
+      <MoreHorizontal size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
       <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{expanded ? t('Less') : `+${rest.length}`}</span>
     </button>
   );
@@ -128,9 +128,9 @@ const BANNER_TONES = {
   expense: { card: 'bg-activity', ink: 'text-activity-ink', accent: 'text-activity-accent', dot: 'bg-activity-soft' },
   income: { card: 'bg-intake', ink: 'text-intake-ink', accent: 'text-intake-accent', dot: 'bg-intake-soft' },
   saving: { card: 'bg-weight', ink: 'text-weight-ink', accent: 'text-weight-accent', dot: 'bg-weight-soft' },
-  needs: { card: 'bg-[#CFE7FE]', ink: 'text-[#183B5E]', accent: 'text-[#436B94]', dot: 'bg-[#E8F3FF]' },
-  wants: { card: 'bg-[#FAE0B4]', ink: 'text-[#7D4E14]', accent: 'text-[#9B6E32]', dot: 'bg-[#FDF3E0]' },
-  gift: { card: 'bg-[#FFD9E8]', ink: 'text-[#7A1F4B]', accent: 'text-[#9C4C73]', dot: 'bg-[#FFEDF4]' },
+  needs: { card: 'bg-needs', ink: 'text-needs-ink', accent: 'text-needs-accent', dot: 'bg-needs-soft' },
+  wants: { card: 'bg-wants', ink: 'text-wants-ink', accent: 'text-wants-accent', dot: 'bg-wants-soft' },
+  gift: { card: 'bg-gift', ink: 'text-gift-ink', accent: 'text-gift-accent', dot: 'bg-gift-soft' },
 };
 
 export type BannerTone = keyof typeof BANNER_TONES;
@@ -142,7 +142,7 @@ export function Banner({ tone, icon: Icon, label, value, sub }: { tone: BannerTo
     <div className={`kc-modal-banner ${c.card} rounded-3xl p-4 flex items-center justify-between gap-3`}>
       <span className={`flex items-center gap-2.5 text-sm font-extrabold ${c.ink} min-w-0`}>
         <span className={`w-9 h-9 rounded-full ${c.dot} flex items-center justify-center shrink-0`}>
-          <Icon size={17} />
+          <Icon size={ICON.md} aria-hidden="true" />
         </span>
         <span className="truncate">{label}</span>
       </span>
@@ -158,8 +158,8 @@ const SAVE_TONES = {
   expense: 'bg-activity text-activity-ink',
   income: 'bg-intake text-intake-ink',
   saving: 'bg-weight text-weight-ink',
-  neutral: 'bg-intake text-intake-ink',
-  gift: 'bg-[#FFD9E8] text-[#7A1F4B]',
+  neutral: 'bg-[var(--text)] text-[var(--on-text)]',
+  gift: 'bg-gift text-gift-ink',
 };
 
 /**
@@ -177,23 +177,17 @@ export function SaveRow({ tone, label, disabled, onSave, onDelete, deleteLabel }
   return (
     <div className="kc-sticky-footer flex gap-2">
       {onDelete && (
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label={deleteLabel ?? 'Delete'}
-          title={deleteLabel ?? 'Delete'}
-          className="pressable w-12 shrink-0 rounded-2xl bg-[#F6D0D0] hover:bg-[#F0BDBD] text-[#7A2727] flex items-center justify-center"
-        >
-          <Trash2 size={17} />
-        </button>
+        <Button variant="dangerQuiet" onClick={onDelete} aria-label={deleteLabel ?? t('Delete')} title={deleteLabel ?? t('Delete')} className="!w-11 !px-0 shrink-0">
+          <Trash2 size={ICON.lg} aria-hidden="true" />
+        </Button>
       )}
       <button
         type="button"
         onClick={onSave}
         disabled={disabled}
-        className={`kc-primary-btn pressable pressable-soft flex-1 min-w-0 py-3 hover:brightness-95 font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm tabular-nums disabled:opacity-40 ${SAVE_TONES[tone]}`}
+        className={`kc-primary-btn pressable pressable-soft flex-1 min-w-0 min-h-11 px-4 hover:brightness-95 font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm tabular-nums disabled:opacity-40 ${SAVE_TONES[tone]}`}
       >
-        <Check size={18} strokeWidth={2.5} className="shrink-0" />
+        <Check size={ICON.lg} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
         <span className="truncate">{label}</span>
       </button>
     </div>
@@ -214,7 +208,7 @@ export function CurrencyGrid({ value, onChange, label = 'Currency' }: { value: s
             aria-checked={active}
             title={currency.name}
             onClick={() => onChange(currency.code)}
-            className={`pressable min-w-0 rounded-xl border px-1 py-2 text-center ${
+            className={`pressable min-w-0 rounded-2xl border px-1 py-2 text-center ${
               active
                 ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]'
                 : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'
@@ -247,11 +241,11 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (key:
               aria-label={t(choice.label)}
               title={t(choice.label)}
               onClick={() => onChange(choice.key)}
-              className={`pressable aspect-square rounded-xl border flex items-center justify-center ${
+              className={`pressable aspect-square rounded-2xl border flex items-center justify-center ${
                 active ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'
               }`}
             >
-              <Icon size={17} aria-hidden="true" />
+              <Icon size={ICON.md} aria-hidden="true" />
             </button>
           );
         })}
@@ -284,8 +278,8 @@ export function BucketPicker({ value, onChange }: { value: string; onChange: (bu
           </button>
         ))}
         {!adding && (
-          <button type="button" onClick={() => setAdding(true)} className="pressable inline-flex items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--border)] px-3 py-2.5 text-xs font-extrabold text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]">
-            <Plus size={13} strokeWidth={2.6} />
+          <button type="button" onClick={() => setAdding(true)} className={chip(false, true)}>
+            <Plus size={ICON.sm} strokeWidth={2.5} aria-hidden="true" />
             {t('New type')}
           </button>
         )}
@@ -304,9 +298,9 @@ export function BucketPicker({ value, onChange }: { value: string; onChange: (bu
             onKeyDown={(event) => {
               if (event.key === 'Enter') { event.preventDefault(); create(); }
             }}
-            className={`${textInput} min-w-0 flex-1 text-sm`}
+            className={`${textInput} min-w-0 flex-1`}
           />
-          <button type="button" disabled={!name.trim()} onClick={create} className="kc-primary-btn pressable shrink-0 rounded-2xl bg-activity px-4 py-3 text-sm font-extrabold text-activity-ink disabled:opacity-40">
+          <button type="button" disabled={!name.trim()} onClick={create} className="kc-primary-btn pressable shrink-0 min-h-11 rounded-2xl bg-activity px-4 text-sm font-extrabold text-activity-ink disabled:opacity-40">
             {t('Add')}
           </button>
         </div>

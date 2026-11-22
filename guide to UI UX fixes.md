@@ -310,17 +310,29 @@ Each step leaves the app working and can be its own patch.
 
 ## 6. Status
 
-| ID | Fixed in | ID | Fixed in | ID | Fixed in | ID | Fixed in |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| C1 | open | F4 | open | B4 | open | S1 | open |
-| C2 | open | F5 | open | B5 | open | S2 | open |
-| C3 | open | F6 | open | I1 | open | S3 | open |
-| C4 | open | F7 | open | I2 | open | S4 | open |
-| F1 | open | B1 | open | I3 | open | W1 | open |
-| F2 | open | B2 | open | T1 | open | W2 | open |
-| F3 | open | B3 | open | T2 | open | W3 | open |
+Fixed in the round "UI / UX fixes and interruptible animations" (this round). *partly* = the shared piece exists and the main places use it; the rest is listed under the table. No browser or device was available: every row is checked by `tsc` and `vite build`, not by eye.
 
-Deliberate exceptions to section 4 (add a line when one is accepted): none yet.
+| ID | Status | ID | Status | ID | Status | ID | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| C1 | **done** | F4 | **done** | B4 | open | S1 | partly |
+| C2 | **done** | F5 | partly | B5 | partly | S2 | partly |
+| C3 | **done** (not `InstallGuide.tsx`, `tour/`) | F6 | **done** | I1 | **done** | S3 | open |
+| C4 | open (decision: colours stay) | F7 | **done** | I2 | **done** | S4 | partly |
+| F1 | **done** | B1 | **done** | I3 | partly | W1 | **done** |
+| F2 | **done** | B2 | partly | T1 | partly | W2 | **done** |
+| F3 | partly | B3 | partly | T2 | open | W3 | **done** |
+
+What is still open, so the next round can start from here:
+
+- **F3**: `rounded-xl` is still used in some rows and pickers that were not touched (`seg()`, `textInput`, the stepper, currency and icon tiles, and the dashed "New type" chip are done).
+- **F5**: the amount filters are `type="text" inputMode="decimal"` and the account balances use `textInput` (compact, right-aligned); both still parse with their own function, not one shared `parseBalance`.
+- **B2 / B3 / B4**: `Button`, `IconButton` and `buttonClass` exist in `ui.tsx` and are used by `SaveRow`, `ConfirmDialog`, `SaveBeforeCloseDialog`, the gift card sheet and the Transactions empty state. Still hand-built: `CategoriesSheet.tsx`, `InstallApp.tsx`, `ProjectDownload.tsx`, `ChartPopup.tsx`, `QuickSheet.tsx`, `TxSheet.tsx:260`, the row actions of the cards and the 28 / 36 / 48 px icon buttons. Add buttons are still drawn in several ways (B4).
+- **B5**: `PillGroup` / `pillItem` serve Month, Transactions and Statistics; `ExpenseChart`, `PersonalInflation` and the `TxSheet` account pills still have their own chip recipe (`chip()` exists).
+- **I3**: `IconButton` / `Button` hide their icons and a sweep added `aria-hidden` to every single-line decorative icon; multi-line icon elements and `TypeGroup`'s chevron rule are open.
+- **T1**: 9, 9.5, 13 and 15 px are gone; the 11 px / 12 px hint roles are not yet unified.
+- **S1 / S2 / S3 / S4 / T2**: `ToggleRow` replaces all five switch rows and `Collapsible`'s chevron follows 1.4; `SectionCard` is not yet shared, `EntryRow` is not merged, `InstallApp` / `ProjectDownload` are not `Collapsible` sections, the heading levels are unchanged. `EmptyState` exists; only the Transactions page uses its pattern (title, text, action).
+
+Deliberate exceptions to section 4: the `--pill-*` CSS-variable fallbacks in `BudgetsView.tsx` / `StatsView.tsx` and the `cards.tsx` tone borders keep a few hex values that no token covers.
 
 ## 7. What this audit did and did not cover
 

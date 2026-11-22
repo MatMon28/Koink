@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { Banknote, ChevronDown, CircleCheck, Edit2, House, Plus, Receipt, Repeat, Sparkles, StickyNote, Trash2, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { ICON } from '../lib/icons';
+import { Banknote, ChevronDown, CircleCheck, Pencil, House, Plus, Receipt, Repeat, Sparkles, StickyNote, Trash2, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { formatDay } from '../lib/dates';
 import { formatMoney } from '../lib/format';
@@ -50,11 +51,11 @@ export function HeroCard({ tone, label, amount, pct, pill, pillTitle, average = 
   const text = moneyFit(amount, 8);
   const Icon = icon ?? (tone === 'in' ? Banknote : Receipt);
   return (
-    <div role="group" aria-label={`${label}: ${text}${average ? ' per month on average' : ''}`} className={`${c.card} kc-crisp um-tight rounded-3xl p-4 sm:p-5 flex flex-col justify-between min-w-0`}>
+    <div role="group" aria-label={average ? t('{label}: {text} per month on average', { label, text }) : `${label}: ${text}`} className={`${c.card} kc-crisp um-tight rounded-3xl p-4 sm:p-5 flex flex-col justify-between min-w-0`}>
       <div>
         <div className="flex items-center justify-between gap-1 mb-1 min-h-[22px]">
           <span className={`inline-flex min-w-0 items-center gap-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider ${c.label}`}>
-            <Icon size={16} className="um-only shrink-0" aria-hidden="true" />
+            <Icon size={ICON.md} className="um-only shrink-0" aria-hidden="true" />
             <span className="um-sr truncate">{t(label)}</span>
           </span>
           {pill && (
@@ -67,7 +68,7 @@ export function HeroCard({ tone, label, amount, pct, pill, pillTitle, average = 
           <span key={amount} className={`anim-value text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight ${c.number}`}>
             {t(text)}
           </span>
-          {average && <span className={`text-xs font-semibold ${c.label}`}>{t('/ month')}</span>}
+          {average && <span className={`text-xs font-bold ${c.label}`}>{t('/ month')}</span>}
         </div>
       </div>
       <div className={`kc-hero-track w-full h-2.5 rounded-full overflow-hidden mt-3 ${c.track}`}>
@@ -125,9 +126,9 @@ export function HeroPair({ inLabel, outLabel, inAmount, outAmount, average = fal
 /* ---------- Needs / Wants / Savings: amount with its share below ---------- */
 
 const SHARE = {
-  needs: { card: 'kc-macro-carbs bg-[#CFE7FE]', label: 'text-[#1A4670]', number: 'text-[#0F3355]', icon: House },
-  wants: { card: 'kc-macro-protein bg-[#FAE0B4]', label: 'text-[#7D4E14]', number: 'text-[#2D1E0B]', icon: Sparkles },
-  savings: { card: 'kc-macro-fat bg-[#E2D6FF]', label: 'text-[#523A8C]', number: 'text-[#1F1636]', icon: PigIcon },
+  needs: { card: 'kc-macro-carbs bg-needs', label: 'text-needs-ink', number: 'text-needs-ink', icon: House },
+  wants: { card: 'kc-macro-protein bg-wants', label: 'text-wants-ink', number: 'text-wants-ink', icon: Sparkles },
+  savings: { card: 'kc-macro-fat bg-weight', label: 'text-weight-ink', number: 'text-weight-ink', icon: PigIcon },
 };
 
 interface ShareCardProps {
@@ -159,9 +160,9 @@ export function ShareCard({ tone, label, amount, share, target, status, shareTit
       aria-label={`${label}: ${text}, ${share}% ${shareTitle}`}
       className="bg-nutrient text-nutrient-ink rounded-2xl relative flex flex-col items-center justify-center gap-0.5 text-center px-2 py-3 sm:px-3 min-w-0"
     >
-      {status === 'ok' && <CircleCheck size={14} strokeWidth={2.6} className="absolute top-1.5 right-1.5" aria-label={t('Target reached')} />}
-      {status === 'over' && <TriangleAlert size={14} strokeWidth={2.6} className="absolute top-1.5 right-1.5 text-[#A3312F]" aria-label={t('Over the target')} />}
-      <c.icon size={16} className="um-only" aria-hidden="true" />
+      {status === 'ok' && <CircleCheck size={ICON.sm} strokeWidth={2.5} className="absolute top-1.5 right-1.5" aria-label={t('Target reached')} />}
+      {status === 'over' && <TriangleAlert size={ICON.sm} strokeWidth={2.5} className="absolute top-1.5 right-1.5 text-[var(--text-warn)]" aria-label={t('Over the target')} />}
+      <c.icon size={ICON.md} className="um-only" aria-hidden="true" />
       <span className="um-sr block max-w-full truncate text-[11px] font-bold uppercase leading-tight tracking-wider">{t(label)}</span>
       <span className="whitespace-nowrap text-base sm:text-lg font-extrabold leading-tight tabular-nums">{t(text)}</span>
       <span title={shareTitle} className="text-xs font-bold tabular-nums block whitespace-nowrap opacity-80">
@@ -179,11 +180,11 @@ export function NoteCard({ label, value, unit, title, icon: Icon, tone, hint, on
   const c = SHARE[tone];
   const inner = (
     <>
-      <Icon size={16} className={`um-only mx-auto ${c.label}`} aria-hidden="true" />
+      <Icon size={ICON.md} className={`um-only mx-auto ${c.label}`} aria-hidden="true" />
       <span className={`um-sr text-[11px] font-bold uppercase tracking-wider ${c.label} block truncate`}>{t(label)}</span>
       <div className="mt-1">
         <span className={`text-lg min-[400px]:text-xl sm:text-2xl font-extrabold tabular-nums ${c.number} tracking-tight whitespace-nowrap`}>{value}</span>
-        {unit && <small className={`ml-0.5 text-xs font-semibold ${c.label}`}>{unit}</small>}
+        {unit && <small className={`ml-0.5 text-xs font-bold ${c.label}`}>{unit}</small>}
       </div>
       {hint && <span className={`um-hide mt-0.5 line-clamp-2 text-[10px] font-bold leading-tight ${c.label}`}>{hint}</span>}
     </>
@@ -213,7 +214,7 @@ export function NoteCard({ label, value, unit, title, icon: Icon, tone, hint, on
  */
 const PILL_TONES = {
   neutral: 'bg-[var(--inset)] text-[var(--text)] border border-[var(--border)]',
-  alert: 'kc-pill-alert bg-[#F6D0D0] text-[#7A2727] border border-transparent',
+  alert: 'kc-pill-alert bg-danger text-danger-ink border border-transparent',
 };
 
 export interface PillItem {
@@ -237,11 +238,11 @@ export function Pills({ items, stretch = false, labels = false }: { items: PillI
             role="img"
             aria-label={t(item.title)}
             title={t(item.title)}
-            className={`${PILL_TONES[item.tone]} ${stretch ? 'flex-auto max-w-full justify-center' : 'min-w-8'} inline-flex items-center gap-1 rounded-lg px-1.5 py-1.5 text-[11px] font-extrabold tabular-nums leading-none whitespace-nowrap`}
+            className={`${PILL_TONES[item.tone]} ${stretch ? 'flex-auto max-w-full justify-center' : 'min-w-8'} inline-flex items-center gap-1 rounded-xl px-1.5 py-1.5 text-[11px] font-extrabold tabular-nums leading-none whitespace-nowrap`}
           >
-            <Icon size={11} strokeWidth={2.6} aria-hidden="true" className="shrink-0 opacity-70" />
+            <Icon size={ICON.mark} strokeWidth={2.5} aria-hidden="true" className="shrink-0 opacity-70" />
             <span className={stretch ? 'whitespace-nowrap' : 'truncate'}>{t(item.text)}</span>
-            {labels && item.label && <span className="font-semibold opacity-70 truncate">{t(item.label)}</span>}
+            {labels && item.label && <span className="font-bold opacity-70 truncate">{t(item.label)}</span>}
           </span>
         );
       })}
@@ -254,8 +255,8 @@ export function Pills({ items, stretch = false, labels = false }: { items: PillI
 const PALETTES = {
   income: { surface: 'var(--color-intake)', text: 'var(--color-intake-ink)', muted: 'var(--color-intake-accent)', inset: 'var(--color-intake-soft)', border: '#A6DDB5', hover: '#B9E6C5' },
   savings: { surface: 'var(--color-weight)', text: 'var(--color-weight-ink)', muted: 'var(--color-weight-accent)', inset: 'var(--color-weight-soft)', border: '#CABAF3', hover: '#D5C6FB' },
-  giftcards: { surface: '#FFD9E8', text: '#5E1838', muted: '#9C4C73', inset: '#FFEDF4', border: '#F2B6D0', hover: '#FFC8DE' },
-  recurring: { surface: '#CFE7FE', text: '#183B5E', muted: '#436B94', inset: '#E8F3FF', border: '#A9CFF5', hover: '#BDDDFC' },
+  giftcards: { surface: 'var(--color-gift)', text: 'var(--color-gift-ink)', muted: 'var(--color-gift-accent)', inset: 'var(--color-gift-soft)', border: '#F2B6D0', hover: '#FFC8DE' },
+  recurring: { surface: 'var(--color-needs)', text: 'var(--color-needs-ink)', muted: 'var(--color-needs-accent)', inset: 'var(--color-needs-soft)', border: '#A9CFF5', hover: '#BDDDFC' },
 };
 
 interface FoldCardProps {
@@ -371,14 +372,14 @@ export function Headline({ text, compact, unit }: { text: string; compact?: bool
   const size = !compact
     ? 'text-sm sm:text-base'
     : text.length <= 5
-      ? 'text-[15px]'
+      ? 'text-sm'
       : text.length === 6
-        ? 'text-sm max-[374px]:text-[13px] tracking-tight'
+        ? 'text-sm max-[374px]:text-sm tracking-tight'
         : 'text-xs tracking-tight';
   return (
     <span className="inline-flex shrink-0 items-baseline gap-1 tabular-nums whitespace-nowrap" title={unit ? `${text} ${unit}` : t(text)}>
       <span className={`font-extrabold text-[var(--text)] ${size}`}>{t(text)}</span>
-      {unit && !compact && <span className="text-[11px] font-semibold text-[var(--muted)]">{unit}</span>}
+      {unit && !compact && <span className="text-[11px] font-bold text-[var(--muted)]">{unit}</span>}
     </span>
   );
 }
@@ -393,7 +394,7 @@ export function EmptyRow({ text, action, onAdd }: { text: string; action: string
     >
       <span>{t(text)}</span>
       <span className="font-bold inline-flex items-center gap-1 shrink-0">
-        <Plus size={13} />
+        <Plus size={ICON.sm} aria-hidden="true" />
         {t(action)}
       </span>
     </button>
@@ -407,8 +408,8 @@ export function TxRow({ tx, compact = false, sub, category }: { tx: Tx; compact?
   const amount = money(tx.amount, { cents: true });
   const marks = (
     <>
-      {tx.recurringId && <Repeat size={10} strokeWidth={2.6} aria-label={t('Recurring')} />}
-      {tx.details && <StickyNote size={10} strokeWidth={2.6} aria-label={t('Has a note')} />}
+      {tx.recurringId && <Repeat size={ICON.mark} strokeWidth={2.5} aria-label={t('Recurring')} />}
+      {tx.details && <StickyNote size={ICON.mark} strokeWidth={2.5} aria-label={t('Has a note')} />}
     </>
   );
   return (
@@ -418,7 +419,7 @@ export function TxRow({ tx, compact = false, sub, category }: { tx: Tx; compact?
           // Category on top, the title right below it, then the day.
           <>
             <span className="text-xs sm:text-sm font-bold text-[var(--text)] group-hover:opacity-80 truncate block">{category}</span>
-            {tx.note && <span className="text-[11px] sm:text-xs font-semibold text-[var(--text)]/80 truncate block">{tx.note}</span>}
+            {tx.note && <span className="text-[11px] sm:text-xs font-bold text-[var(--text)]/80 truncate block">{tx.note}</span>}
             <span className="text-[11px] font-medium tabular-nums text-[var(--muted)] flex items-center gap-1">
               {marks}
               <span className="truncate">{sub ?? formatDay(tx.date)}</span>
@@ -426,7 +427,7 @@ export function TxRow({ tx, compact = false, sub, category }: { tx: Tx; compact?
           </>
         ) : (
           <>
-            <span className="text-xs sm:text-sm font-bold text-[var(--text)] group-hover:opacity-80 truncate block">{tx.note || 'Entry'}</span>
+            <span className="text-xs sm:text-sm font-bold text-[var(--text)] group-hover:opacity-80 truncate block">{tx.note || t('Entry')}</span>
             <span className="text-[11px] font-medium tabular-nums text-[var(--muted)] flex items-center gap-1">
               {marks}
               <span className="truncate">{sub ?? formatDay(tx.date)}</span>
@@ -449,17 +450,17 @@ export function TxRow({ tx, compact = false, sub, category }: { tx: Tx; compact?
             title={t('Edit')}
             aria-label={t('Edit {name}', { name: tx.note || t('entry') })}
           >
-            <Edit2 size={13} />
+            <Pencil size={ICON.sm} aria-hidden="true" />
           </button>
         )}
         <button
           type="button"
           onClick={() => removeTx(tx.id)}
-          className="pressable w-8 h-8 rounded-full text-[var(--muted)] hover:text-[#8C2D32] hover:bg-[#F6D0D0] flex items-center justify-center"
+          className="pressable w-8 h-8 rounded-full text-[var(--muted)] hover:text-danger-ink hover:bg-danger flex items-center justify-center"
           title={t('Delete')}
           aria-label={t('Delete {name}', { name: tx.note || t('entry') })}
         >
-          <Trash2 size={13} />
+          <Trash2 size={ICON.sm} aria-hidden="true" />
         </button>
       </div>
     </div>

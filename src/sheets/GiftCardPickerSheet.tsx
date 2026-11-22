@@ -1,4 +1,5 @@
 import { ChevronRight, Gift, Plus } from 'lucide-react';
+import { ICON } from '../lib/icons';
 import { Bar } from '../components/ui';
 import { Modal } from '../components/Modal';
 import { formatDay, todayStr } from '../lib/dates';
@@ -36,8 +37,8 @@ function Picker() {
       onClick={() => openSheet({ type: 'giftCard' })}
       className="pressable pressable-soft w-full flex items-center justify-center gap-2 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] px-4 py-3 text-sm font-extrabold text-[var(--text)]"
     >
-      <Plus size={16} strokeWidth={2.6} aria-hidden="true" />
-      {t('Add a new gift card')}
+      <Plus size={ICON.md} strokeWidth={2.5} aria-hidden="true" />
+      {t('New gift card')}
     </button>
   );
 
@@ -67,21 +68,21 @@ function Picker() {
                 className="pressable pressable-soft w-full flex items-center gap-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] px-3.5 py-3 text-left"
                 aria-label={t('Spend from {name}', { name: card.name })}
               >
-                <span className="size-9 shrink-0 rounded-full bg-[#FFD9E8] text-[#7A1F4B] flex items-center justify-center">
-                  <Gift size={16} aria-hidden="true" />
+                <span className="size-9 shrink-0 rounded-full bg-gift text-gift-ink flex items-center justify-center">
+                  <Gift size={ICON.md} aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1 space-y-1.5">
                   <span className="flex items-center justify-between gap-2 text-xs tabular-nums">
                     <span className="font-extrabold text-[var(--text)] truncate">{card.name}</span>
                     <span className="font-extrabold text-[var(--text)] shrink-0">
                       {money(left, { cents: true })}
-                      <span className="font-semibold text-[var(--muted)]"> {t('of')} {money(card.initial, { cents: true })}</span>
+                      <span className="font-bold text-[var(--muted)]"> {t('of')} {money(card.initial, { cents: true })}</span>
                     </span>
                   </span>
                   <Bar value={left} max={card.initial || 1} track="kc-water-track bg-[var(--surface)]" fill="kc-water-fill bg-[var(--muted)]" />
-                  {card.expires && <span className="block text-[11px] font-semibold text-[var(--muted)]">{t('Valid until')} {formatDay(card.expires)}</span>}
+                  {card.expires && <span className="block text-[11px] font-bold text-[var(--muted)]">{t('Valid until')} {formatDay(card.expires)}</span>}
                 </span>
-                <ChevronRight size={16} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
+                <ChevronRight size={ICON.md} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
               </button>
             </li>
           ))}
@@ -108,7 +109,7 @@ function Picker() {
                   className="pressable w-full flex items-center justify-between gap-2 rounded-xl border border-[var(--border)] px-3 py-2 text-left text-xs opacity-70 hover:opacity-100"
                 >
                   <span className="font-bold text-[var(--text)] truncate">{card.name}</span>
-                  <span className="font-semibold text-[var(--muted)] shrink-0">{expired ? t('Expired') : t('Used up')}</span>
+                  <span className="font-bold text-[var(--muted)] shrink-0">{expired ? t('Expired') : t('Used up')}</span>
                 </button>
               </li>
             ))}

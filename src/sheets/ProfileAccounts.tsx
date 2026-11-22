@@ -4,7 +4,7 @@ import { SectionLabel, textInput } from '../components/ui';
 import { accountBalance } from '../lib/calc';
 import { round2 } from '../lib/format';
 import { t } from '../lib/i18n';
-import { iconFor } from '../lib/icons';
+import { iconFor, ICON } from '../lib/icons';
 import { useApp } from '../lib/store';
 import type { Account } from '../lib/types';
 
@@ -20,7 +20,7 @@ function parseBalance(text: string): number | null {
 const asText = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
 
 const balanceInput =
-  'min-w-0 w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl pl-2.5 pr-2 py-2 text-right text-sm font-extrabold tabular-nums text-[var(--text)] focus:outline-none focus:border-[var(--muted)]';
+  `${textInput} !min-h-9 !px-2.5 min-w-0 text-right font-extrabold tabular-nums`;
 
 /**
  * The balance of one account as a field: type what is really in it and leave the field (or press Enter).
@@ -89,10 +89,10 @@ export function ProfileAccounts() {
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="pressable -mt-2 px-2.5 py-1 rounded-lg text-[11px] font-extrabold border bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)] inline-flex items-center gap-1"
+            className="pressable -mt-2 px-2.5 py-1 rounded-xl text-[11px] font-extrabold border bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)] inline-flex items-center gap-1"
           >
-            <Plus size={12} strokeWidth={2.8} aria-hidden="true" />
-            {t('Add account')}
+            <Plus size={ICON.mark} strokeWidth={2.5} aria-hidden="true" />
+            {t('New account')}
           </button>
         )}
       </div>
@@ -108,7 +108,7 @@ export function ProfileAccounts() {
           return (
             <div key={account.id} className="flex items-center gap-2 rounded-2xl bg-[var(--inset)] border border-[var(--border)] px-3 py-2">
               <span className="size-8 shrink-0 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[var(--text)]">
-                <Icon size={15} aria-hidden="true" />
+                <Icon size={ICON.md} aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1 truncate text-xs font-extrabold text-[var(--text)]">{account.name}</span>
               <BalanceField key={`${account.id}:${account.opening}`} account={account} />
@@ -119,7 +119,7 @@ export function ProfileAccounts() {
                 aria-label={t('Edit {name}', { name: account.name })}
                 title={t('Rename, change icon or delete')}
               >
-                <Pencil size={14} aria-hidden="true" />
+                <Pencil size={ICON.sm} aria-hidden="true" />
               </button>
             </div>
           );
@@ -136,7 +136,7 @@ export function ProfileAccounts() {
               maxLength={40}
               autoFocus
               autoComplete="off"
-              className={`${textInput} text-sm`}
+              className={`${textInput}`}
             />
             <div className="flex items-center gap-2">
               <label className="relative block min-w-0 flex-1">
@@ -150,7 +150,7 @@ export function ProfileAccounts() {
                     if (event.key === 'Enter') add();
                   }}
                   placeholder={t('Money in it now')}
-                  className={`${textInput} text-sm text-right`}
+                  className={`${textInput} text-right`}
                 />
               </label>
               <button

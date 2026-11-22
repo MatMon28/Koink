@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { ICON } from '../lib/icons';
 import { WidgetFace } from '../components/WidgetButtons';
 import { Collapsible, SectionLabel, Switch } from '../components/ui';
 import { visibleExpenseCategories } from '../lib/categories';
@@ -33,7 +34,7 @@ function Chip({ actionKey, on, disabled, onClick, mode }: { actionKey: string; o
         on ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]' : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] border-[var(--border)]'
       }`}
     >
-      {on && mode === 'many' ? <Check size={14} strokeWidth={3} aria-hidden="true" /> : <Icon size={14} aria-hidden="true" />}
+      {on && mode === 'many' ? <Check size={ICON.sm} strokeWidth={2.5} aria-hidden="true" /> : <Icon size={ICON.sm} aria-hidden="true" />}
       <span className="truncate max-w-[9rem]">{t(action.label)}</span>
     </button>
   );

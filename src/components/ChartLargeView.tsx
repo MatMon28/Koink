@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { ICON } from '../lib/icons';
 import { createPortal } from 'react-dom';
 import { ChartColumn, SlidersHorizontal, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { ChartPlot, type PlotProps } from './ChartPlot';
@@ -475,11 +476,11 @@ export function ChartLargeView({ open, onClose, title, plot, readout, naturalWid
           <div className="mx-auto mb-1.5 h-1 w-10 rounded-full bg-[var(--border)]" aria-hidden="true" />
           <div className="flex items-center justify-between gap-2">
             <h3 className="flex min-w-0 items-center gap-2 text-base font-extrabold">
-              <ChartColumn size={18} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
+              <ChartColumn size={ICON.lg} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
               <span className="truncate">{title}</span>
             </h3>
             <button type="button" onClick={onClose} aria-label={t('Close full view')} title={t('Close full view')} className="pressable flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--text)] text-[var(--on-text)]">
-              <X size={16} aria-hidden="true" />
+              <X size={ICON.md} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -487,7 +488,7 @@ export function ChartLargeView({ open, onClose, title, plot, readout, naturalWid
         <div className="flex shrink-0 items-center justify-between gap-2">
           <div className="flex items-center gap-1.5" role="group" aria-label={t('Zoom')}>
             <button type="button" className={iconButton} onClick={() => zoomTo(zoomRef.current / ZOOM_STEP)} disabled={zoom <= ZOOM_MIN + 1e-3} aria-label={t('Zoom out')} title={t('Zoom out')}>
-              <ZoomOut size={16} aria-hidden="true" />
+              <ZoomOut size={ICON.md} aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -500,7 +501,7 @@ export function ChartLargeView({ open, onClose, title, plot, readout, naturalWid
               {zoom <= ZOOM_MIN + 1e-3 ? t('Fit') : zoomLabel}
             </button>
             <button type="button" className={iconButton} onClick={() => zoomTo(zoomRef.current * ZOOM_STEP)} disabled={zoom >= limit - 1e-3} aria-label={t('Zoom in')} title={t('Zoom in')}>
-              <ZoomIn size={16} aria-hidden="true" />
+              <ZoomIn size={ICON.md} aria-hidden="true" />
             </button>
           </div>
           <div className="flex items-center gap-1.5">
@@ -513,11 +514,11 @@ export function ChartLargeView({ open, onClose, title, plot, readout, naturalWid
                 aria-label={turned ? t('Back to upright') : t('Turn the chart sideways')}
                 title={turned ? t('Back to upright') : t('Turn the chart sideways')}
               >
-                <RotateScreenIcon size={18} />
+                <RotateScreenIcon size={ICON.lg} aria-hidden="true" />
               </button>
             )}
             <button type="button" className={iconButton} onClick={onOpenSettings} aria-label={t('Chart settings')} title={t('Chart settings')}>
-              <SlidersHorizontal size={16} aria-hidden="true" />
+              <SlidersHorizontal size={ICON.md} aria-hidden="true" />
             </button>
           </div>
         </div>

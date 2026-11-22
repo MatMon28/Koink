@@ -58,12 +58,16 @@ A new touch ends a running gesture animation at once (Kakcal: "a new press cance
 | Animation | Ended by | What the next touch finds |
 | --- | --- | --- |
 | Sheet exit | `activeExits` in `Modal.tsx` | the sheet gone |
-| Page rail: slide-in after pill / Back | `running` in `PageSwiper.tsx` | the page at rest |
-| Page rail: spring back of a cancelled swipe | `running` | the page at rest, the neighbour removed |
+| Page rail: slide-in after pill / Back | `running` in `PageSwiper.tsx` | **caught** where it is by a finger on the rail (no jump), otherwise at rest |
+| Page rail: spring back of a cancelled swipe | `running` | **caught** where it is by a finger on the rail, otherwise at rest and the neighbour removed |
 | Page rail: last stretch of a committed swipe | `running` (`flushSync(promote)`) | the new page already current; the touch goes to it |
 | Month slide, the dock's pulse | `endOnTouch()` in `src/lib/interrupt.ts` | the content in place |
 | Dock leaving | `ActionDock.tsx` | the bar removed |
 | Dock arriving | `ActionDock.tsx` (cancels its CSS animations) | the bar in place |
+
+Since this round a finger that lands on the rail while it slides in or springs back does not wait for it and does not make it jump to rest: `PageSwiper` stops the animation, reads the rail's current offset (`railOffset`) and the finger carries on from there (the swipe starts at once, with no dead zone). A committed swipe is never caught: its new page lands now and the touch swipes from it. Keys and touches anywhere else end the animation at once. The release speed also shapes the committed exit (`EXIT_MIN_SPEED`, `EXIT_MAX_MS`), and the rail has `will-change: transform` only while it is dragged or travelling.
+
+Other changes of the round: the **toast** now plays an exit (`anim-toast-out`, 160 ms; a newer toast takes over at once), and the **accordion** content fades with the height (`.accordion-inner`, plain CSS transitions that a tap simply turns round).
 
 Use `endOnTouch(el.animate(...))` for a new animation whose end state is the normal state (no `fill: forwards`).
 

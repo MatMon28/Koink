@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ICON } from '../lib/icons';
 import { Download, RefreshCw, TriangleAlert } from 'lucide-react';
 import { t } from '../lib/i18n';
 import { useApp, useStorageStatus } from '../lib/store';
@@ -29,23 +30,23 @@ export function StorageBanner() {
   if (ok) return null;
 
   const button =
-    'pressable inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold border border-[#7A2727]/25 disabled:opacity-60';
+    'pressable inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-extrabold border border-danger-ink/20 disabled:opacity-60';
 
   return (
-    <div role="alert" className="sticky z-30 top-[calc(max(0.75rem,env(safe-area-inset-top))+6.25rem)] mb-3 rounded-2xl bg-[#F6D0D0] text-[#7A2727] border border-[#D93636]/30 p-3 shadow-sm">
+    <div role="alert" className="sticky z-30 top-[calc(max(0.75rem,env(safe-area-inset-top))+6.25rem)] mb-3 rounded-2xl bg-danger text-danger-ink border border-danger-ink/20 p-3 shadow-sm">
       <div className="flex items-start gap-2.5">
-        <TriangleAlert size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+        <TriangleAlert size={ICON.lg} className="mt-0.5 shrink-0" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-extrabold leading-tight">{t("Changes aren't being saved on this device.")}</p>
           <p className="mt-1 text-[11px] font-medium leading-snug">
             {reason === 'full'
-              ? t('The storage of this browser is full. What you enter now only lives in this open window and is lost when you close it. Export a backup now.')
-              : t('This browser is not letting Koink store data (private mode or blocked storage). What you enter now only lives in this open window and is lost when you close it. Export a backup now.')}
+              ? t('The storage of this browser is full. What you enter now only lives in this open window and is lost when you close it. Save a backup now.')
+              : t('This browser is not letting Koink store data (private mode or blocked storage). What you enter now only lives in this open window and is lost when you close it. Save a backup now.')}
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            <button type="button" onClick={() => void saveBackup()} className={`${button} bg-[#7A2727] text-[#F6D0D0]`}>
-              <Download size={13} aria-hidden="true" />
-              {t('Export a backup now')}
+            <button type="button" onClick={() => void saveBackup()} className={`${button} bg-danger-ink text-danger`}>
+              <Download size={ICON.sm} aria-hidden="true" />
+              {t('Save a backup now')}
             </button>
             <button
               type="button"
@@ -54,11 +55,11 @@ export function StorageBanner() {
                 setRetrying(true);
                 const saved = retry();
                 setRetrying(false);
-                showToast(saved ? t('Saved on this device again') : t('Still not saving. Export a backup to be safe.'));
+                showToast(saved ? t('Saved on this device again') : t('Still not saving. Save a backup to be safe.'));
               }}
               className={`${button} bg-white/50 hover:bg-white/70`}
             >
-              <RefreshCw size={13} aria-hidden="true" />
+              <RefreshCw size={ICON.sm} aria-hidden="true" />
               {t('Try again')}
             </button>
           </div>

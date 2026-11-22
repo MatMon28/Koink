@@ -1,19 +1,174 @@
-import { createElement, useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { Check, ChevronDown, Delete, Minus, Plus, Trash2 } from 'lucide-react';
+import { createElement, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
+import { Check, ChevronDown, Delete, Minus, Plus, Trash2, type LucideIcon } from 'lucide-react';
 import { round2 } from '../lib/format';
-import { iconFor } from '../lib/icons';
+import { ICON, iconFor } from '../lib/icons';
 import { useApp, useToast } from '../lib/store';
 import { Modal } from './Modal';
 import { t } from '../lib/i18n';
+import { usePresence } from '../lib/usePresence';
 
-/** Segmented choice (theme, currency, kind): the selected one is a solid block of the text colour. */
+/** Segmented choice inside a sheet (theme, currency, kind): the selected one is a solid block of the text colour. */
 // eslint-disable-next-line react-refresh/only-export-components
 export const seg = (active: boolean) =>
-  `pressable flex-1 py-2.5 rounded-xl text-xs font-extrabold text-center border ${
+  `pressable flex-1 min-h-11 px-3 rounded-2xl text-xs font-extrabold text-center border ${
     active
       ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]'
       : 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)]'
   }`;
+
+/* ---------- Shared controls (guide to UI UX fixes, 1.5): reuse these, never copy their class strings ---------- */
+
+export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'danger' | 'dangerQuiet';
+export type ButtonTone = 'neutral' | 'expense' | 'income' | 'saving' | 'needs' | 'gift';
+
+const BUTTON_TONES: Record<ButtonTone, string> = {
+  neutral: 'bg-[var(--text)] text-[var(--on-text)]',
+  expense: 'bg-activity text-activity-ink',
+  income: 'bg-intake text-intake-ink',
+  saving: 'bg-weight text-weight-ink',
+  needs: 'bg-needs text-needs-ink',
+  gift: 'bg-gift text-gift-ink',
+};
+
+const BUTTON_VARIANTS: Record<Exclude<ButtonVariant, 'primary'>, string> = {
+  secondary: 'bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)]',
+  quiet: 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]',
+  danger: 'bg-danger hover:bg-danger-hover text-danger-ink',
+  dangerQuiet: 'bg-[var(--inset)] border border-[var(--border)] text-[var(--text-warn)] hover:bg-danger hover:text-danger-ink',
+};
+
+/** Class string of a button: md = 44 px, sm = 36 px. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function buttonClass({ variant = 'secondary', size = 'md', tone = 'neutral', block = false }: { variant?: ButtonVariant; size?: 'md' | 'sm'; tone?: ButtonTone; block?: boolean } = {}): string {
+  const look = variant === 'primary' ? `kc-primary-btn pressable-soft hover:brightness-95 ${BUTTON_TONES[tone]}` : BUTTON_VARIANTS[variant];
+  const dims = size === 'sm' ? 'min-h-9 px-3 text-xs gap-1.5' : 'min-h-11 px-4 text-sm gap-2';
+  return `pressable inline-flex items-center justify-center rounded-2xl font-extrabold disabled:opacity-40 ${dims} ${block ? 'w-full' : ''} ${look}`;
+}
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: 'md' | 'sm';
+  tone?: ButtonTone;
+  block?: boolean;
+  icon?: LucideIcon;
+}
+
+/** The one text button. The icon (14 px small, 18 px medium) is decorative and hidden from screen readers. */
+export function Button({ variant, size = 'md', tone, block, icon: Icon, className = '', children, type = 'button', ...rest }: ButtonProps) {
+  return (
+    <button type={type} className={`${buttonClass({ variant, size, tone, block })} ${className}`} {...rest}>
+      {Icon && <Icon size={size === 'sm' ? ICON.sm : ICON.lg} strokeWidth={size === 'sm' || variant === 'primary' ? 2.5 : 2} className="shrink-0" aria-hidden="true" />}
+      {children}
+    </button>
+  );
+}
+
+const ICON_BUTTON_SIZES = { sm: ['size-8 after:absolute after:-inset-1.5', ICON.md], md: ['size-10', ICON.lg], lg: ['size-11', ICON.xl] } as const;
+const ICON_BUTTON_VARIANTS = {
+  ghost: 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]',
+  inset: 'bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] hover:text-[var(--text)]',
+  surface: 'bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--inset)] text-[var(--muted)] hover:text-[var(--text)]',
+  danger: 'text-[var(--muted)] hover:bg-danger hover:text-danger-ink',
+} as const;
+
+interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'title'> {
+  icon: LucideIcon;
+  /** Spoken name and tooltip: an icon that stands alone always has one. */
+  label: string;
+  size?: keyof typeof ICON_BUTTON_SIZES;
+  variant?: keyof typeof ICON_BUTTON_VARIANTS;
+}
+
+/** The one round icon button. `sm` keeps a 44 px touch area around its 32 px circle. */
+export function IconButton({ icon: Icon, label, size = 'sm', variant = 'ghost', className = '', type = 'button', ...rest }: IconButtonProps) {
+  const [box, iconSize] = ICON_BUTTON_SIZES[size];
+  return (
+    <button type={type} aria-label={label} title={label} className={`pressable relative shrink-0 rounded-full flex items-center justify-center ${box} ${ICON_BUTTON_VARIANTS[variant]} ${className}`} {...rest}>
+      <Icon size={iconSize} aria-hidden="true" />
+    </button>
+  );
+}
+
+/** A small choice or filter: off is an inset pill, on is a solid block of the text colour. */
+// eslint-disable-next-line react-refresh/only-export-components
+export const chip = (active: boolean, dashed = false) =>
+  `pressable inline-flex items-center gap-1.5 min-h-9 px-3 rounded-full text-xs font-extrabold border ${
+    active
+      ? 'bg-[var(--text)] text-[var(--on-text)] border-[var(--text)]'
+      : `bg-[var(--inset)] text-[var(--text)] hover:bg-[var(--hover)] ${dashed ? 'border-dashed border-[var(--muted)]' : 'border-[var(--border)]'}`
+  }`;
+
+/** Switch between a few views on a page (kind, period, layout). Items use `pillItem`. */
+export function PillGroup({ children, className = '', label }: { children: ReactNode; className?: string; label?: string }) {
+  return (
+    <div role="group" aria-label={label} className={`inline-flex items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+/** Wrapper class of a pill group, for pages that need a group with their own markup. */
+// eslint-disable-next-line react-refresh/only-export-components
+export const pillGroup = 'inline-flex w-fit max-w-full items-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full';
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const pillItem = (active: boolean, iconOnly = false) =>
+  `pressable inline-flex items-center justify-center gap-1.5 whitespace-nowrap h-8 ${iconOnly ? 'w-10' : 'px-3.5'} rounded-full text-xs font-extrabold ${
+    active ? 'bg-[var(--text)] text-[var(--on-text)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
+  }`;
+
+/** A date or time field: the same look everywhere. `compact` only beside the Today / Yesterday chips. */
+export function DateField({ compact = false, className = '', ...rest }: InputHTMLAttributes<HTMLInputElement> & { compact?: boolean }) {
+  return <input type="date" className={`${textInput} ${compact ? '!min-h-9 !px-2.5' : ''} ${className}`} {...rest} />;
+}
+
+/** A switch row (icon bubble, title, description, switch); its controls open below it while it is on. */
+export function ToggleRow({ icon, tone = 'bg-[var(--surface)] text-[var(--muted)]', title, description, on, onToggle, disabled, children }: {
+  icon?: ReactNode;
+  /** Colour of the icon bubble. */
+  tone?: string;
+  title: string;
+  description?: string;
+  on: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="bg-[var(--inset)] border border-[var(--border)] rounded-2xl">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label={title}
+        disabled={disabled}
+        onClick={onToggle}
+        className="w-full min-h-[52px] flex items-center justify-between gap-3 px-3 py-2.5 text-left rounded-2xl hover:bg-[var(--hover)] transition-colors disabled:opacity-50"
+      >
+        <span className="flex items-center gap-2.5 min-w-0">
+          {icon && <span className={`size-8 rounded-full flex items-center justify-center shrink-0 ${tone}`}>{icon}</span>}
+          <span className="min-w-0">
+            <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{title}</span>
+            {description && <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{t(description)}</span>}
+          </span>
+        </span>
+        <Switch on={on} />
+      </button>
+      {on && children && <div className="px-3 pb-3 pt-1 space-y-2.5">{children}</div>}
+    </div>
+  );
+}
+
+/** "Nothing here yet": one sentence, an optional title and an optional action. */
+export function EmptyState({ title, children, action }: { title?: string; children: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="kc-section-empty flex flex-col items-center gap-2 text-center py-6 px-4">
+      {title && <p className="text-sm font-extrabold text-[var(--text)]">{t(title)}</p>}
+      <p className="text-xs font-medium text-[var(--muted)]">{children}</p>
+      {action}
+    </div>
+  );
+}
 
 /** One of the user-pickable icons (`ICON_CHOICES`) by its stored key. */
 export function KeyIcon({ name, size = 16, strokeWidth = 2, className, ...rest }: { name: string; size?: number; strokeWidth?: number; className?: string; 'aria-hidden'?: boolean | 'true' }) {
@@ -21,12 +176,12 @@ export function KeyIcon({ name, size = 16, strokeWidth = 2, className, ...rest }
 }
 
 export function SectionLabel({ children, htmlFor }: { children: ReactNode; htmlFor?: string }) {
-  const cls = 'text-xs font-extrabold uppercase tracking-wider text-[var(--muted)] block mb-2';
+  const cls = 'text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)] block mb-1.5';
   return htmlFor ? <label htmlFor={htmlFor} className={cls}>{children}</label> : <span className={cls}>{children}</span>;
 }
 
 export const textInput =
-  'w-full bg-[var(--inset)] border border-[var(--border)] rounded-xl px-3.5 py-2.5 text-[var(--text)] placeholder:text-[var(--muted)]/60 text-base font-bold focus:outline-none focus:border-[var(--muted)] transition-colors';
+  'w-full min-h-11 bg-[var(--inset)] border border-[var(--border)] rounded-2xl px-3.5 text-base [@media(pointer:fine)]:text-sm font-bold text-[var(--text)] placeholder:text-[var(--muted)] placeholder:font-medium focus:outline-none focus:border-[var(--muted)] transition-colors';
 
 /* ---------- Number pad: amounts are typed on screen, never with the phone's keyboard ---------- */
 
@@ -165,7 +320,7 @@ export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, conf
             else onPress('back');
           }}
         >
-          <Delete size={21} aria-hidden="true" />
+          <Delete size={ICON.xl} aria-hidden="true" />
         </button>
       </div>
       <div>
@@ -173,9 +328,9 @@ export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, conf
           type="button"
           onClick={onConfirm}
           disabled={confirmDisabled}
-          className={`kc-primary-btn pressable pressable-soft w-full py-3 hover:brightness-95 font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm tabular-nums disabled:opacity-40 ${confirmClass}`}
+          className={`kc-primary-btn pressable pressable-soft w-full min-h-11 px-4 hover:brightness-95 font-extrabold rounded-2xl flex items-center justify-center gap-2 text-sm tabular-nums disabled:opacity-40 ${confirmClass}`}
         >
-          <Check size={18} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
+          <Check size={ICON.lg} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
           <span className="truncate">{confirmLabel}</span>
         </button>
       </div>
@@ -272,14 +427,14 @@ export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, a
           className={button}
           aria-label={t('Minus {step}', { step })}
         >
-          <Minus size={19} />
+          <Minus size={ICON.lg} aria-hidden="true" />
         </button>
         <button
           type="button"
           onClick={() => (open ? done() : setOpen(true))}
           aria-expanded={open}
-          aria-label={`${ariaLabel}: ${text || 0} ${unit}. ${open ? 'Close the number pad' : 'Open the number pad'}`}
-          className={`pressable flex-1 min-w-0 h-12 rounded-xl bg-[var(--inset)] border text-lg tabular-nums ${open ? 'border-[var(--muted)]' : 'border-[var(--border)]'} flex items-center justify-center`}
+          aria-label={`${ariaLabel}: ${text || 0} ${unit}. ${open ? t('Close the number pad') : t('Open the number pad')}`}
+          className={`pressable flex-1 min-w-0 h-12 rounded-2xl bg-[var(--inset)] border text-lg tabular-nums ${open ? 'border-[var(--muted)]' : 'border-[var(--border)]'} flex items-center justify-center`}
         >
           <AmountDisplay text={t(text)} unit={unit} className="text-lg" />
         </button>
@@ -294,7 +449,7 @@ export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, a
           className={button}
           aria-label={t('Plus {step}', { step })}
         >
-          <Plus size={19} />
+          <Plus size={ICON.lg} aria-hidden="true" />
         </button>
       </div>
       {open && <NumPad onPress={press} onConfirm={done} confirmLabel={t('Done')} decimal={decimals > 0} />}
@@ -305,7 +460,7 @@ export function AmountStepper({ value, onChange, unit, step = 1, min = 0, max, a
               key={delta}
               type="button"
               onClick={() => onChange(clamp(value + delta))}
-              className="pressable flex-1 py-2 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)] text-xs font-extrabold tabular-nums"
+              className="pressable flex-1 min-h-9 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)] text-xs font-extrabold tabular-nums"
             >
               {chipLabel ? chipLabel(delta) : `+${delta}`}
             </button>
@@ -321,12 +476,12 @@ export function Switch({ on }: { on: boolean }) {
     <span
       aria-hidden="true"
       className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-150 shrink-0 inline-flex items-center border ${
-        on ? 'bg-[#C9EFD3] border-[#9ADBB0]' : 'bg-[var(--border)] border-[var(--border)]'
+        on ? 'bg-[var(--intake-on-surface)] border-transparent' : 'bg-[var(--muted)] border-transparent'
       }`}
     >
       <span
         className={`block w-5 h-5 rounded-full transition-transform [transition-duration:420ms] [transition-timing-function:var(--ease-bounce)] shadow-sm ${
-          on ? 'translate-x-5 bg-[#1E5E3A]' : 'translate-x-0 bg-[#FBF8F2]'
+          on ? 'translate-x-5 bg-[var(--surface)]' : 'translate-x-0 bg-[var(--surface)]'
         }`}
       />
     </span>
@@ -346,11 +501,11 @@ export function Collapsible({ title, children, defaultOpen = false }: { title: s
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left"
       >
-        <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--text)]">{t(title)}</span>
+        <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--text)]">{t(title)}</span>
         <ChevronDown
-          size={18}
+          size={ICON.lg}
           aria-hidden="true"
-          className={`shrink-0 text-[var(--muted)] transition-transform [transition-duration:480ms] [transition-timing-function:var(--ease-bounce)] ${open ? 'rotate-180' : ''}`}
+          className={`shrink-0 text-[var(--muted)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
       <div id={`${id}-panel`} className="accordion-grid" data-open={open} inert={!open}>
@@ -378,23 +533,8 @@ export function ConfirmDialog({ open, title = 'Are you sure?', message, confirmL
       <div className="space-y-4">
         <p className="text-sm font-medium text-[var(--text)]">{t(message)}</p>
         <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="pressable py-2.5 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold"
-          >
-            {t('Cancel')}
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="pressable min-h-11 px-2 py-2.5 rounded-2xl bg-[#F6D0D0] hover:bg-[#F0BDBD] text-[#7A2727] text-sm font-extrabold flex items-center justify-center"
-          >
-            <span className="text-center leading-tight">
-              <Trash2 size={15} className="inline-block align-[-2px] mr-1.5" aria-hidden="true" />
-              {confirmLabel}
-            </span>
-          </button>
+          <Button variant="secondary" onClick={onCancel}>{t('Cancel')}</Button>
+          <Button variant="danger" icon={Trash2} onClick={onConfirm}>{t(confirmLabel)}</Button>
         </div>
       </div>
     </Modal>
@@ -415,7 +555,6 @@ interface SaveBeforeCloseDialogProps {
  * typed is lost by accident. Dismissing this question keeps editing.
  */
 export function SaveBeforeCloseDialog({ open, canSave, onSave, onDiscard, onKeep }: SaveBeforeCloseDialogProps) {
-  const quiet = 'pressable py-2.5 rounded-2xl text-sm font-extrabold';
   return (
     <Modal isOpen={open} onClose={onKeep} title={t('Save this entry?')} maxWidth="max-w-sm">
       <div className="space-y-4">
@@ -423,19 +562,11 @@ export function SaveBeforeCloseDialog({ open, canSave, onSave, onDiscard, onKeep
           {canSave ? t('You have not saved what you entered.') : t('What you entered has no amount yet, so it cannot be saved.')}
         </p>
         <div className="space-y-2">
-          {canSave && (
-            <button type="button" onClick={onSave} className={`kc-primary-btn pressable pressable-soft w-full py-3 rounded-2xl bg-intake hover:brightness-95 text-intake-ink text-sm font-extrabold`}>
-              {t('Save')}
-            </button>
-          )}
+          {canSave && <Button variant="primary" tone="income" block onClick={onSave}>{t('Save')}</Button>}
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={onKeep} className={`${quiet} bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)]`}>
-              {t('Keep editing')}
-            </button>
+            <Button variant="secondary" onClick={onKeep}>{t('Keep editing')}</Button>
             {/* Destructive choice on the right, away from the primary Save button's thumb path. */}
-            <button type="button" onClick={onDiscard} className={`${quiet} bg-[#F6D0D0] hover:bg-[#F0BDBD] text-[#7A2727]`}>
-              {t('Don’t save')}
-            </button>
+            <Button variant="danger" onClick={onDiscard}>{t('Don’t save')}</Button>
           </div>
         </div>
       </div>
@@ -455,31 +586,38 @@ export function Bar({ value, max, track, fill, className = 'h-2' }: { value: num
 
 /** One confirmation line at the bottom of the screen, with Undo where it makes sense. */
 export function ToastHost() {
-  const { dismissToast, activeTab } = useApp();
+  const { dismissToast, activeTab, data, basic } = useApp();
+  // The bar of buttons exists on the Month page only: lift the toast only when it is on screen.
+  const barOnScreen = activeTab === 'month' && (basic || Object.values(data.settings.quickAdd).some(Boolean));
   const toast = useToast();
-  if (!toast) return null;
+  // The toast plays its exit before it unmounts; a newer toast takes over at once (new key, new entrance).
+  const lastToast = useRef(toast);
+  if (toast) lastToast.current = toast;
+  const { mounted } = usePresence(!!toast, 170);
+  const shown = toast ?? lastToast.current;
+  if (!mounted || !shown) return null;
   return (
     <div
       className={`fixed left-0 right-0 z-[60] flex justify-center px-4 pointer-events-none ${
-        activeTab === 'stats' ? 'bottom-[max(1.25rem,env(safe-area-inset-bottom))]' : 'bottom-[calc(5.5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(6.25rem+env(safe-area-inset-bottom))]'
+        barOnScreen ? 'bottom-[calc(5.5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(6.25rem+env(safe-area-inset-bottom))]' : 'bottom-[max(1.25rem,env(safe-area-inset-bottom))]'
       }`}
     >
       <div
-        key={toast.id}
+        key={shown.id}
         role="status"
-        className="anim-toast pointer-events-auto max-w-full inline-flex items-center gap-3 rounded-full bg-[var(--text)] text-[var(--on-text)] pl-4 pr-1.5 py-1.5 shadow-lg shadow-black/20"
+        className={`${toast ? 'anim-toast pointer-events-auto' : 'anim-toast-out pointer-events-none'} max-w-full inline-flex items-center gap-3 rounded-full bg-[var(--text)] text-[var(--on-text)] pl-4 pr-1.5 py-1.5 shadow-lg shadow-black/20`}
       >
-        <span className="min-w-0 truncate text-xs font-bold tabular-nums py-1">{t(toast.message)}</span>
-        {toast.onAction ? (
+        <span className="min-w-0 truncate text-xs font-bold tabular-nums py-1">{t(shown.message)}</span>
+        {shown.onAction ? (
           <button
             type="button"
             onClick={() => {
-              toast.onAction?.();
+              shown.onAction?.();
               dismissToast();
             }}
             className="pressable shrink-0 rounded-full bg-[var(--on-text)]/15 hover:bg-[var(--on-text)]/25 px-3 py-1.5 text-xs font-extrabold"
           >
-            {toast.actionLabel}
+            {shown.actionLabel}
           </button>
         ) : (
           <span className="w-2.5" aria-hidden="true" />

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ICON } from '../lib/icons';
 import { Minus, Plus, RotateCcw, Wallet } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { AmountStepper, SectionLabel, textInput } from '../components/ui';
@@ -11,9 +12,9 @@ import { ProfileAccounts } from './ProfileAccounts';
 import { Banner, SaveRow } from './shared';
 
 const RULE_ROWS: { key: keyof BudgetRule; label: string; hint: string; tone: string }[] = [
-  { key: 'needs', label: 'Needs', hint: 'Housing, groceries, transport, bills, health', tone: 'bg-[#CFE7FE] text-[#1A4670]' },
-  { key: 'wants', label: 'Wants', hint: 'Eating out, fun, shopping', tone: 'bg-[#FAE0B4] text-[#7D4E14]' },
-  { key: 'savings', label: 'Savings', hint: 'Money moved to your goals', tone: 'bg-[#E2D6FF] text-[#4D3582]' },
+  { key: 'needs', label: 'Needs', hint: 'Housing, groceries, transport, bills, health', tone: 'bg-needs text-needs-ink' },
+  { key: 'wants', label: 'Wants', hint: 'Eating out, fun, shopping', tone: 'bg-wants text-wants-ink' },
+  { key: 'savings', label: 'Savings', hint: 'Money moved to your goals', tone: 'bg-weight text-weight-ink' },
 ];
 
 export function ProfileSheet() {
@@ -70,7 +71,7 @@ function ProfileForm() {
           placeholder={t('Optional')}
           maxLength={30}
           autoComplete="given-name"
-          className={`${textInput} text-sm`}
+          className={`${textInput}`}
         />
       </div>
 
@@ -94,25 +95,25 @@ function ProfileForm() {
             type="button"
             onClick={() => setRule({ needs: 50, wants: 30, savings: 20 })}
             disabled={isDefault}
-            className="pressable px-2.5 py-1 rounded-lg text-[11px] font-extrabold border bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)] inline-flex items-center gap-1 disabled:opacity-40"
+            className="pressable px-2.5 py-1 rounded-xl text-[11px] font-extrabold border bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)] inline-flex items-center gap-1 disabled:opacity-40"
           >
-            <RotateCcw size={11} strokeWidth={2.6} />
+            <RotateCcw size={ICON.mark} strokeWidth={2.5} aria-hidden="true" />
             50 / 30 / 20
           </button>
         </div>
         <div className="space-y-1.5">
           {RULE_ROWS.map((row) => (
             <div key={row.key} className="flex items-center gap-2.5 rounded-2xl bg-[var(--inset)] border border-[var(--border)] px-3 py-2.5">
-              <span className={`shrink-0 w-12 py-1.5 rounded-lg text-center text-xs font-extrabold tabular-nums ${row.tone}`}>{rule[row.key]}%</span>
+              <span className={`shrink-0 w-12 py-1.5 rounded-xl text-center text-xs font-extrabold tabular-nums ${row.tone}`}>{rule[row.key]}%</span>
               <span className="min-w-0 flex-1">
                 <span className="block text-xs font-extrabold text-[var(--text)]">{t(row.label)}</span>
                 <span className="block text-[11px] font-medium text-[var(--muted)] truncate">{t(row.hint)}</span>
               </span>
               <button type="button" onClick={() => step(row.key, -5)} disabled={rule[row.key] <= 0} className={stepButton} aria-label={t('{label}: minus 5 points', { label: row.label })}>
-                <Minus size={15} />
+                <Minus size={ICON.md} aria-hidden="true" />
               </button>
               <button type="button" onClick={() => step(row.key, 5)} disabled={rule[row.key] >= 100} className={stepButton} aria-label={t('{label}: plus 5 points', { label: row.label })}>
-                <Plus size={15} />
+                <Plus size={ICON.md} aria-hidden="true" />
               </button>
             </div>
           ))}

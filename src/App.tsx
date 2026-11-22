@@ -203,7 +203,7 @@ function Shell() {
       <main className="flex-1 min-w-0 overflow-x-clip">
         <div className={`w-full max-w-4xl mx-auto px-3.5 sm:px-6 pt-3 sm:pt-4 ${dockOnPage ? 'pb-[calc(7rem+env(safe-area-inset-bottom))]' : 'pb-8'}`}>
           <StorageBanner />
-          <h1 className="sr-only">{t('Koink:')} {PAGE_TITLES[activeTab]}</h1>
+          <h1 className="sr-only">{t('Koink:')} {t(PAGE_TITLES[activeTab])}</h1>
           <PageSwiper renderPage={renderPage} />
         </div>
       </main>

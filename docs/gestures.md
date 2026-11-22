@@ -20,7 +20,7 @@
 | Tap | the launch animation | skips it | `intro.ts` |
 | Hold | `+` / `-` of an amount stepper | repeats the step | `ui.tsx` (`AmountStepper`) |
 | Scroll down / up | page | the header folds to the page pill; the bottom dock (Month page only) stays where it is | `Header.tsx`, `ActionDock.tsx` |
-| Any new touch or key | while an animation of a gesture runs | the animation ends at once ([motion.md](motion.md#ending-an-animation-early)); a swipe that was finishing lands the new page; that touch then swipes normally from the landed page (see below) | `PageSwiper.tsx`, `Modal.tsx`, `lib/interrupt.ts` |
+| Any new touch or key | while an animation of a gesture runs | the animation ends at once ([motion.md](motion.md#ending-an-animation-early)); a swipe that was finishing lands the new page and the touch swipes from it; a slide-in or spring-back is *caught* where it is and follows the finger at once (see below) | `PageSwiper.tsx`, `Modal.tsx`, `lib/interrupt.ts` |
 | Tap the scrim, Escape | open sheet | closes it (or asks, see above) | `Modal.tsx` |
 | Swipe down | the **chart settings popup** (grip row and title, the dimmed area, and anywhere on the popup when it does not scroll) | closes it: it follows the finger and fades, closes past 72 px or on a flick, otherwise springs back; read in the popup's own axes, so also inside the full view turned sideways | `ChartPopup.tsx`, `lib/chartTurn.ts` |
 | Pinch, Ctrl / trackpad wheel, drag | the chart in the large view of *Expenses over time* | zoom around the point between the fingers; move, with a glide | `ChartLargeView.tsx` |
@@ -43,6 +43,18 @@ Finger and pen only (a mouse drag does nothing). Vertical movement stays normal 
 
 A drag that turned into a swipe never also taps what was under the finger. At the first and last page the page only stretches a little and springs back. A page reached by the pill or by Back slides in from the side it lies on. With `prefers-reduced-motion` the page changes without animation.
 
+### Catching the rail (a new gesture during an animation)
+
+No touch is ignored. Whatever the rail is doing when a finger lands on it:
+
+| The rail is... | The new touch... |
+| --- | --- |
+| springing back after a cancelled swipe, or sliding in after the pill / Back | catches it where it is (`grab()`), locks the swipe at once and carries on from that offset, in either direction; released without moving it rests |
+| finishing a committed swipe | lands the new page now (`promote()`), then swipes normally from it, so a quick second swipe goes on to the next page |
+| anywhere else on screen (header, dock, another control) | ends the animation at once |
+
+A key press always ends it. One touch still changes at most one page.
+
 ### Sensitivity
 
 Named constants at the top of `PageSwiper.tsx`:
@@ -56,7 +68,8 @@ Named constants at the top of `PageSwiper.tsx`:
 | `COMMIT_SHARE`, `COMMIT_MIN_PX`, `COMMIT_MAX_PX` | 16 %, 48, 84 | release distance that changes the page (16 % of the width, kept within 48-84 px) |
 | `FLICK_SPEED`, `FLICK_MIN_PX` | 0.35 px/ms, 24 px | a quick flick changes the page sooner |
 | `RAIL_GAP_PX` | 24 | gap between the two pages |
-| `COMMIT_MS`, `COMMIT_MIN_MS` | 170, 90 | time a committed swipe takes to finish (less when the finger did most of it) |
+| `EXIT_MAX_MS`, `COMMIT_MIN_MS`, `EXIT_MIN_SPEED` | 220, 90, 1.4 px/ms | a committed swipe finishes its travel in `remaining / max(release speed, EXIT_MIN_SPEED)`, kept between 90 and 220 ms |
+| `CATCH_TAP_PX` | 4 | a rail caught mid-animation that the finger did not move afterwards rests instead of committing |
 | `ENTER_OFFSET_PX` | 28 | slide-in distance for a page reached without a swipe |
 
 Other thresholds:

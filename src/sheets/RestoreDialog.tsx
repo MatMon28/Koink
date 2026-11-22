@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ICON } from '../lib/icons';
 import { Check, Download, TriangleAlert, Upload } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import { formatDay } from '../lib/dates';
@@ -43,8 +44,8 @@ export function RestoreDialog({ open, preview, fileName, onCancel, onConfirm }: 
       <div className="space-y-4">
         <p className="text-xs font-medium text-[var(--muted)] break-all">{fileName}</p>
 
-        <div className="rounded-2xl bg-[#F6D0D0] text-[#7A2727] border border-[#D93636]/25 p-3 flex items-start gap-2.5">
-          <TriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+        <div className="rounded-2xl bg-danger text-danger-ink border border-danger-ink/20 p-3 flex items-start gap-2.5">
+          <TriangleAlert size={ICON.md} className="mt-0.5 shrink-0" aria-hidden="true" />
           <p className="text-xs font-bold leading-snug">
             {t('This will replace your current journal.')}{' '}
             <span className="font-medium">{t('Entries, goals, budgets, accounts and settings in this browser are swapped for the ones in the file. Nothing is merged.')}</span>
@@ -67,7 +68,7 @@ export function RestoreDialog({ open, preview, fileName, onCancel, onConfirm }: 
         </div>
 
         {currencyDiffers && (
-          <p className="text-[11px] font-bold text-[#7A2727] bg-[#FAE0B4] rounded-xl px-3 py-2">
+          <p className="text-[11px] font-bold text-danger-ink bg-wants rounded-xl px-3 py-2">
             {t('The file is in {next}, your journal is in {now}. After the restore every amount is shown in {next}.', { next: incoming.currency, now: current.currency })}
           </p>
         )}
@@ -81,7 +82,7 @@ export function RestoreDialog({ open, preview, fileName, onCancel, onConfirm }: 
             onClick={async () => setCopySaved((await saveBackup()) || copySaved)}
             className="pressable pressable-soft w-full py-2.5 px-3 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[var(--text)] text-xs font-extrabold inline-flex items-center justify-center gap-1.5"
           >
-            {copySaved ? <Check size={14} aria-hidden="true" /> : <Download size={14} aria-hidden="true" />}
+            {copySaved ? <Check size={ICON.sm} aria-hidden="true" /> : <Download size={ICON.sm} aria-hidden="true" />}
             {copySaved ? t('Copy of the current journal saved') : t('Save a copy of the current journal first')}
           </button>
         )}
@@ -96,9 +97,9 @@ export function RestoreDialog({ open, preview, fileName, onCancel, onConfirm }: 
               setCopySaved(false);
               onConfirm();
             }}
-            className="pressable min-h-11 px-2 py-2.5 rounded-2xl bg-[#F6D0D0] hover:bg-[#F0BDBD] text-[#7A2727] text-sm font-extrabold flex items-center justify-center gap-1.5"
+            className="pressable min-h-11 px-2 py-2.5 rounded-2xl bg-danger hover:bg-danger-hover text-danger-ink text-sm font-extrabold flex items-center justify-center gap-1.5"
           >
-            <Upload size={15} aria-hidden="true" />
+            <Upload size={ICON.md} aria-hidden="true" />
             <span className="leading-tight">{hasCurrent && !copySaved ? t('Replace anyway') : t('Replace journal')}</span>
           </button>
         </div>
