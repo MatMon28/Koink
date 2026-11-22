@@ -35,3 +35,7 @@ The switches are `role="switch"` buttons with `aria-checked`; segmented choices 
 
 - **Currency** is a grid of ~40 currencies (`CurrencyGrid` in `sheets/shared.tsx`), the journal's own. **Update exchange rates** fetches current rates from Frankfurter ([currencies.md](currencies.md)); until then approximate built-in ones are used. Details: [currencies.md](currencies.md).
 - **Expense categories** expands in place into the category manager ([categories.md](categories.md)); it is the same body as the sheet opened from the Budgets page.
+
+## Mode (Basic / Full)
+
+**Mode** sits right under Language: two cards, Basic and Full (`ModeSetting` in `src/components/ModeChooser.tsx`), applied at once; the same choice is asked on the first launch. In [Basic mode](basic-mode.md) Settings drops *Hide needs, wants and savings*, *Hide the Budgets page*, *Buttons in the bottom bar* and *Widgets*, and the texts that mention budgets, goals or accounts use a Basic wording.

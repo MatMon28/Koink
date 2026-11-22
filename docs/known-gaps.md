@@ -100,3 +100,11 @@
 - **Android widgets** (spacer, hollow rings, `setImageAlpha`, tiles by weight) were edited without an Android SDK, like the rest of `android/`: not compiled, not run. A tile's `layout_weight` is read from its own root element, which `RemoteViews` keeps because it inflates into the row.
 - The turn is a CSS rotation, not an orientation lock: the status bar and navigation bar stay where the phone has them. A Capacitor screen-orientation plugin could rotate the whole screen; not added.
 - Compare *Both* has no difference pill; it would need one per category.
+
+## Latest round (Basic mode)
+
+- `tsc -b` and `vite build` pass. **The UI was not run in a browser or on a device**: the first-launch chooser, the Settings switch and every Basic screen were checked by reading the code and type-checking only. Look first at the chooser's stacking over the launch animation (`z-[200]`), and at Month / Statistics in Basic.
+- Basic hides recurring items, gift cards and widgets as well (not only savings and quick log): they belong to Full. A user with recurring items who switches to Basic no longer sees the due list until switching back.
+- Basic has no screen for a starting balance: the Profile balance is the starting balances of any accounts made in Full plus income minus expenses.
+- The guided tour text still describes Full; the tour always runs in Full.
+- Excel export and backups contain the whole journal in both modes.

@@ -88,7 +88,7 @@ function recencyRank(txs: { kind: Kind; categoryId: string }[], kind: Kind): Map
 type Step = 'amount' | 'rate' | 'details' | 'category';
 
 function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; guardRef: RefObject<FormGuard | null> }) {
-  const { data, selectedMonth, money, currency: mainCurrency, rateFor, addTx, updateTx, removeTx, saveCategory, closeSheet, openSheet } = useApp();
+  const { data, basic, selectedMonth, money, currency: mainCurrency, rateFor, addTx, updateTx, removeTx, saveCategory, closeSheet, openSheet } = useApp();
   // The entry as it was when the sheet opened; the form no longer depends on the ledger after that.
   const [original] = useState(() => (sheet.editId ? data.txs.find((tx) => tx.id === sheet.editId) : undefined));
   const kind = original?.kind ?? sheet.kind;
@@ -168,9 +168,10 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
     return {
       label: `${meta.name} · ${monthName}`,
       value: money(total),
-      sub: limit > 0 ? (left >= 0 ? `${money(left)} left of ${money(limit)}` : `${money(-left)} over ${money(limit)}`) : 'No budget set',
+      // Basic mode has no budgets: no line about them.
+      sub: basic ? undefined : limit > 0 ? (left >= 0 ? `${money(left)} left of ${money(limit)}` : `${money(-left)} over ${money(limit)}`) : 'No budget set',
     };
-  }, [data.txs, data.goals, data.profile.budgets, original?.id, kind, categoryId, converted, month, meta.name, money]);
+  }, [data.txs, data.goals, data.profile.budgets, basic, original?.id, kind, categoryId, converted, month, meta.name, money]);
 
   // The titles used most recently for this category: one tap fills the title.
   const recent = useMemo(() => {
@@ -386,7 +387,8 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
         />
       </div>
 
-      {data.accounts.length > 0 && (
+      {/* Basic mode has one account: nothing to pick (an entry keeps the account it already has). */}
+      {data.accounts.length > 0 && !basic && (
         <div>
           <SectionLabel>{t('Account')}</SectionLabel>
           <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('Account')}>
@@ -419,7 +421,7 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
         </div>
       )}
 
-      {cardOptions.length > 0 && (
+      {cardOptions.length > 0 && !basic && (
         <div>
           <SectionLabel>{t('Pay with a gift card')}</SectionLabel>
           <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('Gift card')}>
@@ -610,6 +612,7 @@ function RateStep({ currency, mainCurrency, rate, amount, onRate, onReset, onDon
 /* ---------- Side trip: new category ---------- */
 
 function NewCategoryStep({ onCancel, onCreate }: { onCancel: () => void; onCreate: (name: string, icon: string, bucket: Bucket) => void }) {
+  const { basic } = useApp();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('tag');
   const [bucket, setBucket] = useState<Bucket>('wants');
@@ -634,10 +637,12 @@ function NewCategoryStep({ onCancel, onCreate }: { onCancel: () => void; onCreat
         />
       </div>
       <IconPicker value={icon} onChange={setIcon} />
-      <div>
-        <SectionLabel>{t('Counts as')}</SectionLabel>
-        <BucketPicker value={bucket} onChange={setBucket} />
-      </div>
+      {!basic && (
+        <div>
+          <SectionLabel>{t('Counts as')}</SectionLabel>
+          <BucketPicker value={bucket} onChange={setBucket} />
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <button type="button" onClick={onCancel} className="pressable py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold">{t('Back')}</button>
         <button

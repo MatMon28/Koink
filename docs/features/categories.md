@@ -40,3 +40,9 @@ Backups include `categories` and `settings.hiddenCategories`; older backups load
 ## Order in the entry sheets
 
 In *Add / Edit expense* the category tiles are ordered by **most recent use** (the ledger is sorted newest first; categories never used keep their usual order after), and only the first row is shown until *Show all · N* is pressed. The recurring sheet uses the same order and the same collapsible `ChoiceGrid`. [entries.md](entries.md)
+
+## Default categories and Basic mode
+
+The built-in expense categories are House (`housing`), Food (`groceries`), Health, Fun and **Others** (`others`, new) as the five **defaults**, plus Transport, Bills, Eating out and Shopping. `DEFAULT_HIDDEN_CATEGORIES` (`categories.ts`) lists the last four: a new journal, and *Delete all data*, start with them hidden; Settings > Expense categories shows them again. A journal that already exists keeps its own hidden list, and ids never changed, so no entry loses its category. House and Food are the old Housing and Groceries under shorter names.
+
+In [Basic mode](basic-mode.md) the manager is **one flat list** (no Needs / Wants groups, no *New type*, no *Counts as*); new categories count as Wants and the types made in Full are kept.

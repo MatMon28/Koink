@@ -47,3 +47,7 @@ Notes:
   - **Close:** the X, Escape, Back, or a **swipe down** on the title bar or on the chart (read in the view's own axes, so "down" is the way the text reads, also when turned). The view follows the finger, fades, and either sinks away (past 96 px, or a flick) or springs back. It opens by rising and fading in and closes by sinking and fading out.
   - The read-out is capped at about a third of the height and scrolls; the settings popup scrolls on its own.
 - The component takes `txs`, the period (`fromDate`, `toDate`), the categories that have spending (`period.byCategory`) and the set of known category ids from `StatsView.tsx`. Comparison is not part of the period selector at the top: the page cards above the chart still describe the chosen period only.
+
+## Basic mode
+
+In [Basic mode](basic-mode.md) the page is deliberately small: periods **1 / 3 / 6 / 12 months** (no Custom; a stored Custom counts as 6 months), **Income** and **Spent** as plain **totals** of the period (no averages), **Balance trend**, **Where it went** (one colour, no needs / wants legend) and **Month by month**. The Needs / Wants / Savings shares, the Saved / Kept / Per day cards and the *Expenses over time* chart are not shown. Everything is counted from `txs` (no savings entries).

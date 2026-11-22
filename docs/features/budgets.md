@@ -57,3 +57,7 @@ A budget is one monthly figure per category: it applies to every month, past one
 - There is **no Accounts card here any more**: accounts live in the Profile ([accounts.md](accounts.md)).
 - Needs / Wants / own-type cards list the live category list (hidden categories only while they carry spending or a budget). **Manage expense categories** under the grid opens the category manager: [categories.md](categories.md).
 - The budget sheet starts with the number pad open.
+
+## Basic mode
+
+[Basic mode](basic-mode.md) has no budgets anywhere: no Budgets page (a stored Budgets tab opens Month), no Budget card, no budget row or pill on the category cards, no budget line in the entry sheet, no monthly budget in the Profile. Budgets stay in the data and return in Full.

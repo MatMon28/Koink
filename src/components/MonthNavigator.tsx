@@ -7,7 +7,7 @@ import { t } from '../lib/i18n';
 
 /** Month changer: previous / next arrows, a pill that opens a year grid, and a way back to this month. */
 export function MonthNavigator() {
-  const { data, selectedMonth, setSelectedMonth } = useApp();
+  const { data, txs, selectedMonth, setSelectedMonth } = useApp();
   const thisMonth = currentMonth();
   const isCurrent = selectedMonth === thisMonth;
   const label = formatMonth(selectedMonth);
@@ -16,7 +16,7 @@ export function MonthNavigator() {
   const [open, setOpen] = useState(false);
   const [viewYear, setViewYear] = useState(() => Number(selectedMonth.slice(0, 4)));
 
-  const monthsWithData = useMemo(() => new Set(data.txs.map((tx) => monthOf(tx.date))), [data.txs]);
+  const monthsWithData = useMemo(() => new Set(txs.map((tx) => monthOf(tx.date))), [txs]);
 
   useEffect(() => {
     if (!open) return;

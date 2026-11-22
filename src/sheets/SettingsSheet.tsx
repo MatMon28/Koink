@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Banknote, Download, EyeOff, FileSpreadsheet, Gift, Lock, Minimize2, Receipt, RefreshCw, Repeat, Sparkles, Trash2, Upload, Zap, type LucideIcon } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { AppIcon } from '../components/Brand';
+import { ModeSetting } from '../components/ModeChooser';
 import { DataStatus } from '../components/DataStatus';
 import { InstallApp } from '../components/InstallApp';
 import { Modal } from '../components/Modal';
@@ -41,7 +42,7 @@ const dataButton =
 
 export function SettingsSheet() {
   const { isOpen } = useSheet('settings');
-  const { data, selectedMonth, updateSettings, closeSheet, previewBackup, restoreBackup, loadSample, eraseAll, showToast, refreshRates } = useApp();
+  const { data, basic, selectedMonth, updateSettings, closeSheet, previewBackup, restoreBackup, loadSample, eraseAll, showToast, refreshRates } = useApp();
   const { saveBackup, lastBackup } = useBackup();
   const [updatingRates, setUpdatingRates] = useState(false);
   const { settings } = data;
@@ -108,6 +109,12 @@ export function SettingsSheet() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Mode: Basic or Full (also asked on the first launch) */}
+        <div>
+          <SectionLabel>{t('Mode')}</SectionLabel>
+          <ModeSetting />
         </div>
 
         <Collapsible title={t('Appearance')} defaultOpen>
@@ -211,6 +218,8 @@ export function SettingsSheet() {
             <Switch on={settings.ultraMinimal} />
           </button>
 
+          {!basic && (
+            <>
           <button
             type="button"
             role="switch"
@@ -248,6 +257,8 @@ export function SettingsSheet() {
             </span>
             <Switch on={settings.hideBudgets} />
           </button>
+            </>
+          )}
         </Collapsible>
 
         {/* Currency */}
@@ -275,7 +286,7 @@ export function SettingsSheet() {
             <CurrencyGrid value={settings.currency} onChange={(code) => updateSettings({ currency: code })} label={t('Currency of the journal')} />
           )}
           <p className="mt-2 text-[11px] font-medium text-[var(--muted)]">
-            {t('The journal\'s currency is what every total, budget and balance is counted in. A single entry can be paid in another currency: it is converted to the journal\'s currency when saved (pick it in the entry, rates below) and keeps what was actually paid.')}
+            {basic ? t('The journal\'s currency is what every total and balance is counted in. A single entry can be paid in another currency: it is converted to the journal\'s currency when saved (pick it in the entry, rates below) and keeps what was actually paid.') : t('The journal\'s currency is what every total, budget and balance is counted in. A single entry can be paid in another currency: it is converted to the journal\'s currency when saved (pick it in the entry, rates below) and keeps what was actually paid.')}
           </p>
           <div className="mt-2 flex items-center gap-2">
             <button
@@ -305,7 +316,8 @@ export function SettingsSheet() {
           <CategoriesBody />
         </Collapsible>
 
-        {/* Quick-add bar */}
+        {/* Quick-add bar (Basic mode always has income and expense, nothing else) */}
+        {!basic && (
         <Collapsible title={t('Buttons in the bottom bar')}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {QUICK_ROWS.map((row) => {
@@ -334,8 +346,9 @@ export function SettingsSheet() {
             })}
           </div>
         </Collapsible>
+        )}
 
-        <WidgetsSettings />
+        {!basic && <WidgetsSettings />}
 
         <NotificationSettings />
 
@@ -362,7 +375,7 @@ export function SettingsSheet() {
             {t('Export to Excel')}
           </button>
           <p className="text-[11px] font-medium text-[var(--muted)] -mt-1">
-            {t('A readable spreadsheet of your entries, budgets, goals and accounts. It is for reading and sharing: it cannot be restored. Use Save backup for that.')}
+            {basic ? t('A readable spreadsheet of your entries. It is for reading and sharing: it cannot be restored. Use Save backup for that.') : t('A readable spreadsheet of your entries, budgets, goals and accounts. It is for reading and sharing: it cannot be restored. Use Save backup for that.')}
           </p>
           <button type="button" onClick={() => (hasEntries ? setConfirmSample(true) : loadSample())} className={`${dataButton} w-full`}>
             <Sparkles size={14} />
@@ -388,7 +401,7 @@ export function SettingsSheet() {
         >
           <span className="min-w-0">
             <span className="block text-sm font-extrabold">{t('Delete all data')}</span>
-            <span className="block text-[11px] font-medium opacity-80">{t('Erase every entry, goal, budget and account in this browser')}</span>
+            <span className="block text-[11px] font-medium opacity-80">{basic ? t('Erase every entry in this browser') : t('Erase every entry, goal, budget and account in this browser')}</span>
           </span>
           <Trash2 size={18} className="shrink-0" aria-hidden="true" />
         </button>
@@ -409,7 +422,7 @@ export function SettingsSheet() {
       <ConfirmDialog
         open={confirmSample}
         title={t('Replace your journal?')}
-        message={t('Loading the sample journal replaces your entries, goals, budgets and recurring items. Save a backup first if you want to keep them.')}
+        message={basic ? t('Loading the sample journal replaces your entries. Save a backup first if you want to keep them.') : t('Loading the sample journal replaces your entries, goals, budgets and recurring items. Save a backup first if you want to keep them.')}
         confirmLabel={t('Replace')}
         onCancel={() => setConfirmSample(false)}
         onConfirm={() => {
@@ -421,7 +434,7 @@ export function SettingsSheet() {
       <ConfirmDialog
         open={eraseStep === 1}
         title={t('Delete all data?')}
-        message={t('Every entry, goal, budget and recurring item in this browser is erased.')}
+        message={basic ? t('Every entry in this browser is erased.') : t('Every entry, goal, budget and recurring item in this browser is erased.')}
         confirmLabel={t('Continue')}
         onCancel={() => setEraseStep(0)}
         onConfirm={() => setEraseStep(2)}

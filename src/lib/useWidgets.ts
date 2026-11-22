@@ -9,10 +9,16 @@ import { intentFor, parseWidgetLink } from './widgets';
  * the preview and a tapped Android widget all end up here, so every button does the same everywhere.
  */
 export function useRunWidgetAction(): (key: string) => void {
-  const { data, openSheet, closeSheet, setActiveTab } = useApp();
+  const { data, basic, openSheet, closeSheet, setActiveTab } = useApp();
   const hasGoals = data.goals.length > 0;
   return useCallback((key: string) => {
     const intent = intentFor(key);
+    // Basic mode has no savings, quick log, recurring items or gift cards: a button set up in Full mode
+    // (an Android widget keeps its buttons) just lands on the Month page.
+    if (basic && (intent.type === 'saving' || intent.type === 'quick' || (intent.type === 'target' && (intent.target === 'recurring' || intent.target === 'giftcard')))) {
+      closeSheet();
+      return setActiveTab('month');
+    }
     if (intent.type === 'category') return openSheet({ type: 'tx', kind: 'expense', categoryId: intent.categoryId });
     if (intent.type === 'saving') return openSheet(hasGoals ? { type: 'tx', kind: 'saving' } : { type: 'goal' });
     if (intent.type === 'quick') return openSheet({ type: 'quick' });
@@ -25,7 +31,7 @@ export function useRunWidgetAction(): (key: string) => void {
         closeSheet();
         return setActiveTab(intent.target);
     }
-  }, [hasGoals, openSheet, closeSheet, setActiveTab]);
+  }, [basic, hasGoals, openSheet, closeSheet, setActiveTab]);
 }
 
 let launchLinkTaken = false;

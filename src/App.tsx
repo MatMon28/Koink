@@ -5,6 +5,7 @@ import { PigIcon } from './lib/pig';
 import { ActionDock, type DockAction } from './components/ActionDock';
 import { Header } from './components/Header';
 import { InstallGuideHost, VIEW_CHANGE_EVENT } from './components/InstallGuide';
+import { ModeChooser } from './components/ModeChooser';
 import { PageSwiper } from './components/PageSwiper';
 import { StorageBanner } from './components/StorageBanner';
 import { AppTour } from './components/tour/AppTour';
@@ -48,8 +49,9 @@ function renderPage(tab: ActiveTab) {
 
 /** Income, expense and the shortcuts. The bar belongs to the Month page: `show` is false elsewhere. */
 function QuickAddBar({ show }: { show: boolean }) {
-  const { data, openSheet } = useApp();
-  const quick = data.settings.quickAdd;
+  const { data, basic, openSheet } = useApp();
+  // Basic mode: income and expense, nothing else (no recurring, log again, savings or gift cards).
+  const quick = basic ? { ...data.settings.quickAdd, income: true, expense: true, recurring: false, quick: false, saving: false, giftcard: false } : data.settings.quickAdd;
   const actions: DockAction[] = [];
   if (quick.income) actions.push({ id: 'income', icon: <Banknote />, tone: 'bg-intake text-intake-ink', label: 'Add income', onClick: () => openSheet({ type: 'tx', kind: 'income' }) });
   if (quick.expense) actions.push({ id: 'expense', icon: <Receipt />, tone: 'bg-activity text-activity-ink', label: 'Add expense', onClick: () => openSheet({ type: 'tx', kind: 'expense' }) });
@@ -152,8 +154,8 @@ function TourBridge() {
 }
 
 function Shell() {
-  const { activeTab, setActiveTab, setSelectedMonth, openSheet, closeSheet, data } = useApp();
-  const hasDock = Object.values(data.settings.quickAdd).some(Boolean);
+  const { activeTab, setActiveTab, setSelectedMonth, openSheet, closeSheet, data, basic } = useApp();
+  const hasDock = basic || Object.values(data.settings.quickAdd).some(Boolean);
   // The button bar is only on the Month page. A committed swipe counts at once (like the header pill),
   // so the bar comes or goes while the page is still travelling.
   const shownTab = usePillTab() ?? activeTab;
@@ -167,7 +169,11 @@ function Shell() {
   const openTarget = useCallback((target: OpenTarget) => {
     if (target === 'stats' || target === 'budgets') {
       closeSheet();
-      setActiveTab(target);
+      setActiveTab(target); // Budgets is not reachable in Basic mode: the store shows the Month page
+    } else if (basic && (target === 'giftcard' || target === 'recurring')) {
+      // Basic mode has neither gift cards nor recurring items: land on the Month page.
+      closeSheet();
+      setActiveTab('month');
     } else if (target === 'giftcard') {
       openSheet({ type: 'giftCards' });
     } else if (target === 'recurring') {
@@ -176,7 +182,7 @@ function Shell() {
     } else {
       openSheet({ type: 'tx', kind: target });
     }
-  }, [closeSheet, openSheet, setActiveTab, setSelectedMonth]);
+  }, [basic, closeSheet, openSheet, setActiveTab, setSelectedMonth]);
 
   useEffect(() => {
     const target = takeLaunchAction();
@@ -217,6 +223,7 @@ function Shell() {
       <ProfileSheet />
       <SettingsSheet />
       <ToastHost />
+      <ModeChooser />
     </div>
   );
 }

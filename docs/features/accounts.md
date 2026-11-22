@@ -28,3 +28,7 @@ Known limit: there are no transfers between accounts. Fix a balance by editing t
 ## In the profile (changed)
 
 The Profile sheet no longer shows the all-time balance banner. Its place is taken by **Accounts** (`ProfileAccounts.tsx`): every account is a row with its icon, name and a **balance field**. Type what is really in the account and leave the field (or press Enter): the opening balance is recomputed (`opening = typed - what the entries add up to`, the same rule as `AccountSheet`), so later entries keep moving it. The pencil opens `AccountSheet` to rename, change the icon or delete. *Add account* opens an inline form (name + money in it now). The banner at the top now shows the **total of all accounts**. Edits to accounts apply at once; *Save profile* still saves the name and the budget rule.
+
+## Basic mode
+
+[Basic mode](basic-mode.md) has **one account and no account screens**: no list in the Profile, no picker in the entry sheet, no account on rows or in the filter. Accounts made in Full stay in the data; an entry keeps its account, and the entry sheet still gives a new entry the account used last, invisibly. Starting balances are edited in Full.

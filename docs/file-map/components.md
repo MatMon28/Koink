@@ -31,6 +31,7 @@
 | `StorageBanner.tsx` | `StorageBanner` | The sticky red banner on every page while the journal cannot be written to the device: why, *Export a backup now*, *Try again*; also warns on closing the tab | [../features/backup.md](../features/backup.md) |
 | `DataStatus.tsx` | `DataStatus` | The status block at the top of Settings > Your data: saved on this device (or the failure and a Retry), and the date of the last backup file | [../features/backup.md](../features/backup.md) |
 | `ProjectDownload.tsx` | `ProjectDownload` | "Project files" card of Settings: a download link to `downloads/koink-project.zip`; renders nothing in the Android app |
+| `ModeChooser.tsx` | `ModeChooser`, `ModeSetting` | The first-launch Basic / Full dialog (shown until `settings.modeChosen`), and the same two cards for Settings > Mode. [../features/basic-mode.md](../features/basic-mode.md) |
 | `Brand.tsx` | `Wordmark`, `AppIcon` | The wordmark (theme-coloured, class `koink-wordmark`; carries the press animations' CSS) and the app icon (light or dark tile with the theme), both built from `src/brand/art.js`. See [../brand.md](../brand.md) |
 
 ## Patterns worth knowing

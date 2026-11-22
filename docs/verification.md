@@ -107,3 +107,7 @@ Checked: `tsc -b` and ESLint clean, `vite build` succeeds; the Frankfurter endpo
 ## Checked this round
 
 - `tsc`, `eslint` and `vite build` pass. `recurringDates`, `recurringSlots`, `nextDueDate`, `expenseSeries` and `budgetSummary` were exercised with a small script (weekly every 2 weeks from 3 Jan 2025, day / week / month buckets, category predicate, generic budget). The new screens (filter panel, chart, custom period, weekly form) were not driven in a browser.
+
+## Basic-mode round
+
+Run: `npm ci`, `tsc -b`, `vite build` (all pass). Not run: browser or device checks of the mode chooser and the Basic screens (no browser in the environment). Scenarios to try by hand: first launch (chooser, pick Basic, pick Full); Settings > Mode both ways with the Budgets page open; Basic with the sample journal (no savings entries, no Budget card, no account names); add an expense in Basic and see the five default categories; Statistics at 1 / 3 / 6 / 12 months.

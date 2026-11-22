@@ -1,4 +1,4 @@
-import { Banknote, Briefcase, Car, Coins, FileText, Gift, HeartPulse, House, Laptop, ShoppingBag, ShoppingBasket, Ticket, UtensilsCrossed, type LucideIcon } from 'lucide-react';
+import { Banknote, Briefcase, Car, Coins, FileText, Gift, HeartPulse, House, Laptop, Shapes, ShoppingBag, ShoppingBasket, Ticket, UtensilsCrossed, type LucideIcon } from 'lucide-react';
 import { t } from './i18n';
 import { PigIcon } from './pig';
 import { iconFor } from './icons';
@@ -11,17 +11,28 @@ export interface ExpenseCategory {
   bucket: Bucket;
 }
 
-/** Needs first, then wants: the order of the cards on the Month page. */
+/**
+ * Needs first, then wants: the order of the cards on the Month page.
+ * The five **default** categories are House, Food, Health, Fun and Others (`DEFAULT_HIDDEN_CATEGORIES`
+ * hides the rest in a new journal). The ids of the older ones are kept, so no entry loses its category.
+ */
 export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
-  { id: 'housing', get name() { return t('Housing'); }, icon: House, bucket: 'needs' },
-  { id: 'groceries', get name() { return t('Groceries'); }, icon: ShoppingBasket, bucket: 'needs' },
+  { id: 'housing', get name() { return t('House'); }, icon: House, bucket: 'needs' },
+  { id: 'groceries', get name() { return t('Food'); }, icon: ShoppingBasket, bucket: 'needs' },
+  { id: 'health', get name() { return t('Health'); }, icon: HeartPulse, bucket: 'needs' },
   { id: 'transport', get name() { return t('Transport'); }, icon: Car, bucket: 'needs' },
   { id: 'bills', get name() { return t('Bills'); }, icon: FileText, bucket: 'needs' },
-  { id: 'health', get name() { return t('Health'); }, icon: HeartPulse, bucket: 'needs' },
-  { id: 'eating_out', get name() { return t('Eating out'); }, icon: UtensilsCrossed, bucket: 'wants' },
   { id: 'fun', get name() { return t('Fun'); }, icon: Ticket, bucket: 'wants' },
+  { id: 'others', get name() { return t('Others'); }, icon: Shapes, bucket: 'wants' },
+  { id: 'eating_out', get name() { return t('Eating out'); }, icon: UtensilsCrossed, bucket: 'wants' },
   { id: 'shopping', get name() { return t('Shopping'); }, icon: ShoppingBag, bucket: 'wants' },
 ];
+
+/**
+ * Built-in categories that are off in a new journal (and after *Delete all data*). They are still there:
+ * Settings > Expense categories shows them again, and an existing journal keeps its own choice.
+ */
+export const DEFAULT_HIDDEN_CATEGORIES: string[] = ['transport', 'bills', 'eating_out', 'shopping'];
 
 export interface IncomeSource {
   id: string;

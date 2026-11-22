@@ -59,3 +59,7 @@ Until the app has been opened once after the widget was placed, the widget shows
 ## Not verified
 
 The Android widgets were written without an Android SDK (like the rest of `android/`): not compiled and not run on a device. The web side (strip, sheet, settings) compiles and builds. See [../known-gaps.md](../known-gaps.md).
+
+## Basic mode
+
+[Basic mode](basic-mode.md) hides the Widgets section of Settings and the Month-page strip. Android home widgets keep the buttons chosen in Full; in Basic a button that needs a Full-only screen (savings, quick log, recurring, gift cards, budgets) opens the Month page (`useRunWidgetAction`).

@@ -41,6 +41,7 @@
 | Settings: language, appearance, currency, bottom bar, widgets, install card | [features/settings.md](features/settings.md) |
 | Language (English / Italian) | [features/language.md](features/language.md) |
 | Themes and the six style presets | [features/themes.md](features/themes.md) |
+| Basic mode (first-launch chooser, Settings > Mode, what Basic hides) | [features/basic-mode.md](features/basic-mode.md) |
 | Ultra minimal mode | [features/ultra-minimal.md](features/ultra-minimal.md) |
 | Reminder notifications | [notifications.md](notifications.md) |
 | Launch animation | [launch-intro.md](launch-intro.md) |
@@ -76,6 +77,8 @@ Keep each document under roughly 120 lines. If one grows, split it and add a row
 ## Last audit
 
 Written together with the PWA / Android / gestures round. Checked against the tree at that point: every path named in the docs exists, the npm scripts match `package.json`, the storage keys match the source, and the versions quoted (Capacitor 8.5.3, Android Gradle Plugin 8.13.0, Gradle 8.14.3, minSdk 24, SDK 36, Java 21) match `package.json` and the generated Gradle files. What was run and what was not is in [verification.md](verification.md).
+
+**Basic-mode round (Basic / Full mode, first-launch chooser, five default categories):** new document `features/basic-mode.md`; month, transactions, statistics, settings, categories, profile, accounts, data-model, known-gaps, verification, changes-patch, the lib / components file maps and the root README updated. Checked: `tsc -b` and `vite build` pass; not run in a browser.
 
 **Kakcal-features round (launch animation, page rail, reminders, Ultra minimal, sheet behaviour):** new documents `notifications.md`, `launch-intro.md`, `motion.md`, `features/ultra-minimal.md`; `gestures.md` rewritten; architecture, data-model, design-system, pwa, android, brand, prepare-apps, the feature documents and every file map updated. Checked: paths in the docs exist, storage keys and constants quoted match the source. What was run is in [verification.md](verification.md); Android was again not compiled.
 

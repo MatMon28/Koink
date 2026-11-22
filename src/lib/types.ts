@@ -3,6 +3,12 @@ import type { Language } from './i18n';
 export type Theme = 'light' | 'lite-dark' | 'dark';
 export type ThemeStyle = 'classic' | 'angular' | 'aurora' | 'pop' | 'playful' | 'minimal' | 'mono';
 
+/**
+ * `basic`: income and expenses only, three pages (Month, Transactions, Statistics), one account, no budgets,
+ * savings, quick log or recurring items. `full`: everything. Chosen on first launch, changed in Settings.
+ */
+export type Mode = 'basic' | 'full';
+
 export type Kind = 'expense' | 'income' | 'saving';
 /**
  * The type an expense category belongs to: `needs`, `wants`, or the id (`ty_...`) of one of the user's own
@@ -163,6 +169,10 @@ export interface WidgetSettings {
 }
 
 export interface Settings {
+  /** Basic or Full (see `Mode`). Only the screens change; no data is ever removed by switching. */
+  mode: Mode;
+  /** False until the user has picked a mode on the first launch (the chooser is shown while it is false). */
+  modeChosen: boolean;
   /** Language of the whole interface (English or Italian). */
   language: Language;
   /** Hide the Needs / Wants / Savings cards on the Month page (Settings > Appearance). */

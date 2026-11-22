@@ -23,3 +23,7 @@ Which bucket a category belongs to is fixed in `src/lib/categories.ts`. The rule
 Stored in `profile.name`, `profile.rule` and `profile.monthlyBudget`, saved with `updateProfile()`.
 
 > **Changed:** the banner shows the total of the accounts (not the all-time balance of the entries) and the **Accounts** block sits between the name and the budget rule. Several accounts, each with the money in it: see [accounts.md](accounts.md#in-the-profile-changed).
+
+## Basic mode
+
+In [Basic mode](basic-mode.md) the Profile is the name and a **Balance** banner (accounts' starting balances + all income - all expenses). The accounts list, the monthly budget and the 50 / 30 / 20 rule are not shown (and saving never touches them).

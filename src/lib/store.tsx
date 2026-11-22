@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { sortTxs } from './calc';
-import { syncCategories } from './categories';
+import { DEFAULT_HIDDEN_CATEGORIES, syncCategories } from './categories';
+import { inTourEmbed, normalizeMode, syncMode } from './mode';
 import { syncTabs } from './tabs';
 import { currentMonth, daysInMonth, formatDay, pad, todayStr } from './dates';
 import { buildSampleTxs, SAMPLE_ACCOUNTS, SAMPLE_GOALS, SAMPLE_PROFILE, SAMPLE_RECURRING } from './demo';
@@ -19,6 +20,9 @@ import { t } from './i18n';
 
 const defaultSettings = (): Settings => ({
   language: detectLanguage(),
+  // Full until the first-launch chooser (ModeChooser.tsx) records the user's pick.
+  mode: 'full',
+  modeChosen: false,
   hideSplit: false,
   hideBudgets: false,
   theme: 'light',
@@ -26,7 +30,7 @@ const defaultSettings = (): Settings => ({
   monoHue: DEFAULT_MONO_HUE,
   ultraMinimal: false,
   currency: 'EUR',
-  hiddenCategories: [],
+  hiddenCategories: [...DEFAULT_HIDDEN_CATEGORIES],
   rates: {},
   ratesDate: '',
   quickAdd: { income: true, expense: true, recurring: true, quick: true, saving: true, giftcard: false },
@@ -162,6 +166,9 @@ function sanitize(raw: unknown): AppData | null {
   const base = defaultSettings();
   const settings: Settings = {
     language: s.language === undefined ? base.language : normalizeLanguage(s.language),
+    // A journal or backup from before modes existed keeps the whole app (Full) and is not asked again.
+    mode: normalizeMode(s.mode),
+    modeChosen: s.modeChosen === undefined ? true : s.modeChosen === true,
     hideBudgets: s.hideBudgets === true,
     // Before this setting existed the choice lived in localStorage ('koink_month_split_hidden').
     hideSplit: s.hideSplit === undefined ? legacySplitHidden() : s.hideSplit === true,
@@ -218,6 +225,13 @@ export interface Toast {
 
 interface AppContextValue {
   data: AppData;
+  /**
+   * True while Basic mode is on (and not inside the guided tour). The one flag every screen asks: Basic only
+   * changes what is shown, `data` always keeps everything.
+   */
+  basic: boolean;
+  /** The entries the current mode shows: all of them, or in Basic mode income and expenses only (no savings). */
+  txs: Tx[];
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
   selectedMonth: string;
@@ -314,7 +328,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Everything below reads the category list through categories.ts: bring it up to date first.
   // The page order (tabs.ts) also follows Settings: a hidden page leaves the pill and the swipe rail.
-  useMemo(() => syncTabs(data.settings.hideBudgets), [data.settings.hideBudgets]);
+  // Basic mode: no Budgets page, whatever the Appearance switch says. The guided tour always shows everything.
+  const basic = data.settings.mode === 'basic' && !inTourEmbed();
+  useMemo(() => syncMode(basic), [basic]);
+  useMemo(() => syncTabs(data.settings.hideBudgets || basic), [data.settings.hideBudgets, basic]);
+  // Savings entries are not shown in Basic mode (they stay in the journal and come back in Full).
+  const txs = useMemo(() => (basic ? data.txs.filter((tx) => tx.kind !== 'saving') : data.txs), [basic, data.txs]);
   useMemo(() => syncCategories(data.categories, data.settings.hiddenCategories, data.categoryTypes), [data.categories, data.settings.hiddenCategories, data.categoryTypes]);
 
   const { theme, themeStyle, monoHue, currency, ultraMinimal, language } = data.settings;
@@ -354,7 +373,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // A hidden page is never the active one (hiding Budgets while it is open shows the Month page).
-  const hideBudgets = data.settings.hideBudgets;
+  const hideBudgets = data.settings.hideBudgets || basic;
   const activeTab: ActiveTab = chosenTab === 'budgets' && hideBudgets ? 'month' : chosenTab;
   const setActiveTab = useCallback((tab: ActiveTab) => {
     // A hidden page cannot be opened (a widget, a reminder or an old link may still ask for it).
@@ -587,7 +606,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const eraseAll = useCallback(() => {
     setData((prev) => ({
       txs: [], goals: [], recurring: [], accounts: [], giftCards: [], categories: [], categoryTypes: [], profile: emptyProfile(),
-      settings: { ...prev.settings, hiddenCategories: [], sampleData: false },
+      settings: { ...prev.settings, hiddenCategories: [...DEFAULT_HIDDEN_CATEGORIES], sampleData: false },
     }));
     setSelectedMonth(currentMonth());
   }, []);
@@ -624,12 +643,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [previewBackup, restoreBackup]);
 
   const value = useMemo<AppContextValue>(() => ({
-    data, activeTab, setActiveTab, selectedMonth, setSelectedMonth, openSheet, closeSheet,
+    data, basic, txs, activeTab, setActiveTab, selectedMonth, setSelectedMonth, openSheet, closeSheet,
     money, moneyFit, symbol: currencySymbol(currency), currency, rateFor, addTx, updateTx, removeTx, saveGoal, removeGoal, saveRecurring,
     removeRecurring, logRecurring, saveAccount, removeAccount, saveGiftCard, removeGiftCard, saveCategory, saveCategoryType, removeCategoryType, removeCategory, setCategoryHidden, refreshRates, setBudget, updateProfile, updateSettings, eraseAll, loadSample, exportData,
     previewBackup, restoreBackup, importData, showToast, dismissToast,
   }), [
-    data, activeTab, setActiveTab, selectedMonth, openSheet, closeSheet, money, moneyFit, currency, addTx,
+    data, basic, txs, activeTab, setActiveTab, selectedMonth, openSheet, closeSheet, money, moneyFit, currency, addTx,
     updateTx, removeTx, saveGoal, removeGoal, saveRecurring, removeRecurring, logRecurring, saveAccount, removeAccount, saveGiftCard, removeGiftCard, saveCategory,
     saveCategoryType, removeCategoryType, removeCategory, setCategoryHidden, refreshRates, rateFor, setBudget, updateProfile,
     updateSettings, eraseAll, loadSample, exportData, previewBackup, restoreBackup, importData, showToast, dismissToast,

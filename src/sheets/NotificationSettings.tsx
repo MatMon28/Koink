@@ -67,7 +67,7 @@ function Row({ icon, tone, title, desc, on, onToggle, disabled, children }: RowP
  * Turning one on asks for the system permission; the scheduling itself happens in useReminders.
  */
 export function NotificationSettings() {
-  const { data, updateSettings, showToast } = useApp();
+  const { data, basic, updateSettings, showToast } = useApp();
   const n = data.settings.notifications;
   const [permission, setPermission] = useState<NotificationPermission>('prompt');
 
@@ -95,7 +95,7 @@ export function NotificationSettings() {
   };
 
   const recurringDays = new Set(data.recurring.map((item) => item.day)).size;
-  const anyOn = n.logDay.enabled || n.recurring.enabled || n.weeklyReview.enabled || n.monthStart.enabled;
+  const anyOn = n.logDay.enabled || (n.recurring.enabled && !basic) || n.weeklyReview.enabled || n.monthStart.enabled;
 
   const test = async () => {
     const sent = await sendTestNotification().catch(() => false);
@@ -139,6 +139,7 @@ export function NotificationSettings() {
           <TimeField label={t('At')} value={n.logDay.time} onChange={(time) => patch('logDay', { time })} />
         </Row>
 
+        {!basic && (
         <Row
           icon={<Repeat size={15} />}
           tone="bg-[#CFE7FE] text-[#183F66]"
@@ -153,6 +154,7 @@ export function NotificationSettings() {
             {recurringDays === 1 ? t('1 reminder a month') : t('{recurringDays} reminders a month', { recurringDays })}{t(', one for each day something is due.')}
           </p>
         </Row>
+        )}
 
         <Row
           icon={<TrendingUp size={15} />}
@@ -190,7 +192,7 @@ export function NotificationSettings() {
           icon={<CalendarDays size={15} />}
           tone="bg-nutrient text-nutrient-ink"
           title={t('New month')}
-          desc="On the 1st: check budgets, log what repeats"
+          desc={basic ? 'On the 1st: a fresh month to log' : 'On the 1st: check budgets, log what repeats'}
           on={n.monthStart.enabled}
           onToggle={() => toggle('monthStart')}
         >

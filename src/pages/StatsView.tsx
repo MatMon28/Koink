@@ -28,8 +28,10 @@ const W_SVG = 320;
 const H_SVG = 120;
 
 export function StatsView() {
-  const { data, money, moneyFit, setSelectedMonth, setActiveTab } = useApp();
-  const [range, setRange] = usePersistentState<RangeKey>('koink_stats_range', '6');
+  const { data, basic, txs, money, moneyFit, setSelectedMonth, setActiveTab } = useApp();
+  const [storedRange, setRange] = usePersistentState<RangeKey>('koink_stats_range', '6');
+  // Basic mode keeps the statistics simple: 1 / 3 / 6 / 12 months, no custom period (it counts as 6 months).
+  const range: RangeKey = basic && storedRange === 'custom' ? '6' : storedRange;
   const [customFrom, setCustomFrom] = usePersistentState('koink_stats_from', addDays(todayStr(), -29));
   const [customTo, setCustomTo] = usePersistentState('koink_stats_to', todayStr());
   const [trendOpen, setTrendOpen] = usePersistentState('koink_stats_trend_open', true);
@@ -39,7 +41,8 @@ export function StatsView() {
 
   const custom = range === 'custom';
   // Totals (not monthly averages) for one month and for a custom period; averages for 3 / 6 / 12 months.
-  const averaged = range === '3' || range === '6' || range === '12';
+  // Basic mode shows plain totals for the period, never averages.
+  const averaged = !basic && (range === '3' || range === '6' || range === '12');
 
   // The period as days: the chart and the custom filter work on these; the months below drive the rest.
   const { fromDate, toDate, months } = useMemo(() => {
@@ -55,7 +58,7 @@ export function StatsView() {
   }, [range, custom, customFrom, customTo]);
 
   // A custom period only counts the entries inside its days (its first and last month are partly in).
-  const scopedTxs = useMemo(() => (custom ? data.txs.filter((tx) => tx.date >= fromDate && tx.date <= toDate) : data.txs), [custom, data.txs, fromDate, toDate]);
+  const scopedTxs = useMemo(() => (custom ? txs.filter((tx) => tx.date >= fromDate && tx.date <= toDate) : txs), [custom, txs, fromDate, toDate]);
   const list = useMemo(() => totalsByMonth(scopedTxs, months), [scopedTxs, months]);
 
   const period = useMemo(() => {
@@ -97,14 +100,14 @@ export function StatsView() {
 
   // Running balance (everything earned minus everything spent) at the end of each month of the range.
   const trend = useMemo(() => {
-    if (data.txs.length === 0) return [];
-    const first = monthOf(data.txs[data.txs.length - 1].date);
+    if (txs.length === 0) return [];
+    const first = monthOf(txs[txs.length - 1].date);
     const shown = months.filter((m) => m >= first);
     if (shown.length === 0) return [];
     // Everything before the period (a custom one can start mid-month) is the starting balance.
     const startDate = custom && fromDate > `${shown[0]}-01` ? fromDate : `${shown[0]}-01`;
     let balance = 0;
-    for (const tx of data.txs) {
+    for (const tx of txs) {
       if (tx.date >= startDate) continue;
       if (tx.kind === 'income') balance += tx.amount;
       else if (tx.kind === 'expense') balance -= tx.amount;
@@ -113,7 +116,7 @@ export function StatsView() {
       balance += list.find((m) => m.month === month)?.net ?? 0;
       return { month, value: round2(balance) };
     });
-  }, [data.txs, months, list, custom, fromDate]);
+  }, [txs, months, list, custom, fromDate]);
 
   const values = trend.map((p) => p.value);
   const minV = Math.min(...values);
@@ -138,7 +141,7 @@ export function StatsView() {
     <div className="um-stack space-y-4">
       <div className="flex justify-center">
         <div role="group" aria-label={t('Period')} className="inline-flex w-fit max-w-full items-center justify-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
-          {RANGES.map((item) => (
+          {RANGES.filter((item) => !basic || item.id !== 'custom').map((item) => (
             <button
               key={item.id}
               type="button"
@@ -189,6 +192,8 @@ export function StatsView() {
         pillTitle={averaged ? t('Average income minus average spending, per month') : t('Income minus spending in this period')}
       />
 
+      {!basic && (
+        <>
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
         <ShareCard tone="needs" label={t('Needs')} amount={period.avgNeeds} share={shares.needs} target={shares.ofIncome ? data.profile.rule.needs : undefined} shareTitle={shareTitle} />
         <ShareCard tone="wants" label={t('Wants')} amount={period.avgWants} share={shares.wants} target={shares.ofIncome ? data.profile.rule.wants : undefined} shareTitle={shareTitle} />
@@ -200,9 +205,11 @@ export function StatsView() {
         <NoteCard tone="wants" icon={HandCoins} label={t('Kept')} value={`${percent(period.income - period.spent, period.income)}%`} title={t('Share of income that was not spent')} />
         <NoteCard tone="savings" icon={CalendarDays} label={t('Per day')} value={moneyFit(period.perDay, 7)} title={t('Average spending per day')} />
       </div>
+        </>
+      )}
 
       {/* Expense chart: bars or line, optional comparison of periods / categories, full view */}
-      <ExpenseChart txs={data.txs} fromDate={fromDate} toDate={toDate} categories={period.byCategory} knownIds={knownIds} />
+      {!basic && <ExpenseChart txs={txs} fromDate={fromDate} toDate={toDate} categories={period.byCategory} knownIds={knownIds} />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {/* Balance trend */}
@@ -297,7 +304,9 @@ export function StatsView() {
             <div className="pt-3 space-y-3">
               {period.byCategory.map(({ category, total }) => {
                 const Icon = category.icon;
+                // Needs / wants colours only exist in Full mode; Basic uses one calm colour.
                 const needs = category.bucket === 'needs';
+                const plain = basic;
                 return (
                   <div key={category.id}>
                     <div className="flex items-center justify-between gap-2 text-[11px] mb-1 tabular-nums">
@@ -313,13 +322,13 @@ export function StatsView() {
                     <Bar
                       value={total}
                       max={maxCategory}
-                      track={needs ? 'bg-[var(--pill-c-bg,#CFE7FE)]' : 'bg-[var(--pill-p-bg,#FAE0B4)]'}
-                      fill={needs ? 'bg-[var(--pill-c-text,#1A4670)]' : 'bg-[var(--pill-p-text,#7D4E14)]'}
+                      track={plain ? 'bg-[var(--inset)]' : needs ? 'bg-[var(--pill-c-bg,#CFE7FE)]' : 'bg-[var(--pill-p-bg,#FAE0B4)]'}
+                      fill={plain ? 'bg-activity-accent' : needs ? 'bg-[var(--pill-c-text,#1A4670)]' : 'bg-[var(--pill-p-text,#7D4E14)]'}
                     />
                   </div>
                 );
               })}
-              <p className="flex items-center gap-3 pt-0.5 text-[11px] font-bold text-[var(--muted)]">
+              <p className={`items-center gap-3 pt-0.5 text-[11px] font-bold text-[var(--muted)] ${basic ? 'hidden' : 'flex'}`}>
                 <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-c-text,#1A4670)]" />{t('Needs')}</span>
                 <span className="inline-flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-[var(--pill-p-text,#7D4E14)]" />{t('Wants')}</span>
               </p>

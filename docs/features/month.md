@@ -77,3 +77,7 @@ Remembered in `localStorage`: `koink_month_layout`, `koink_month_open`, `koink_m
 ## The button bar (Month page only)
 
 The bottom bar of add buttons (`QuickAddBar` in `App.tsx`, `ActionDock.tsx`) is shown on this page only. Moving to Transactions, Budgets or Statistics (swipe or pill) makes it leave towards the side the page went; coming back, it enters from the side the Month page came from. With a swipe it reacts the moment the swipe is committed. The other pages use the normal bottom padding. Sheets opened elsewhere have no button to shrink into and drop away. [../motion.md](../motion.md)
+
+## Basic mode
+
+In [Basic mode](basic-mode.md) the page is Income / Spent, **Left** and **Per day** (two note cards, no Budget), the category cards (entries and share pills only, no budget row), and only the **Income** tracker. Needs / Wants / Savings, the layout switch (always Normal), the widget strip and the Savings, Recurring and Gift cards trackers are not shown. Totals come from `txs` (no savings entries).

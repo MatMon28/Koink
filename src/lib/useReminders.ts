@@ -12,7 +12,7 @@ import type { OpenTarget } from './types';
  * notification to the matching screen. Mounted once, in the shell.
  */
 export function useReminders(onOpen: (target: OpenTarget) => void): void {
-  const { data, money } = useApp();
+  const { data, basic, money } = useApp();
   const latestOnOpen = useRef(onOpen);
   useEffect(() => {
     latestOnOpen.current = onOpen;
@@ -20,8 +20,8 @@ export function useReminders(onOpen: (target: OpenTarget) => void): void {
 
   // The plan as text: the effect below runs only when something in it really changed.
   const planKey = useMemo(
-    () => JSON.stringify(buildNotificationPlan(data.settings.notifications, data.recurring, (amount) => money(amount, { cents: true }))),
-    [data.settings.notifications, data.recurring, money],
+    () => JSON.stringify(buildNotificationPlan(data.settings.notifications, data.recurring, (amount) => money(amount, { cents: true }), basic)),
+    [data.settings.notifications, data.recurring, basic, money],
   );
 
   useEffect(() => listenForNotificationTaps((target) => {

@@ -35,8 +35,9 @@ interface CategoryCard {
 const prefersReducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export function MonthView() {
-  const { data, selectedMonth, money, moneyFit, openSheet, eraseAll, updateSettings, setActiveTab } = useApp();
-  const totals = useMemo(() => monthTotals(data.txs, selectedMonth), [data.txs, selectedMonth]);
+  const { data, basic, txs, selectedMonth, money, moneyFit, openSheet, eraseAll, updateSettings, setActiveTab } = useApp();
+  // Basic mode: income and expenses only (`txs` has no savings entries), no budgets, one list of categories.
+  const totals = useMemo(() => monthTotals(txs, selectedMonth), [txs, selectedMonth]);
   const shares = ruleShares(totals);
   const budget = budgetSummary(data.profile, totals);
   const rule = data.profile.rule;
@@ -56,10 +57,10 @@ export function MonthView() {
   }, [totals, data.categories, data.settings.hiddenCategories]);
   const categoryIds = cards.map((c) => c.id);
   // The Gift cards tracker appears once there is a card, or when its button is switched on (Settings).
-  const showGiftCards = data.giftCards.length > 0 || data.settings.quickAdd.giftcard;
+  const showGiftCards = !basic && (data.giftCards.length > 0 || data.settings.quickAdd.giftcard);
 
   // The needs / wants / savings split can be tucked away in Settings > Appearance.
-  const hideSplit = data.settings.hideSplit;
+  const hideSplit = data.settings.hideSplit || basic;
   // Spending in the user's own expense types gets a fourth card (named after the type when there is one).
   const ownTypeNames = data.categoryTypes
     .filter((ty) => cards.some((c) => c.bucket === ty.id && c.ids.some((id) => (totals.byCategory[id]?.total ?? 0) > 0)))
@@ -69,7 +70,8 @@ export function MonthView() {
   // Card expansion and the chosen layout are remembered independently.
   const [chosenLayout, setLayout] = usePersistentState<Layout>('koink_month_layout', 'normal');
   // Ultra minimal always shows the compact overview; the chosen layout comes back when it is switched off.
-  const layout: Layout = data.settings.ultraMinimal ? 'compact' : chosenLayout;
+  // Basic mode has five categories to show: always the Normal layout, and no layout switch.
+  const layout: Layout = data.settings.ultraMinimal ? 'compact' : basic ? 'normal' : chosenLayout;
   const [openSlots, setOpenSlots] = usePersistentState<string[]>('koink_month_open', []);
   const [openTrackers, setOpenTrackers] = usePersistentState<TrackerId[]>('koink_month_trackers_open', ['recurring']);
   const compact = layout === 'compact';
@@ -139,7 +141,7 @@ export function MonthView() {
     const entries = category.ids.map((id) => totals.byCategory[id]);
     const total = round2(entries.reduce((sum, entry) => sum + (entry?.total ?? 0), 0));
     const count = entries.reduce((sum, entry) => sum + (entry?.count ?? 0), 0);
-    const limit = category.orphan ? 0 : data.profile.budgets[category.id] ?? 0;
+    const limit = category.orphan || basic ? 0 : data.profile.budgets[category.id] ?? 0;
     const left = limit - total;
     const items = totals.items.filter((tx) => tx.kind === 'expense' && category.ids.includes(tx.categoryId));
     const Icon = category.icon;
@@ -150,12 +152,17 @@ export function MonthView() {
     const pills: PillItem[] = [
       { tone: 'neutral', icon: Receipt, text: String(count), label: count === 1 ? 'entry' : 'entries', title: `${count} ${count === 1 ? 'entry' : 'entries'} this month` },
       { tone: 'neutral', icon: ChartPie, text: `${share}%`, label: 'of spending', title: `${share}% of this month's spending` },
-      limit > 0
-        ? left >= 0
-          ? { tone: 'neutral', icon: Wallet, text: moneyFit(left, 6), label: 'left', title: `${money(left)} of the ${money(limit)} budget left` }
-          : { tone: 'alert', icon: Wallet, text: moneyFit(left, 6), label: 'over', title: `${money(-left)} over the ${money(limit)} budget` }
-        : { tone: 'neutral', icon: Wallet, text: '–', label: 'no budget', title: 'No budget set' },
     ];
+    // The budget pill does not exist in Basic mode.
+    if (!basic) {
+      pills.push(
+        limit > 0
+          ? left >= 0
+            ? { tone: 'neutral', icon: Wallet, text: moneyFit(left, 6), label: 'left', title: `${money(left)} of the ${money(limit)} budget left` }
+            : { tone: 'alert', icon: Wallet, text: moneyFit(left, 6), label: 'over', title: `${money(-left)} over the ${money(limit)} budget` }
+          : { tone: 'neutral', icon: Wallet, text: '–', label: 'no budget', title: 'No budget set' },
+      );
+    }
 
     return (
       <div key={category.id} className={cellClass(open)}>
@@ -393,9 +400,10 @@ export function MonthView() {
         <HeroPair inLabel={t('Income')} outLabel={t('Spent')} inAmount={totals.income} outAmount={totals.spent} pillTitle={t('Income minus spending')} />
 
         <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
+          <div className={`grid gap-2.5 sm:gap-3.5 ${basic ? 'grid-cols-2' : 'grid-cols-3'}`}>
             <NoteCard tone="needs" icon={Wallet} label={t('Left')} value={moneyFit(totals.left, 7)} title={t('Income minus spending and savings')} />
             <NoteCard tone="wants" icon={CalendarDays} label={t('Per day')} value={moneyFit(perDay, 7)} title={t('Average spending per day ({days} {v})', { days, v: days === 1 ? t('day') : t('days') })} />
+            {!basic && (
             <NoteCard
               tone="savings"
               icon={Target}
@@ -412,6 +420,7 @@ export function MonthView() {
               }
               onClick={budget.budget > 0 && budget.scope === 'categories' && budget.unbudgeted > 0 && !data.settings.hideBudgets ? () => setActiveTab('budgets') : undefined}
             />
+            )}
           </div>
           {!hideSplit && (
             <div className="space-y-1.5">
@@ -457,7 +466,7 @@ export function MonthView() {
           )}
         </div>
 
-        <div className="um-hide flex flex-wrap items-center justify-center gap-2 px-1">
+        <div className={`um-hide flex flex-wrap items-center justify-center gap-2 px-1 ${basic ? 'hidden' : ''}`}>
           <div role="group" aria-label={t('Card layout')} className="inline-flex items-center gap-0.5 rounded-full bg-[var(--surface)] border border-[var(--border)] p-1">
             {layouts.map((item) => (
               <button
@@ -481,7 +490,7 @@ export function MonthView() {
         <div className={gridClass}>{categoryCards}</div>
 
         <div className={gridClass}>
-          {TRACKERS.filter((id) => id !== 'giftcards' || showGiftCards).map((id) => (
+          {TRACKERS.filter((id) => (!basic || id === 'income') && (id !== 'giftcards' || showGiftCards)).map((id) => (
             <div key={id} className={cellClass(layout === 'expanded' || openTrackers.includes(id))}>
               {trackerCard(id)}
             </div>
@@ -492,7 +501,7 @@ export function MonthView() {
       <ConfirmDialog
         open={confirmFresh}
         title={t('Start with an empty journal?')}
-        message={t('The sample entries, goals, budgets and recurring items are removed. Your theme and currency stay.')}
+        message={basic ? t('The sample entries are removed. Your theme and currency stay.') : t('The sample entries, goals, budgets and recurring items are removed. Your theme and currency stay.')}
         confirmLabel={t('Start fresh')}
         onCancel={() => setConfirmFresh(false)}
         onConfirm={() => {

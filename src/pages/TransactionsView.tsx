@@ -61,10 +61,11 @@ interface MonthBlock {
  * icon, the amount under the text, so everything fits half a phone screen.
  */
 function EntryRow({ tx, narrow = false }: { tx: Tx; narrow?: boolean }) {
-  const { data, money, openSheet, removeTx } = useApp();
+  const { data, basic, money, openSheet, removeTx } = useApp();
   const meta = categoryMeta(tx.kind, tx.categoryId, data.goals);
   const Icon = meta.icon;
-  const account = tx.accountId ? data.accounts.find((a) => a.id === tx.accountId) : undefined;
+  // Basic mode has one account and never names it.
+  const account = tx.accountId && !basic ? data.accounts.find((a) => a.id === tx.accountId) : undefined;
   const amount = money(tx.amount, { cents: true });
   const title = tx.note || meta.name;
   const noteMark = tx.details ? <StickyNote size={11} strokeWidth={2.4} className="shrink-0 text-[var(--muted)]" aria-label={t('Has a note')} /> : null;
@@ -157,9 +158,11 @@ function MonthHeading({ block, band }: { block: MonthBlock; band: boolean }) {
 }
 
 export function TransactionsView() {
-  const { data, money } = useApp();
+  const { data, basic, txs, money } = useApp();
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = usePersistentState<Filter>('koink_tx_filter', 'all');
+  const [storedFilter, setFilter] = usePersistentState<Filter>('koink_tx_filter', 'all');
+  // Basic mode has no Savings chip: a Savings filter chosen in Full mode counts as All.
+  const filter: Filter = basic && storedFilter === 'saving' ? 'all' : storedFilter;
   const [storedView, setView] = usePersistentState<string>('koink_tx_view', 'list');
   const view: View = storedView === 'pair' ? 'pair' : 'list'; // the removed 'days' layout falls back to the list
   const [limit, setLimit] = useState(PAGE);
@@ -178,7 +181,7 @@ export function TransactionsView() {
   // Categories offered in the panel: only the ones that carry entries of the kind being shown.
   const catOptions = useMemo(() => {
     const seen = new Map<string, { key: string; kind: Kind; name: string; icon: typeof List }>();
-    for (const tx of data.txs) {
+    for (const tx of txs) {
       if (filter !== 'all' && tx.kind !== filter) continue;
       const key = catKey(tx);
       if (seen.has(key)) continue;
@@ -188,9 +191,9 @@ export function TransactionsView() {
     return [...seen.values()].sort((a, b) => a.name.localeCompare(b.name));
     // data.categories: names come from the category list
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.txs, data.goals, data.categories, filter]);
+  }, [txs, data.goals, data.categories, filter]);
 
-  const filtered = useMemo(() => data.txs.filter((tx) => {
+  const filtered = useMemo(() => txs.filter((tx) => {
     if (filter !== 'all' && tx.kind !== filter) return false;
     if (extra.cats.length > 0 && !extra.cats.includes(catKey(tx))) return false;
     if (extra.accounts.length > 0 && !extra.accounts.includes(tx.accountId ?? '_none')) return false;
@@ -199,7 +202,7 @@ export function TransactionsView() {
     if (!Number.isNaN(minAmount) && tx.amount < minAmount) return false;
     if (!Number.isNaN(maxAmount) && tx.amount > maxAmount) return false;
     if (!q) return true;
-    const account = tx.accountId ? data.accounts.find((a) => a.id === tx.accountId)?.name ?? '' : '';
+    const account = tx.accountId && !basic ? data.accounts.find((a) => a.id === tx.accountId)?.name ?? '' : '';
     return (
       tx.note.toLowerCase().includes(q) ||
       (tx.details ?? '').toLowerCase().includes(q) ||
@@ -209,7 +212,7 @@ export function TransactionsView() {
     );
     // data.categories: the names searched come from the category list
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [data.txs, data.goals, data.accounts, data.categories, filter, q, extra, minAmount, maxAmount]);
+  }), [txs, basic, data.goals, data.accounts, data.categories, filter, q, extra, minAmount, maxAmount]);
 
   const groups = useMemo(() => {
     const out: Group[] = [];
@@ -265,7 +268,7 @@ export function TransactionsView() {
       {/* Kind filter: above the search bar */}
       <div className="flex justify-center">
         <div role="group" aria-label={t('Show')} className="inline-flex w-fit max-w-full items-center justify-center gap-1 p-1 bg-[var(--surface)] border border-[var(--border)] rounded-full">
-          {FILTERS.map((item) => (
+          {FILTERS.filter((item) => !basic || item.id !== 'saving').map((item) => (
             <button
               key={item.id}
               type="button"
@@ -378,7 +381,7 @@ export function TransactionsView() {
               </div>
             )}
 
-            {data.accounts.length > 0 && (
+            {data.accounts.length > 0 && !basic && (
               <div>
                 <span className="block mb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Account')}</span>
                 <div className="flex flex-wrap gap-1.5">
@@ -458,11 +461,11 @@ export function TransactionsView() {
 
       {groups.length === 0 ? (
         <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl px-5 py-8 text-center">
-          <p className="text-sm font-extrabold text-[var(--text)]">{data.txs.length === 0 ? t('No entries yet') : t('Nothing matches')}</p>
+          <p className="text-sm font-extrabold text-[var(--text)]">{txs.length === 0 ? t('No entries yet') : t('Nothing matches')}</p>
           <p className="kc-section-empty mt-1 text-xs font-medium text-[var(--muted)]">
-            {data.txs.length === 0 ? t('Use the buttons at the bottom to log your first expense or income.') : t('Try another word, or show all kinds of entries.')}
+            {txs.length === 0 ? t('Use the buttons at the bottom to log your first expense or income.') : t('Try another word, or show all kinds of entries.')}
           </p>
-          {data.txs.length > 0 && (query || filter !== 'all' || activeExtra > 0) && (
+          {txs.length > 0 && (query || filter !== 'all' || activeExtra > 0) && (
             <button
               type="button"
               onClick={() => {

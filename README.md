@@ -24,6 +24,7 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 
 | Task | Source files | Document |
 | --- | --- | --- |
+| **Basic mode** (first-launch chooser, Settings > Mode, what Basic hides, the five default categories) | `src/lib/mode.ts`, `src/components/ModeChooser.tsx`, `basic` / `txs` in `src/lib/store.tsx`, then the screen you change (`src/pages/*`, `src/sheets/*`) | [features/basic-mode.md](docs/features/basic-mode.md) |
 | **Month page** (hero cards, needs / wants / savings, category cards, layouts) | `src/pages/MonthView.tsx`, `src/components/cards.tsx` | [features/month.md](docs/features/month.md) |
 | **Transactions page** (kind chips above the search, the layout switch at the right of the entries recap, filter panel, month sections, list / 2 days, category first and title below, quick delete) | `src/pages/TransactionsView.tsx` | [features/transactions.md](docs/features/transactions.md) |
 | **Budgets page** (collapsible cards, category budgets per type, goals, recurring list; hiding the page) | `src/pages/BudgetsView.tsx`, `src/sheets/EditSheets.tsx`, `src/lib/tabs.ts`, `budgetSummary` in `src/lib/calc.ts` (what the headline figure covers, unbudgeted spending), `NoteCard` in `src/components/cards.tsx` | [features/budgets.md](docs/features/budgets.md) |
@@ -90,7 +91,13 @@ docs/                 documentation (index: docs/README.md)
 3. Every sheet is a `<Modal>`; every sheet is opened with `openSheet({ type: ... })`. The list of types is the `Sheet` union in `src/lib/types.ts`.
 4. After adding, renaming or deleting a file, update its row in `docs/file-map/` and, if it is a feature, the matching `docs/features/*.md` (rule and table in [docs/README.md](docs/README.md#keeping-the-docs-current)).
 
-## Latest round: new logo (pig with a gold coin, the K on the coin) and new animations
+## Latest round: Basic mode and five default categories
+
+- **Basic / Full mode.** The first launch asks once (`ModeChooser.tsx`); Settings > **Mode** changes it later. **Basic** is income and expenses only: three pages (Month, Transactions, Statistics), one account (no account screens), no budgets anywhere, no savings, quick log, recurring items, gift cards or widgets. Month shows Income / Spent, Left and Per day and the category cards; Statistics shows Income and Spent totals, Balance trend, Where it went and Month by month (1 / 3 / 6 / 12 months). **Full** is the whole app as before. Switching deletes nothing; journals from before modes load as Full and are not asked. [docs/features/basic-mode.md](docs/features/basic-mode.md)
+- **Default categories are House, Food, Health, Fun and Others** (new built-in *Others*; House and Food are the old Housing and Groceries). Transport, Bills, Eating out and Shopping start hidden in a new journal and can be shown again in Settings > Expense categories; existing journals keep their own choice, and you can still make new categories. [docs/features/categories.md](docs/features/categories.md)
+- Changed code: `src/lib/mode.ts` and `src/components/ModeChooser.tsx` (new), `types.ts`, `store.tsx` (`basic`, `txs`), `categories.ts`, `App.tsx`, `MonthView.tsx`, `StatsView.tsx`, `TransactionsView.tsx`, `TxSheet.tsx`, `ProfileSheet.tsx`, `SettingsSheet.tsx`, `CategoriesSheet.tsx`, `NotificationSettings.tsx`, `reminders.ts`, `useReminders.ts`, `useWidgets.ts`, `WidgetStrip.tsx`, `MonthNavigator.tsx`, `i18n.it.ts`. Checked with `tsc -b` and `vite build`; **not run in a browser** ([docs/known-gaps.md](docs/known-gaps.md)). `changes.patch`: [docs/changes-patch.md](docs/changes-patch.md).
+
+## Previous round: new logo (pig with a gold coin, the K on the coin) and new animations
 
 - **Logo.** The pig keeps its shape; its coin is now a solid gold disc with the **K cut out of it**, and the big K behind the pig is gone. Icon, wordmark (k + pig as the "o" + ink, a plain coin above the pig), favicon, PWA icons, Android launcher / adaptive / themed icons and the notification icon are all redrawn, in a light version (`#F9F3E6`, ink `#0B0F1E`, coin `#F59F00`) and a dark one (`#070A14`, `#F9F3E6`, `#FFC53D`). All from one file, `src/brand/art.js`: `npm run brand` rewrites 61 files ([docs/brand.md](docs/brand.md)).
 - **Five new launch animations**, `coin-drop` (first launch), `draw-on`, `pop-toss`, `mint`, `peek`, replacing the five old ones. They are designed 1.8-2.4 s long and play at twice that speed, 0.9-1.2 s, as long as the old ones. `?intro=1` to `5` forces one ([docs/launch-intro.md](docs/launch-intro.md)).

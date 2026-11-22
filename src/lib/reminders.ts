@@ -95,10 +95,12 @@ export function buildNotificationPlan(
   settings: NotificationSettings,
   recurring: Recurring[],
   money: (amount: number) => string,
+  /** Basic mode: no recurring items and no budgets, so no recurring reminder and a plainer new-month note. */
+  basic = false,
 ): PlannedNotification[] {
   const plan: PlannedNotification[] = [];
 
-  if (settings.recurring.enabled) {
+  if (settings.recurring.enabled && !basic) {
     const byDay = new Map<number, Recurring[]>();
     // The alarm repeats every month, so only monthly items get one (an item that is due every 3 months
     // would ring in the two months it is not due). Weekly items have no reminder either.
@@ -150,10 +152,10 @@ export function buildNotificationPlan(
       id: NOTIFICATION_IDS.monthStart,
       channelId: 'koink-reviews',
       title: 'A new month starts',
-      body: 'Check your budgets and log what repeats.',
+      body: basic ? 'Log your income and expenses from the first day.' : 'Check your budgets and log what repeats.',
       ...clock(settings.monthStart.time),
       day: 1,
-      target: 'budgets',
+      target: basic ? 'stats' : 'budgets',
     });
   }
 

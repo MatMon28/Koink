@@ -31,3 +31,7 @@ The list is all months, not the month browsed on the other pages.
 The sideways scroller layout (*Day cards*, `view === 'days'`, with its arrows, snap scrolling and *Older days* item) is gone together with its texts. Nothing scrolls sideways on this page any more.
 
 Everywhere an entry is listed with its category (this page, the Income and Savings cards of the Month page) the category is the first line and the title the second; inside an expense category card of the Month page the card itself is the category, so the title stays first.
+
+## Basic mode
+
+In [Basic mode](basic-mode.md) the chips are All / Expenses / Income (a stored *Savings* filter counts as All), rows never name an account, and the filter panel has no Account block. The list comes from `txs` (savings entries stay in the journal but are not listed).

@@ -9,10 +9,11 @@ import { t } from '../lib/i18n';
  * as on the Android home screen, usable in the browser and the installed web app too.
  */
 export function WidgetStrip() {
-  const { data, openSheet } = useApp();
+  const { data, basic, openSheet } = useApp();
   const run = useRunWidgetAction();
   const { widgets } = data.settings;
-  if (!widgets.showInApp) return null;
+  // Basic mode has no widgets (their buttons reach savings, budgets and the other Full-only screens).
+  if (!widgets.showInApp || basic) return null;
   return (
     <section aria-label={t('Widgets')} className="um-hide space-y-2.5">
       <div className="flex items-center justify-between gap-2 px-1">

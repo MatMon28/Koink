@@ -27,13 +27,20 @@ export function ProfileSheet() {
 }
 
 function ProfileForm() {
-  const { data, money, symbol, updateProfile, closeSheet } = useApp();
+  const { data, basic, txs, money, symbol, updateProfile, closeSheet } = useApp();
   const [name, setName] = useState(data.profile.name);
   const [rule, setRule] = useState<BudgetRule>(data.profile.rule);
   const [monthlyBudget, setMonthlyBudget] = useState(data.profile.monthlyBudget);
 
   // What is in all the accounts together: the profile's headline now that balances live in accounts.
   const totalInAccounts = useMemo(() => round2(data.accounts.reduce((sum, account) => sum + accountBalance(data.txs, account), 0)), [data.accounts, data.txs]);
+
+  // Basic mode has one account and no account list: the banner shows the balance of the whole journal
+  // (what was in the accounts at the start, plus every income, minus every expense).
+  const balance = useMemo(
+    () => round2(data.accounts.reduce((sum, account) => sum + account.opening, 0) + txs.reduce((sum, tx) => sum + (tx.kind === 'income' ? tx.amount : tx.kind === 'expense' ? -tx.amount : 0), 0)),
+    [data.accounts, txs],
+  );
 
   const total = rule.needs + rule.wants + rule.savings;
   const isDefault = rule.needs === 50 && rule.wants === 30 && rule.savings === 20;
@@ -48,9 +55,9 @@ function ProfileForm() {
       <Banner
         tone="saving"
         icon={Wallet}
-        label={name.trim() ? t("{name}'s money", { name: name.trim() }) : t('Money in accounts')}
-        value={money(totalInAccounts)}
-        sub={data.accounts.length ? t(data.accounts.length === 1 ? '{n} account' : '{n} accounts', { n: data.accounts.length }) : t('No accounts yet')}
+        label={name.trim() ? t("{name}'s money", { name: name.trim() }) : basic ? t('Balance') : t('Money in accounts')}
+        value={money(basic ? balance : totalInAccounts)}
+        sub={basic ? t('Income minus expenses') : data.accounts.length ? t(data.accounts.length === 1 ? '{n} account' : '{n} accounts', { n: data.accounts.length }) : t('No accounts yet')}
       />
 
       <div>
@@ -67,8 +74,9 @@ function ProfileForm() {
         />
       </div>
 
-      <ProfileAccounts />
+      {!basic && <ProfileAccounts />}
 
+      {!basic && (
       <div>
         <SectionLabel>{t('Monthly budget')}</SectionLabel>
         <AmountStepper value={monthlyBudget} onChange={setMonthlyBudget} unit={symbol} step={50} min={0} ariaLabel={t('Monthly budget')} chips={[500, 1000, 2000]} />
@@ -76,7 +84,9 @@ function ProfileForm() {
           {t('One generic budget for all your spending each month, on top of the category budgets. Leave it at 0 to budget by category only.')}
         </p>
       </div>
+      )}
 
+      {!basic && (
       <div>
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Budget rule')}</span>
@@ -111,10 +121,11 @@ function ProfileForm() {
           {total === 100 ? t('Shares of your income. They add up to 100%.') : t('The three shares add up to {total}%. {v} points to reach 100%.', { total, v: total < 100 ? t('Add {v}', { v: 100 - total }) : t('Take off {v}', { v: total - 100 }) })}
         </p>
       </div>
+      )}
 
       <SaveRow
         tone="neutral"
-        disabled={total !== 100}
+        disabled={!basic && total !== 100}
         onSave={() => {
           updateProfile({ name: name.trim(), rule, monthlyBudget });
           closeSheet();

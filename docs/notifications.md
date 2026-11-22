@@ -59,3 +59,7 @@ A notification is shown through the offline worker when there is one (`registrat
 - **Delete all data** keeps the settings, so reminders stay as chosen; recurring-item reminders disappear with the items.
 
 Not verified on a device: see [known-gaps.md](known-gaps.md). The icon was checked by eye at every density, rendered on a tinted background.
+
+## Basic mode
+
+In [Basic mode](features/basic-mode.md) the *Recurring items* reminder is not offered or planned (`buildNotificationPlan(..., basic)`), and the *New month* reminder says "Log your income and expenses from the first day." and opens Statistics instead of Budgets.

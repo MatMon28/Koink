@@ -58,7 +58,7 @@ function TypeGroup({ title, count, actions, defaultOpen = true, children }: { ti
 
 /** The whole manager, without a sheet around it: used by the sheet below and by Settings. */
 export function CategoriesBody() {
-  const { data, saveCategory, removeCategory, saveCategoryType, removeCategoryType, setCategoryHidden, showToast } = useApp();
+  const { data, basic, saveCategory, removeCategory, saveCategoryType, removeCategoryType, setCategoryHidden, showToast } = useApp();
   const [editing, setEditing] = useState<string | null>(null); // id being edited, '' = a new one
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('tag');
@@ -151,9 +151,10 @@ export function CategoriesBody() {
 
   return (
     <div className="space-y-3">
-      {allBuckets().map((b) => {
-        const members = list.filter((c) => c.bucket === b.id);
-        const own = isOwnBucket(b.id);
+      {/* Basic mode has no Needs / Wants / own types: one flat list of categories. */}
+      {(basic ? [{ id: '_all', name: t('Categories') }] : allBuckets()).map((b) => {
+        const members = basic ? list : list.filter((c) => c.bucket === b.id);
+        const own = !basic && isOwnBucket(b.id);
         return (
           <TypeGroup
             key={b.id}
@@ -212,7 +213,7 @@ export function CategoriesBody() {
       )}
 
       {editing === null && typeEditing !== '' ? (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className={`grid grid-cols-1 gap-2 ${basic ? '' : 'sm:grid-cols-2'}`}>
           <button
             type="button"
             onClick={() => startNew()}
@@ -221,6 +222,7 @@ export function CategoriesBody() {
             <Plus size={17} strokeWidth={2.5} />
             {t('New category')}
           </button>
+          {!basic && (
           <button
             type="button"
             onClick={() => { setTypeEditing(''); setTypeName(''); }}
@@ -229,6 +231,7 @@ export function CategoriesBody() {
             <Plus size={17} strokeWidth={2.5} />
             {t('New type')}
           </button>
+          )}
         </div>
       ) : editing !== null ? (
         <div className="space-y-4 rounded-3xl border border-[var(--border)] p-3.5">
@@ -250,10 +253,12 @@ export function CategoriesBody() {
             />
           </div>
           <IconPicker value={icon} onChange={setIcon} />
-          <div>
-            <SectionLabel>{t('Counts as')}</SectionLabel>
-            <BucketPicker value={bucket} onChange={setBucket} />
-          </div>
+          {!basic && (
+            <div>
+              <SectionLabel>{t('Counts as')}</SectionLabel>
+              <BucketPicker value={bucket} onChange={setBucket} />
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={() => setEditing(null)} className="pressable py-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] text-[var(--text)] text-sm font-extrabold">{t('Cancel')}</button>
             <button type="button" disabled={!name.trim()} onClick={submit} className="kc-primary-btn pressable py-3 rounded-2xl bg-activity text-activity-ink font-extrabold text-sm disabled:opacity-40">

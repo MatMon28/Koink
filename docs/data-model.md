@@ -17,7 +17,7 @@
 | `Recurring` | Recurring item: `id`, `name`, `amount`, `kind` (`expense` / `income`), `categoryId`, `day` (1-28), `every` (months between due dates, 1 = monthly) and `start` (`YYYY-MM` anchor). [features/recurring.md](features/recurring.md) |
 | `CategoryType` | Your own expense type besides Needs and Wants: `id` (`ty_...`), `name`. `CustomCategory.bucket` is `needs`, `wants` or one of these ids (`Bucket` is a string). [features/categories.md](features/categories.md) |
 | `Profile` | `name`, `rule` (`needs` / `wants` / `savings` percentages), `budgets` (category id -> monthly amount). |
-| `Settings` | `language` (`en` / `it`, first launch: the browser's), `hideSplit`, `hideBudgets` (hides the Budgets page), `theme`, `themeStyle`, `monoHue`, `ultraMinimal`, `currency` (any code of `CURRENCIES`), `hiddenCategories`, `rates` + `ratesDate` ([features/currencies.md](features/currencies.md)), `quickAdd` (which dock buttons show), `notifications`, `sampleData`. |
+| `Settings` | `mode` (`basic` / `full`) and `modeChosen` ([features/basic-mode.md](features/basic-mode.md)), `language` (`en` / `it`, first launch: the browser's), `hideSplit`, `hideBudgets` (hides the Budgets page), `theme`, `themeStyle`, `monoHue`, `ultraMinimal`, `currency` (any code of `CURRENCIES`), `hiddenCategories`, `rates` + `ratesDate` ([features/currencies.md](features/currencies.md)), `quickAdd` (which dock buttons show), `notifications`, `sampleData`. |
 | `NotificationSettings` | The four reminders: `logDay`, `recurring`, `monthStart` (`{ enabled, time }`, time as `HH:MM`) and `weeklyReview` (the same plus `weekday`, 1 = Sunday ... 7 = Saturday). [notifications.md](notifications.md) |
 | `OpenTarget` | What can be opened from outside: `expense`, `income`, `recurring`, `stats`, `budgets` (reminders, shortcuts, `?open=`). |
 | `AppData` | `{ txs, goals, recurring, accounts, giftCards, categories, categoryTypes, profile, settings }`: the whole journal. |
@@ -94,3 +94,7 @@ Changing the currency changes the symbol only: amounts are not converted.
 - `Profile.monthlyBudget: number` (0 = off): the generic monthly budget. Missing in older backups = 0. `budgetSummary` returns `{ budget, spent, left, generic, scope ('overall' | 'categories'), categoryBudget, unbudgeted, unbudgetedCategories: { id, total }[], unplanned (= unbudgeted, old name) }`: `scope` says what `spent` covers ([features/budgets.md](features/budgets.md#what-the-headline-figure-covers)).
 - `Recurring.unit?: 'month' | 'week'` and `Recurring.anchor?: string` (`YYYY-MM-DD`, weekly items only). `every` counts months or weeks depending on `unit`. Missing = monthly, so older backups load unchanged.
 - `logRecurring(item, month, date?)`: `date` is the due date of one weekly occurrence.
+
+## Mode (Basic / Full)
+
+`Settings.mode` is `'basic' | 'full'` and `Settings.modeChosen` is false until the first-launch chooser is answered. Journals and backups without them load as `full` + chosen. The store derives `basic` (also false inside the guided tour) and `txs` (all entries, or without `saving` ones in Basic) for the screens; `data` itself is never filtered. See [features/basic-mode.md](features/basic-mode.md). New journals also start with `hiddenCategories` = `DEFAULT_HIDDEN_CATEGORIES` (Transport, Bills, Eating out, Shopping).
