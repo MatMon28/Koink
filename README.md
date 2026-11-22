@@ -43,7 +43,7 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **Backup, restore (with preview), save status and the "not saved" banner, sample data, delete all** | `src/lib/store.tsx`, `src/lib/storage.ts` (`writeJournal`, save state, last backup), `src/lib/journal.ts` (`summarizeJournal`), `src/lib/useBackup.ts`, `src/sheets/RestoreDialog.tsx`, `src/components/StorageBanner.tsx`, `src/components/DataStatus.tsx`, `src/lib/platform.ts` (`saveTextFile`), `src/lib/demo.ts` | [features/backup.md](docs/features/backup.md) |
 | **Excel export** (a readable spreadsheet, not a backup) | `src/lib/excel.ts` (loaded on demand), `saveBlobFile` in `src/lib/platform.ts`, the *Export to Excel* button in `src/sheets/SettingsSheet.tsx` | [features/excel-export.md](docs/features/excel-export.md) |
 | **Themes and style presets** | `src/lib/themes.ts`, `src/index.css`, `src/styles/presets.css` | [features/themes.md](docs/features/themes.md), [design-system.md](docs/design-system.md) |
-| **Smooth sheet drag / header scroll, logo click animation** | `src/components/Modal.tsx`, `src/components/Header.tsx`, end of `src/index.css` | [motion.md](docs/motion.md#smoothness-fixes-sheet-drag-scrolling) |
+| **Smooth sheet drag / header scroll, logo press animations** | `src/components/Modal.tsx`, `src/components/Header.tsx`, end of `src/index.css` | [motion.md](docs/motion.md#smoothness-fixes-sheet-drag-scrolling) |
 | **Swipes, Back button, drag-to-close, "a new touch ends the animation"** | `src/components/PageSwiper.tsx`, `src/lib/interrupt.ts`, `src/lib/pillTab.ts`, `src/lib/back.ts`, `src/components/Modal.tsx`, `src/components/MonthNavigator.tsx`, `src/lib/velocity.ts` | [gestures.md](docs/gestures.md) |
 | **Reminder notifications** | `src/lib/reminders.ts` (plan), `src/lib/notifications.ts` (delivery), `src/lib/useReminders.ts`, `src/sheets/NotificationSettings.tsx` | [notifications.md](docs/notifications.md) |
 | **Ultra minimal mode** | `um-*` classes at the end of `src/index.css`, `src/components/cards.tsx`, `Tabs.tsx`, `MonthNavigator.tsx` | [features/ultra-minimal.md](docs/features/ultra-minimal.md) |
@@ -75,7 +75,7 @@ src/pages/            the four pages
 src/sheets/           every bottom sheet (entry, accounts, categories, goals, budgets, settings...)
 src/components/       shared UI (cards, modal, header, dock, inputs)
 src/lib/              state, maths, dates, expense chart series, themes, platform bridges, widgets, gift cards (no JSX except store.tsx)
-src/brand/art.js      all Koink artwork: logo, wordmark, launch animations (plain JS, shared with scripts/)
+src/brand/art.js      all Koink artwork: logo, wordmark, launch and logo-press animations (plain JS, shared with scripts/)
 src/styles/           presets.css (the six style presets), intro.css (launch animation)
 public/               favicon, manifest, PWA icons, brand/ (brand sheet, light and dark assets), downloads/ (the project archive)
 scripts/              offline-worker template, brand renderer, launch-screen style generator, Android prepare script, project packer
@@ -90,7 +90,15 @@ docs/                 documentation (index: docs/README.md)
 3. Every sheet is a `<Modal>`; every sheet is opened with `openSheet({ type: ... })`. The list of types is the `Sheet` union in `src/lib/types.ts`.
 4. After adding, renaming or deleting a file, update its row in `docs/file-map/` and, if it is a feature, the matching `docs/features/*.md` (rule and table in [docs/README.md](docs/README.md#keeping-the-docs-current)).
 
-## Latest round: PWA launch files, guided app tour, and device installation guide
+## Latest round: new logo (pig with a gold coin, the K on the coin) and new animations
+
+- **Logo.** The pig keeps its shape; its coin is now a solid gold disc with the **K cut out of it**, and the big K behind the pig is gone. Icon, wordmark (k + pig as the "o" + ink, a plain coin above the pig), favicon, PWA icons, Android launcher / adaptive / themed icons and the notification icon are all redrawn, in a light version (`#F9F3E6`, ink `#0B0F1E`, coin `#F59F00`) and a dark one (`#070A14`, `#F9F3E6`, `#FFC53D`). All from one file, `src/brand/art.js`: `npm run brand` rewrites 61 files ([docs/brand.md](docs/brand.md)).
+- **Five new launch animations**, `coin-drop` (first launch), `draw-on`, `pop-toss`, `mint`, `peek`, replacing the five old ones. They are designed 1.8-2.4 s long and play at twice that speed, 0.9-1.2 s, as long as the old ones. `?intro=1` to `5` forces one ([docs/launch-intro.md](docs/launch-intro.md)).
+- **Five logo-press animations.** Tapping the header logo plays a random one of *oink*, *keypress*, *wink & flip*, *happy hop*, *turnabout* (never the same twice in a row; `?press=1` to `5` forces one). Before, there was one ([docs/motion.md](docs/motion.md#logo-animation)).
+- **Also in `public/brand/`**, not used by the app yet: a looping loader (`koink-loader-spin-loop-*`) and a wordmark that builds itself (`koink-wordmark-animation-*`); every animation exists as a self-playing SVG in light and dark, and `public/brand/index.html` shows them all.
+- Changed code: `src/brand/art.js`, `src/components/Brand.tsx`, `src/components/Header.tsx`, `src/index.css` (the old `.is-oinking` block), `scripts/render-brand.mjs`, `public/favicon.svg`; `intro.ts`, `intro.css` and `pig.ts` needed no change. The eight old intro SVGs in `public/brand/` are removed.
+
+## Previous round: PWA launch files, guided app tour, and device installation guide
 
 Inspired by [Kakcal](https://github.com/MatMon28/Kakcalculator) (`AppTour.tsx`, `tourContent.ts`, `NotificationShowcase.tsx`, `WidgetGallery.tsx`, `InstallGuide.tsx`, `InstallApp.tsx`, `pwa.md`, `pwa-setup.md`, `apk-download.md`).
 

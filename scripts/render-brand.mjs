@@ -7,7 +7,10 @@
  *   public/favicon.svg                         follows the browser's light / dark scheme
  *   public/brand/koink-icon-{light,dark}.svg   + a 512 px PNG of each
  *   public/brand/koink-wordmark-{light,dark}.svg
- *   public/brand/koink-intro-<id>-{light,dark}.svg   the launch animations, self-playing
+ *   public/brand/koink-intro-<id>-{light,dark}.svg   the launch animations, self-playing (at their designed speed)
+ *   public/brand/koink-loader-<id>-{light,dark}.svg  the looping loader animation
+ *   public/brand/koink-wordmark-animation-{light,dark}.svg   the wordmark building itself
+ *   public/brand/koink-press-<id>-{light,dark}.svg   the logo-press animations (tap on the header logo)
  *   public/brand/index.html                    a sheet that shows all of the above
  *   public/icons/*.png                         PWA icons (192, 512, maskable, apple-touch)
  *   android/.../mipmap-*                       launcher icons (legacy, round, adaptive foreground, monochrome)
@@ -19,7 +22,20 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { INTRO_ANIMATIONS, PALETTE, TILE_RADIUS, iconSvg, introSvg, logoMarkup, monoLogoSvg, wordmarkSvg } from '../src/brand/art.js';
+import {
+  INTRO_ANIMATIONS,
+  LOADER_ANIMATION,
+  PALETTE,
+  PRESS_ANIMATIONS,
+  TILE_RADIUS,
+  iconSvg,
+  introSvg,
+  logoMarkup,
+  monoLogoSvg,
+  pressSvg,
+  wordmarkAnimationSvg,
+  wordmarkSvg,
+} from '../src/brand/art.js';
 
 let sharp;
 try {
@@ -62,6 +78,9 @@ for (const mode of ['light', 'dark']) {
   await text(`public/brand/koink-icon-${mode}.svg`, iconSvg(mode));
   await text(`public/brand/koink-wordmark-${mode}.svg`, wordmarkSvg(mode, { background: true }));
   for (const animation of INTRO_ANIMATIONS) await text(`public/brand/koink-intro-${animation.id}-${mode}.svg`, introSvg(animation, mode));
+  await text(`public/brand/koink-loader-${LOADER_ANIMATION.id}-${mode}.svg`, introSvg(LOADER_ANIMATION, mode));
+  await text(`public/brand/koink-wordmark-animation-${mode}.svg`, wordmarkAnimationSvg(mode));
+  for (const animation of PRESS_ANIMATIONS) await text(`public/brand/koink-press-${animation.id}-${mode}.svg`, pressSvg(animation, mode));
 }
 
 const figure = (src, caption, cls = '') => `<figure class="${cls}"><img src="${src}" alt="${caption}"><figcaption>${caption}</figcaption></figure>`;
@@ -98,8 +117,14 @@ await text(
   <div class="row">${figure('koink-wordmark-light.svg', 'Wordmark, light', 'wide')}${figure('koink-wordmark-dark.svg', 'Wordmark, dark', 'wide')}</div>
 
   <h2>Launch animations</h2>
-  <p>Tap one to play it again. <button type="button" id="all">Play all</button></p>
-  <div class="row play">${INTRO_ANIMATIONS.flatMap((a, i) => ['light', 'dark'].map((mode) => figure(`koink-intro-${a.id}-${mode}.svg`, `${i + 1}. ${a.id}, ${mode} (${a.duration} ms)`))).join('')}</div>
+  <p>Tap one to play it again. <button type="button" id="all">Play all</button> The files play at the speed they were designed at; the app plays them twice as fast (the time in brackets).</p>
+  <div class="row play">${INTRO_ANIMATIONS.flatMap((a, i) => ['light', 'dark'].map((mode) => figure(`koink-intro-${a.id}-${mode}.svg`, `${i + 1}. ${a.id}, ${mode} (${a.designMs} ms, ${a.duration} ms in the app)`))).join('')}</div>
+
+  <h2>Logo press (tap on the logo in the header)</h2>
+  <div class="row play">${PRESS_ANIMATIONS.flatMap((a, i) => ['light', 'dark'].map((mode) => figure(`koink-press-${a.id}-${mode}.svg`, `${i + 1}. ${a.id}, ${mode} (${a.duration} ms)`, 'wide'))).join('')}</div>
+
+  <h2>Design assets (not used by the app yet)</h2>
+  <div class="row play">${['light', 'dark'].map((mode) => figure(`koink-loader-${LOADER_ANIMATION.id}-${mode}.svg`, `Loader, loops, ${mode}`)).join('')}${['light', 'dark'].map((mode) => figure(`koink-wordmark-animation-${mode}.svg`, `Wordmark builds itself, ${mode}`, 'wide')).join('')}</div>
 </main>
 <script>
   // An SVG image plays its animation when it loads: loading it again plays it again.
@@ -116,8 +141,8 @@ await text(
 
 await png(iconSvg('light'), 192, 'public/icons/icon-192.png');
 await png(iconSvg('light'), 512, 'public/icons/icon-512.png');
-// Maskable: full bleed, the logo centred inside the 80 % safe zone.
-await png(iconSvg('light', { tile: 'square', scale: 0.98 }), 512, 'public/icons/maskable-512.png');
+// Maskable: full bleed, the logo (pig and coin) centred inside the 80 % safe zone.
+await png(iconSvg('light', { tile: 'square', scale: 0.9 }), 512, 'public/icons/maskable-512.png');
 // iOS rounds the corners itself and does not want transparency: the reference tile as it is.
 await png(iconSvg('light', { tile: 'square' }), 180, 'public/icons/apple-touch-icon.png');
 await png(iconSvg('light'), 512, 'public/brand/koink-icon-light-512.png');
@@ -133,11 +158,11 @@ if (existsSync(path.join(root, res))) {
     await png(iconSvg('light', { tile: 'circle', scale: 0.86 }), 48 * factor, `${res}/mipmap-${name}/ic_launcher_round.png`);
     // Adaptive icon layers: 108 dp canvas, the logo inside the 66 dp safe circle. The background
     // layer is the colour ic_launcher_background (values/). Monochrome is the Android 13+ themed icon.
-    await png(iconSvg('light', { tile: 'none', scale: 0.78 }), 108 * factor, `${res}/mipmap-${name}/ic_launcher_foreground.png`);
-    await png(monoLogoSvg({ scale: 0.78 }), 108 * factor, `${res}/mipmap-${name}/ic_launcher_monochrome.png`);
-    // Notification icon: Android uses only the alpha channel and tints it. The whole logo, as
-    // large as the 24 dp canvas allows, with heavier pig lines so the face survives at that size.
-    await png(monoLogoSvg({ scale: 1.5, thicken: 1.35 }), 24 * factor, `${res}/drawable-${name}/ic_stat_koink.png`);
+    await png(iconSvg('light', { tile: 'none', scale: 0.76 }), 108 * factor, `${res}/mipmap-${name}/ic_launcher_foreground.png`);
+    await png(monoLogoSvg({ scale: 0.76 }), 108 * factor, `${res}/mipmap-${name}/ic_launcher_monochrome.png`);
+    // Notification icon: Android uses only the alpha channel and tints it. The whole logo (the K is a
+    // hole in the coin), as large as the 24 dp canvas allows, with heavier pig lines so the face survives.
+    await png(monoLogoSvg({ scale: 1.15, thicken: 1.35 }), 24 * factor, `${res}/drawable-${name}/ic_stat_koink.png`);
   }
 } else {
   console.log('android/ not found: skipped the launcher and notification icons.');

@@ -51,7 +51,7 @@ Also in headless Chromium against `npm run preview` (tests open the app with `?i
 
 | Area | Result |
 | --- | --- |
-| Launch animation | overlay in the DOM before the app's first render; stays for the animation, then leaves (about 1.1 s); never the same animation twice in a row; a tap skips it and does not reach the app; none with `?intro=0` or reduced motion; all four end on the icon (frames inspected); runs in the dev server and inside iframes |
+| Launch animation | overlay in the DOM before the app's first render; stays for the animation, then leaves (0.9-1.2 s); never the same animation twice in a row; a tap skips it and does not reach the app; none with `?intro=0` or reduced motion; all five end on the icon (frames inspected); runs in the dev server and inside iframes |
 | First paint | with the bundle blocked, the inline script alone applies the saved theme, style and background |
 | Page rail | neighbour pre-mounted hidden and `inert`; during a swipe it sits 24 px beside the page; the same DOM node becomes the page; no vertical jump with the page scrolled; a cancelled swipe returns to one page; turning round swaps the neighbour; the dock returns from the swipe's side |
 | Sheets | drag 90 px or a quick 26 px flick closes, a slow 30 px drag springs back; a tap 30-40 ms after closing lands on the page; frame follows the visual viewport |
@@ -63,14 +63,25 @@ Also in headless Chromium against `npm run preview` (tests open the app with `?i
 
 In those reminder tests `Notification.permission` and the display call were **stubbed**: headless Chromium reports the permission inconsistently and shows nothing. Real permission prompts and real notifications were not seen.
 
+## New logo and animations round
+
+Done in headless Chromium, in the production build:
+
+| Area | Result |
+| --- | --- |
+| Icons | `npm run brand` writes 61 files. Sheet of every icon (light and dark tiles, maskable, adaptive foreground, monochrome, notification icon at 24 and 96 px) inspected. Safe zones measured: Android foreground and monochrome reach 0.297 of the canvas from the centre (the 66 dp circle is 0.306), the maskable icon 0.351 (the circle is 0.40) |
+| Launch animations | `?view=app&intro=1` to `5`: ids `coin-drop`, `draw-on`, `pop-toss`, `mint`, `peek`, `--intro-ms` 950 / 1050 / 900 / 1100 / 1200, light and dark, no console errors. Rendered frame by frame against the design files: the intros agree to within 0 px, the press animations to sub-pixel anti-aliasing |
+| Logo press | `?view=app&intro=0&press=1` to `5` sets `data-press` to `oink`, `keypress`, `wink-flip`, `hop`, `turnabout`, the animation runs and the attribute is gone afterwards; without `press` a random one plays, never the same twice |
+| Build | `tsc -b` and `vite build` clean |
+| Not checked | the dark theme inside the running app (the saved theme could not be forced from the test); the dark artwork is covered by the generated SVGs and the icon sheet. Android was not rebuilt: the new PNGs are in place, but no device showed them |
+
 ## Koink round
 
 | Area | Result |
 | --- | --- |
 | Icon | rendered at 1024 px and compared with the reference: fewer than 400 of about a million pixels differ noticeably. Dark version compared by eye with the dark reference |
 | Wordmark | rendered on the reference's canvas and overlaid: letters, K, pig and coin coincide within a pixel; the pig's lighter lines and closed ears were matched after the first overlay showed them |
-| Launch animations | frame strips of all five, light and dark, inspected; in the app: the first launch plays `coin-oink`, later picks never repeat, overlay background is the app's `--bg`, ink and coin switch with the theme; skip, `?intro=0` and reduced motion as before |
-| Coin | in `coin-oink` the turn is one keyframe sequence, `scaleX` 1 -> 0 -> -1 -> 0 -> 1 (one full turn); no other animation turns it |
+| Launch animations | frame strips of all five, light and dark, inspected; in the app: the first launch plays `coin-drop`, later picks never repeat, overlay background is the app's `--bg`, ink and coin switch with the theme; skip, `?intro=0` and reduced motion as before |
 | Rename | storage written as `koins_*` is moved to `koink_*` with the journal, view preferences and animation memory intact, unrelated keys untouched; the first paint still honours `koins_boot`; `koins-shell-*` caches are deleted; title, manifest and wordmark say Koink |
 | Brand sheet | `/brand/` opens, all 14 images load; visiting it does not replace the cached app shell; it is not precached |
 | Existing suites | entry flows (44), gestures (29), page rail (15), sheets (12), Ultra minimal (18), reminders (24), launch (11), PWA (18), standalone Back (8) all still pass under the new name |

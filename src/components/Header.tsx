@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Settings, User } from 'lucide-react';
+import { PRESS_ANIMATIONS } from '../brand/art.js';
 import { useApp } from '../lib/store';
 import { Wordmark } from './Brand';
 import { Tabs } from './Tabs';
@@ -20,7 +21,7 @@ const smoothstep = (value: number) => {
  * Profile (left), name (centre), settings (right), with the page pill below. The name row folds
  * away over the first few pixels of scroll; the pill hides while scrolling down and floats back in
  * (without the header background) as soon as the page is scrolled up again. Tapping the logo makes
- * the pig take its coin (`.is-oinking`, index.css).
+ * one of the press animations play on the pig and its coin (`PRESS_ANIMATIONS` in art.js, `data-press`).
  */
 export function Header() {
   const { activeTab, setActiveTab, openSheet } = useApp();
@@ -29,7 +30,8 @@ export function Header() {
   const topRowRef = useRef<HTMLDivElement>(null);
   const tabsRowRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLButtonElement>(null);
-  const oinkTimer = useRef<number | null>(null);
+  const pressTimer = useRef<number | null>(null);
+  const lastPress = useRef(-1);
   const state = useRef({ lastY: 0, tabs: 1 });
 
   useEffect(() => {
@@ -92,22 +94,33 @@ export function Header() {
   }, [activeTab]);
 
   useEffect(() => () => {
-    if (oinkTimer.current) window.clearTimeout(oinkTimer.current);
+    if (pressTimer.current) window.clearTimeout(pressTimer.current);
   }, []);
 
-  /** The pig takes the coin: restarts the animation even when it is clicked again while it plays. */
-  const oink = () => {
+  /**
+   * Plays a press animation on the logo: random, never the same twice in a row (`?press=1` to `?press=5`
+   * forces one). Restarts when the logo is tapped again while one plays; the attribute is removed when it ends.
+   */
+  const press = () => {
     const logo = logoRef.current;
     if (!logo) return;
-    if (oinkTimer.current) window.clearTimeout(oinkTimer.current);
-    logo.classList.remove('is-oinking');
+    if (pressTimer.current) window.clearTimeout(pressTimer.current);
+    const forced = Number(new URLSearchParams(window.location.search).get('press'));
+    let next: number;
+    if (Number.isInteger(forced) && forced >= 1 && forced <= PRESS_ANIMATIONS.length) next = forced - 1;
+    else {
+      const choices = PRESS_ANIMATIONS.map((_, index) => index).filter((index) => index !== lastPress.current);
+      next = choices[Math.floor(Math.random() * choices.length)];
+    }
+    lastPress.current = next;
+    logo.removeAttribute('data-press');
     void logo.getBoundingClientRect(); // restart the CSS animations
-    logo.classList.add('is-oinking');
-    oinkTimer.current = window.setTimeout(() => logo.classList.remove('is-oinking'), 1300);
+    logo.setAttribute('data-press', PRESS_ANIMATIONS[next].id);
+    pressTimer.current = window.setTimeout(() => logo.removeAttribute('data-press'), PRESS_ANIMATIONS[next].duration + 100);
   };
 
   const onTitle = () => {
-    oink();
+    press();
     if (activeTab !== 'month') setActiveTab('month');
     else window.scrollTo({ top: 0, behavior: 'smooth' });
   };

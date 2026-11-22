@@ -8,7 +8,7 @@
 
 | File | Exports | Role |
 | --- | --- | --- |
-| `Header.tsx` | `Header` | Sticky header: profile button, wordmark (tap = Month page / scroll to top), settings button, and the page pill below. Scroll handler (one write per frame, opacity and transform only, no blur) folds the name row away in the first 48 px and hides / reveals the pill by scroll direction. Tapping the logo adds `.is-oinking` for 1.3 s: the pig takes its coin (CSS at the end of `index.css`) |
+| `Header.tsx` | `Header` | Sticky header: profile button, wordmark (tap = Month page / scroll to top), settings button, and the page pill below. Scroll handler (one write per frame, opacity and transform only, no blur) folds the name row away in the first 48 px and hides / reveals the pill by scroll direction. Tapping the logo (`press()`) sets `data-press` to a random one of the five `PRESS_ANIMATIONS` (never the last one; `?press=N` forces one) for the animation's length; the rules come from `art.js` via the wordmark's own `<style>` |
 | `Tabs.tsx` | `Tabs` | The page pill. `NAV_META` = label, icon and the active pastel of each page; the order comes from `tabOrder()` (`lib/tabs.ts`; Budgets drops out when hidden in Settings). Only the active page shows its label (none do in Ultra minimal). It shows `usePillTab() ?? activeTab`, so a committed swipe moves it at once |
 | `ActionDock.tsx` | `ActionDock`, `DockAction` | The floating bottom bar, rendered in a portal. Pinned to the bottom, it never hides while the page scrolls, but it **belongs to the Month page**: the `show` prop is false elsewhere. Phases `in` / `out` / `gone`: it enters from the side the page came from and leaves towards the side the page went (`--kc-swipe-dir`), and the next touch ends either at once |
 | `WidgetButtons.tsx` | `WidgetTile`, `WidgetFace` | One round widget button (small icon, **no text**, dock style; the lone one is 48 px) and a whole widget face whose shape follows the number of buttons (circle, pill, card), on a semitransparent tray whose buttons spread out when it is wider (`stretch`). Used by the widget strip and the Settings previews | [../features/widgets.md](../features/widgets.md) |
@@ -31,7 +31,7 @@
 | `StorageBanner.tsx` | `StorageBanner` | The sticky red banner on every page while the journal cannot be written to the device: why, *Export a backup now*, *Try again*; also warns on closing the tab | [../features/backup.md](../features/backup.md) |
 | `DataStatus.tsx` | `DataStatus` | The status block at the top of Settings > Your data: saved on this device (or the failure and a Retry), and the date of the last backup file | [../features/backup.md](../features/backup.md) |
 | `ProjectDownload.tsx` | `ProjectDownload` | "Project files" card of Settings: a download link to `downloads/koink-project.zip`; renders nothing in the Android app |
-| `Brand.tsx` | `Wordmark`, `AppIcon` | The wordmark (theme-coloured, class `koink-wordmark`) and the app icon (light or dark tile with the theme), both built from `src/brand/art.js`. See [../brand.md](../brand.md) |
+| `Brand.tsx` | `Wordmark`, `AppIcon` | The wordmark (theme-coloured, class `koink-wordmark`; carries the press animations' CSS) and the app icon (light or dark tile with the theme), both built from `src/brand/art.js`. See [../brand.md](../brand.md) |
 
 ## Patterns worth knowing
 

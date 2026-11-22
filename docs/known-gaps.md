@@ -42,7 +42,7 @@
 17. `vite.config.ts` contains template lines (an optional `.vite-source-tags.js` import, `process.env` defines) that the app does not need; they are harmless and were left alone. Two ESLint findings come from them ([verification.md](verification.md)).
 18. `android/app/src/test` and `androidTest` hold Capacitor's example tests under the package `com.getcapacitor.myapp`.
 19. `index.html` ends with a large `<script data-element-picker>` block added by the preview tool the project was built in. It is not part of the app.
-20. **Standalone animation files** (`public/brand/koink-intro-*.svg`) clip at their 1024 canvas, so parts that fly in from outside (the rolling pig) enter at the edge. In the app the art overflows its box and nothing is clipped.
+20. **Standalone animation files** (`public/brand/koink-intro-*.svg`) clip at their 1024 canvas, so parts that fly in from outside (the pig of *pop-toss*, *peek*) enter at the edge. In the app the art overflows its box and nothing is clipped.
 21. **The name Koins** survives in two compatibility shims only (storage keys and cache names of builds from before the rename): [brand.md](brand.md#rename-koins---koink).
 
 ## Added with widgets, gift cards and the pig icon

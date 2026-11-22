@@ -1,4 +1,4 @@
-import { ICON_SIZE, logoMarkup, TILE_RADIUS, WORDMARK_BOX, wordmarkMarkup } from '../brand/art.js';
+import { ICON_SIZE, logoMarkup, PRESS_ANIMATIONS, pressCss, TILE_RADIUS, WORDMARK_BOX, wordmarkMarkup } from '../brand/art.js';
 import { t } from '../lib/i18n';
 
 interface BrandProps {
@@ -10,16 +10,19 @@ interface BrandProps {
  * colours are CSS variables, so the light or the dark version shows with the theme (index.css:
  * --kk-tile, --kk-tile-ink, --kk-coin). See docs/brand.md.
  */
+/** One rule set per press animation (`PRESS_ANIMATIONS`), each active while the header button has `data-press="<id>"` (Header.tsx). */
+const PRESS_STYLE = PRESS_ANIMATIONS.map((animation) => pressCss(animation, `.kc-logo-btn[data-press="${animation.id}"]`)).join('');
+
 const WORDMARK_SVG =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${WORDMARK_BOX.x} ${WORDMARK_BOX.y} ${WORDMARK_BOX.width} ${WORDMARK_BOX.height}" aria-hidden="true">` +
-  `${wordmarkMarkup({ ink: 'currentColor', coin: 'var(--kk-coin)', animated: true })}</svg>`;
+  `<style>${PRESS_STYLE}</style>${wordmarkMarkup({ ink: 'currentColor', coin: 'var(--kk-coin)', animated: true })}</svg>`;
 
 const ICON_SVG =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}"><rect width="${ICON_SIZE}" height="${ICON_SIZE}" rx="${TILE_RADIUS}" fill="var(--kk-tile)"/>` +
   `${logoMarkup({ ink: 'var(--kk-tile-ink)', bg: 'var(--kk-tile)', coin: 'var(--kk-coin)' })}</svg>`;
 
 /**
- * The name: K, the pig as the "o" with its coin above, "ink". It has no plate and takes the
+ * The name: k, the pig as the "o" with its gold coin above, "ink". It has no plate and takes the
  * colour of the text around it, so it follows the theme behind it; the coin keeps its own colour.
  */
 export function Wordmark({ className = '' }: BrandProps) {

@@ -447,90 +447,13 @@ html[data-ultra='true'] .um-center { justify-content: center !important; text-al
 html[data-ultra='true'] .um-stack > :not(:last-child) { margin-block-end: 0.625rem !important; }
 
 
-/* ---------- Logo click: the pig takes its coin (Header.tsx adds .is-oinking for 1.3 s) ----------
-   The wordmark's parts carry the kk-* classes (art.js, `animated`). Origins are percentages of each
-   part's own box, so they hold wherever the logo is drawn. */
+/* ---------- Logo press (Header.tsx sets data-press="<id>" on .kc-logo-btn while one plays) ----------
+   The animations are in src/brand/art.js (PRESS_ANIMATIONS); the wordmark's own <style> (Brand.tsx)
+   carries their rules. Here: room for the coin to fly outside the wordmark's box, and the reduced-motion
+   version (no movement, a small nod of the pig and its coin). */
 .koink-wordmark svg { overflow: visible; }
-.kc-logo-btn .kk-pig,
-.kc-logo-btn .kk-coin-a,
-.kc-logo-btn .kk-coin-b,
-.kc-logo-btn .kk-snout,
-.kc-logo-btn .kk-eyes,
-.kc-logo-btn .kk-ear-l,
-.kc-logo-btn .kk-ear-r { transform-box: fill-box; }
-.kc-logo-btn .kk-pig { transform-origin: 50% 100%; }
-.kc-logo-btn .kk-coin-a,
-.kc-logo-btn .kk-coin-b,
-.kc-logo-btn .kk-eyes,
-.kc-logo-btn .kk-snout { transform-origin: 50% 50%; }
-.kc-logo-btn .kk-ear-l { transform-origin: 100% 100%; }
-.kc-logo-btn .kk-ear-r { transform-origin: 0% 100%; }
-
-.kc-logo-btn.is-oinking .kk-coin-a { animation: kk-w-coin 1100ms linear both; }
-.kc-logo-btn.is-oinking .kk-coin-b { animation: kk-w-turn 1100ms linear both; }
-.kc-logo-btn.is-oinking .kk-pig { animation: kk-w-oink 1100ms linear both; }
-.kc-logo-btn.is-oinking .kk-snout { animation: kk-w-snout 1100ms linear both; }
-.kc-logo-btn.is-oinking .kk-eyes { animation: kk-w-eyes 1100ms linear both; }
-.kc-logo-btn.is-oinking .kk-ear-l { animation: kk-w-ear-l 1100ms linear both; }
-.kc-logo-btn.is-oinking .kk-ear-r { animation: kk-w-ear-r 1100ms linear both; }
-
-/* The coin hops up, turns once, drops into the pig and shrinks away; the next coin pops back. */
-@keyframes kk-w-coin {
-  0%, 6% { opacity: 1; transform: translateY(0) scale(1); animation-timing-function: cubic-bezier(.2,.7,.3,1); }
-  22% { transform: translateY(-34px) scale(1); animation-timing-function: ease-in-out; }
-  30% { transform: translateY(-38px) scale(1); animation-timing-function: cubic-bezier(.55,0,.9,.5); }
-  50% { opacity: 1; transform: translateY(170px) scale(.7); }
-  51% { opacity: 0; transform: translateY(170px) scale(.7); }
-  52%, 78% { opacity: 0; transform: translateY(0) scale(.2); animation-timing-function: cubic-bezier(.3,1.5,.5,1); }
-  82% { opacity: 1; }
-  92%, 100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes kk-w-turn {
-  0%, 10% { transform: scaleX(1); animation-timing-function: cubic-bezier(.12,0,.39,0); }
-  17% { transform: scaleX(0); animation-timing-function: cubic-bezier(.61,1,.88,1); }
-  24% { transform: scaleX(-1); animation-timing-function: cubic-bezier(.12,0,.39,0); }
-  31% { transform: scaleX(0); animation-timing-function: cubic-bezier(.61,1,.88,1); }
-  38%, 100% { transform: scaleX(1); }
-}
-/* The oink: squash on landing, a little jump, settle. */
-@keyframes kk-w-oink {
-  0%, 48% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-out; }
-  55% { transform: translateY(0) scale(1.07, .92); animation-timing-function: cubic-bezier(.3,0,.3,1); }
-  64% { transform: translateY(-26px) scale(.96, 1.06); animation-timing-function: cubic-bezier(.5,0,.7,.6); }
-  73% { transform: translateY(0) scale(1.04, .96); animation-timing-function: ease-out; }
-  82%, 100% { transform: translateY(0) scale(1, 1); }
-}
-@keyframes kk-w-snout {
-  0%, 53% { transform: scale(1); animation-timing-function: cubic-bezier(.3,1.5,.5,1); }
-  62% { transform: scale(1.3); animation-timing-function: ease-in-out; }
-  70% { transform: scale(.93); }
-  78%, 100% { transform: scale(1); }
-}
-@keyframes kk-w-eyes {
-  0%, 50% { transform: scaleY(1); }
-  54%, 66% { transform: scaleY(.12); }
-  72%, 100% { transform: scaleY(1); }
-}
-@keyframes kk-w-ear-l {
-  0%, 52% { transform: rotate(0); }
-  60% { transform: rotate(-17deg); }
-  69% { transform: rotate(7deg); }
-  78%, 100% { transform: rotate(0); }
-}
-@keyframes kk-w-ear-r {
-  0%, 52% { transform: rotate(0); }
-  60% { transform: rotate(17deg); }
-  69% { transform: rotate(-7deg); }
-  78%, 100% { transform: rotate(0); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .kc-logo-btn.is-oinking .kk-coin-a,
-  .kc-logo-btn.is-oinking .kk-coin-b,
-  .kc-logo-btn.is-oinking .kk-pig,
-  .kc-logo-btn.is-oinking .kk-snout,
-  .kc-logo-btn.is-oinking .kk-eyes,
-  .kc-logo-btn.is-oinking .kk-ear-l,
-  .kc-logo-btn.is-oinking .kk-ear-r { animation: none; }
-  .kc-logo-btn.is-oinking .kk-pig { animation: kk-w-nod 400ms ease-out; }
+  .kc-logo-btn[data-press] [class*='kk-'] { animation: none !important; }
+  .kc-logo-btn[data-press] .kk-body { animation: kk-w-nod 400ms ease-out !important; transform-origin: 50% 100%; }
 }
 @keyframes kk-w-nod { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
