@@ -6,18 +6,24 @@
 >
 > **Related:** [prepare-apps.md](prepare-apps.md), [pwa-setup.md](pwa-setup.md)
 
-`changes.patch` is `git diff --binary` between the repository at the commit **`fdd0ade`** ("A few fixes", the head of `main` when this round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): hidden categories in the entry sheet, the "..." category tile, the Title field below the date with its recent-titles list, Reset moved into the chart settings popup, a semitransparent widget tray with bigger icons, a button picked for each single-button widget, personal inflation in Statistics and the border fade on scrolling fields, with the updated documentation. It contains no `node_modules/`, `dist/`, `package.json` or lock file change, and it does not contain itself. It adds six files and deletes none.
+`changes.patch` is `git diff --binary` between the repository at the commit **`cb7512a`** ("UI/UX fixes", the head of `main` when this round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): the UI / UX coherence audit. It adds one file, `guide to UI UX fixes.md`, and updates the documentation that points to it. **It changes no source file**: the fixes are the work that guide describes, and each of its eight steps can come back as its own patch. It contains no `node_modules/`, `dist/`, `package.json` or lock file change, it does not contain itself, and it deletes nothing.
 
 ```sh
 git apply --check changes.patch   # dry run
 git apply --index changes.patch   # apply and stage (new files included)
-# the repository has moved on since eab27b8:
+# the repository has moved on since cb7512a:
 git apply --3way changes.patch
 ```
 
 To make the next one: commit or stash nothing, edit, `git add -A`, then `git diff --cached --binary > changes.patch` and unstage with `git reset`. Keep the docs of every changed file in the same patch (rule in [README.md](README.md#keeping-the-docs-current)).
 
-## What the Latest round changed (hidden categories, "..." tile, titles, personal inflation, scroll fade, widgets)
+## What the Latest round changed (UI / UX coherence audit)
+
+- New: `guide to UI UX fixes.md` (root; the file name has spaces, so quote it on a command line).
+- Edited docs: `README.md`, `docs/README.md`, `docs/design-system.md`, `docs/known-gaps.md`, `docs/changes-patch.md`, `docs/file-map/config-scripts-public.md`.
+- No code, dependency or binary change. Nothing to build or test: `git apply --check changes.patch` is the whole verification.
+
+## What the previous round changed (hidden categories, "..." tile, titles, personal inflation, scroll fade, widgets)
 
 - New: `src/sheets/TitleField.tsx`, `src/components/PersonalInflation.tsx`, `src/lib/inflation.ts`, `src/lib/scrollFade.ts`, `android/app/src/main/java/com/koink/app/KoinkWidgetConfigActivity.java`, `android/app/src/main/res/drawable/widget_tray_bg.xml`.
 - Edited code: `src/main.tsx`, `src/index.css`, `src/components/{ActionDock,ChartLargeView,ChartPopup,ExpenseChart,InstallGuide,Modal,ModeChooser,WidgetButtons}.tsx`, `src/lib/{i18n.it,store,types,widgetBridge,widgets}.ts(x)`, `src/pages/StatsView.tsx`, `src/sheets/{TxSheet,WidgetsSettings,shared}.tsx`, `android/app/src/main/{AndroidManifest.xml,java/com/koink/app/KoinkWidgetProvider.java}`, `android/app/src/main/res/{layout/widget_button,layout/widget_button_single,layout/widget_buttons,values/strings,xml/widget_single_info}.xml`.

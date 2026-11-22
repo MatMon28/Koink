@@ -63,6 +63,7 @@ Node.js 22+ is required; Android also needs JDK 21 and Android SDK 36. Full step
 | **Categories and income sources** | `src/lib/categories.ts` | [data-model.md](docs/data-model.md) |
 | **Header, page pill, bottom dock (Month page only), sheets, toasts** | `src/components/Header.tsx`, `Tabs.tsx`, `ActionDock.tsx`, `Modal.tsx`, `ui.tsx`, `src/lib/pillTab.ts`, `src/lib/dock.ts`, `src/lib/interrupt.ts` | [architecture.md](docs/architecture.md) |
 | **Shared inputs** (amount stepper, switch, confirm dialog) | `src/components/ui.tsx` | [file-map/components.md](docs/file-map/components.md) |
+| **UI / UX coherence** (the 28 audited inconsistencies and their fixes; the one standard for colours, fields, buttons, icons, type and wording; the **rules every new feature follows**) | the files each finding names, nothing else | [guide to UI UX fixes.md](guide%20to%20UI%20UX%20fixes.md) |
 | **How the whole thing fits together** | `src/App.tsx`, `src/main.tsx` | [architecture.md](docs/architecture.md) |
 | **Which file does X?** | | [file-map/README.md](docs/file-map/README.md) |
 | **How to test, what was and was not verified** | | [verification.md](docs/verification.md), [known-gaps.md](docs/known-gaps.md) |
@@ -83,6 +84,7 @@ public/               favicon, manifest, PWA icons, brand/ (brand sheet, light a
 scripts/              offline-worker template, brand renderer, launch-screen style generator, Android prepare script, project packer
 android/              Capacitor Android project
 docs/                 documentation (index: docs/README.md)
+guide to UI UX fixes.md   UI / UX audit: 28 findings with their fixes, the standard, rules for new features (written to be handed to an LLM)
 ```
 
 ### Rules that save tokens
@@ -91,8 +93,17 @@ docs/                 documentation (index: docs/README.md)
 2. Colours are CSS variables (`--bg`, `--surface`, `--text`, ...) plus the Tailwind tokens `intake` (money in), `activity` (money out), `weight` (savings), `nutrient` (yellow note cards). The names are inherited from the reference app on purpose: see [design-system.md](docs/design-system.md) before renaming anything.
 3. Every sheet is a `<Modal>`; every sheet is opened with `openSheet({ type: ... })`. The list of types is the `Sheet` union in `src/lib/types.ts`.
 4. After adding, renaming or deleting a file, update its row in `docs/file-map/` and, if it is a feature, the matching `docs/features/*.md` (rule and table in [docs/README.md](docs/README.md#keeping-the-docs-current)).
+5. A new screen, sheet, field, button, icon or label follows section 4 of [guide to UI UX fixes.md](guide%20to%20UI%20UX%20fixes.md#4-rules-for-future-features) (reuse the shared pieces, tokens instead of hex colours, one icon per meaning, text through `t()`). Fixing an old inconsistency: find its ID in section 2 of that file and tick it in section 6.
 
-## Latest round: hidden categories, "..." tile, recent titles, personal inflation, scroll fade, widgets
+## Latest round: UI / UX coherence audit (documentation only, no code change)
+
+- **New file: [guide to UI UX fixes.md](guide%20to%20UI%20UX%20fixes.md)**, in the root. An audit of fields, pages, icons, buttons, type, cards and wording at commit `cb7512a`: **28 findings** (4 high, 15 medium, 9 low), each with the files and lines, the fix and a "done when". Examples: warning text that is hard-coded and unreadable on the dark themes, text fields small enough to make iPhone Safari zoom, Delete and Save in the same pink in the expense sheet, strings that can never be translated, 12 icon sizes, 9 versions of the folding card, a toast that still leaves room for a bottom bar that is no longer there.
+- **It is a brief for an LLM (or a person):** section 1 is the standard (tokens to add, type roles, sizes, icon vocabulary, the shared pieces to build in `ui.tsx`, wording), section 3 the order of work in 8 steps, section 6 a status table to tick.
+- **Rules for future features** are section 4 of that file: every new screen, field, button, icon or label follows them whenever possible, and an accepted exception is written down there. Rule 5 below and [docs/README.md](docs/README.md#keeping-the-docs-current) point to it.
+- **Nothing in `src/` changed.** Not run in a browser: the audit read `ui.tsx`, `shared.tsx`, `icons.ts`, `i18n.ts` and the tokens of `index.css` in full and searched the pages, sheets and components by pattern; contrast figures are computed from the tokens ([docs/known-gaps.md](docs/known-gaps.md)).
+- Docs updated: this file, `docs/README.md`, `docs/design-system.md`, `docs/known-gaps.md`, `docs/file-map/config-scripts-public.md`, `docs/changes-patch.md`. `changes.patch`: [docs/changes-patch.md](docs/changes-patch.md).
+
+## Previous round: hidden categories, "..." tile, recent titles, personal inflation, scroll fade, widgets
 
 - **Add expense: hidden categories can be chosen.** The category row lists the visible categories first and the hidden ones after them. `TxSheet.tsx`. [docs/features/entries.md](docs/features/entries.md), [docs/features/categories.md](docs/features/categories.md)
 - **Category row: three tiles and a "..." tile.** The fourth tile of the row is a **"..."** button (with `+N`) that opens the other categories; it **replaces the arrow button** under the field. Same grid for income sources and goals. `ChoiceGrid` in `shared.tsx`. [docs/features/entries.md](docs/features/entries.md)

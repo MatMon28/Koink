@@ -75,7 +75,8 @@ Easing variables: `--ease-soft` / `--dur-soft` and `--ease-bounce` / `--dur-boun
 
 ## Conventions
 
-- Text sizes: labels `text-[11px] font-bold uppercase tracking-wider`, figures `font-extrabold tabular-nums`.
+- **The full standard** (tokens to use instead of hex colours, type roles, control sizes, icon sizes and which icon means what, shared pieces, wording) is in [../guide to UI UX fixes.md](../guide%20to%20UI%20UX%20fixes.md), with the 28 places where the code does not follow it yet. New components follow its section 4.
+- Text sizes: labels `text-[11px] font-bold uppercase tracking-wider`, figures `font-extrabold tabular-nums`. (Most labels in the code are `font-extrabold`, and `SectionLabel` is 12px: finding F4 of the guide settles it on 11px `font-extrabold`; correct this line when F4 is fixed.)
 - Radii: `rounded-3xl` cards, `rounded-2xl` inner rows and buttons, `rounded-full` pills and icon buttons.
 - Money in fixed-width cards uses `moneyFit` so it can never be clipped.
 - Fonts: Plus Jakarta Sans (default), Space Grotesk and Chakra Petch (presets), declared in `index.css` with one latin `woff2` each. The wordmark needs no font: its letters are outlines ([brand.md](brand.md)).

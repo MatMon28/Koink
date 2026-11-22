@@ -12,6 +12,7 @@
 | Understand how the app is put together (shell, state, sheets) | [architecture.md](architecture.md) |
 | Know what is stored, the types, the money maths, the backup format | [data-model.md](data-model.md) |
 | Change colours, tokens, presets, motion classes | [design-system.md](design-system.md) |
+| Fix a UI / UX inconsistency, or make a new screen, field, button, icon or label match the rest of the app | [../guide to UI UX fixes.md](../guide%20to%20UI%20UX%20fixes.md) |
 | Change swipe rules or what Back does | [gestures.md](gestures.md) |
 | Change animation timing, springs, how sheets leave | [motion.md](motion.md) |
 | Produce or apply `changes.patch` | [changes-patch.md](changes-patch.md) |
@@ -59,6 +60,8 @@ After **every** new feature or new / renamed / deleted file, update the matching
 | --- | --- |
 | Any file (add / rename / delete) | its row in the matching `file-map/*.md`, and the root README legend if it is a main entry point |
 | A page or a sheet | the matching `features/*.md` |
+| A new screen, sheet, field, button, icon or label | build it by section 4 of [../guide to UI UX fixes.md](../guide%20to%20UI%20UX%20fixes.md#4-rules-for-future-features); an accepted exception goes in its section 6 |
+| A fix for one of the audited inconsistencies | tick its ID in section 6 of the same file; a new shared piece gets its row in [file-map/components.md](file-map/components.md) |
 | `package.json` scripts, requirements, build flow | [prepare-apps.md](prepare-apps.md), [known-gaps.md](known-gaps.md) |
 | Manifest, icons, offline worker, install card / guide, guided tour, PWA tags in `index.html` | [pwa.md](pwa.md), [pwa-setup.md](pwa-setup.md), [web-preview.md](web-preview.md), [file-map/config-scripts-public.md](file-map/config-scripts-public.md), [file-map/components.md](file-map/components.md) |
 | `capacitor.config.json`, anything in `android/`, a Capacitor plugin | [android.md](android.md), [file-map/android-native.md](file-map/android-native.md), [prepare-apps.md](prepare-apps.md) |
@@ -72,11 +75,13 @@ After **every** new feature or new / renamed / deleted file, update the matching
 | Anything in `src/brand/art.js` | run `npm run brand`; [brand.md](brand.md), [launch-intro.md](launch-intro.md) |
 | The docs structure itself | this file and the root `README.md` |
 
-Keep each document under roughly 120 lines. If one grows, split it and add a row above.
+Keep each document under roughly 120 lines. If one grows, split it and add a row above. The one exception is the root `guide to UI UX fixes.md`: it stays in one piece on purpose, so it can be handed to an LLM as a single file.
 
 ## Last audit
 
 Written together with the PWA / Android / gestures round. Checked against the tree at that point: every path named in the docs exists, the npm scripts match `package.json`, the storage keys match the source, and the versions quoted (Capacitor 8.5.3, Android Gradle Plugin 8.13.0, Gradle 8.14.3, minSdk 24, SDK 36, Java 21) match `package.json` and the generated Gradle files. What was run and what was not is in [verification.md](verification.md).
+
+**UI / UX coherence round (audit, no code change):** new root file `guide to UI UX fixes.md` (28 findings at commit `cb7512a`, the standard, rules for future features); this file, the root README, `design-system.md`, `known-gaps.md`, `file-map/config-scripts-public.md` and `changes-patch.md` updated. Checked: every file and line the guide names exists at `cb7512a`. Nothing was run; no source file changed.
 
 **Basic-mode round (Basic / Full mode, first-launch chooser, five default categories):** new document `features/basic-mode.md`; month, transactions, statistics, settings, categories, profile, accounts, data-model, known-gaps, verification, changes-patch, the lib / components file maps and the root README updated. Checked: `tsc -b` and `vite build` pass; not run in a browser.
 

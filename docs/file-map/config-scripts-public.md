@@ -21,6 +21,7 @@
 | `.vercelignore` | Keeps `android/` out of Vercel uploads |
 | `.github/workflows/pages.yml` | GitHub Actions workflow that deploys `dist/` to GitHub Pages (and fetches `Koink.apk` from the latest release when available) |
 | `README.md` | Overview and the file legend |
+| `guide to UI UX fixes.md` | UI / UX coherence audit at commit `cb7512a`, written to be handed to an LLM: the standard (colour tokens, type roles, sizes, icon vocabulary, shared pieces, wording), 28 findings with file, line, fix and "done when", the order of work, the **rules for future features** (section 4), a checklist and a status table. Changes no code. Longer than the other documents on purpose (one file) |
 
 ### npm scripts
 
