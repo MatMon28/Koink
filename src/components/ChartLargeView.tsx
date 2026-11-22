@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ChartColumn, RotateCw, SlidersHorizontal, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChartColumn, SlidersHorizontal, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { ChartPlot, type PlotProps } from './ChartPlot';
+import { RotateScreenIcon } from './RotateScreenIcon';
 import { useBackLayer } from '../lib/back';
+import { ChartTurnContext } from '../lib/chartTurn';
 import { clampZoom, maxZoom, ZOOM_FLOOR_MAX, ZOOM_MIN } from '../lib/expenseSeries';
 import { t } from '../lib/i18n';
 import { usePresence } from '../lib/usePresence';
@@ -73,6 +75,8 @@ interface Props {
   readout: ReactNode;
   /** Width in px bars would have when scrolled at their natural size (the zoom bars start at). */
   naturalWidth: number;
+  /** Changes when the chart is reset: zoom and position start over, even if the data is the same. */
+  resetKey?: number;
   onOpenSettings: () => void;
   /** The settings popup, drawn inside the view so that it turns with it. */
   popup: ReactNode;
@@ -91,7 +95,7 @@ const iconButton = 'pressable flex size-9 shrink-0 items-center justify-center r
  *    turned), the button, Escape or Back.
  * It opens by rising and fading in and closes by sinking and fading out.
  */
-export function ChartLargeView({ open, onClose, title, plot, readout, naturalWidth, onOpenSettings, popup }: Props) {
+export function ChartLargeView({ open, onClose, title, plot, readout, naturalWidth, resetKey = 0, onOpenSettings, popup }: Props) {
   const { mounted, shown } = usePresence(open, SHOW_MS);
   const [rotated, setRotated] = useState(false);
   const [portrait, setPortrait] = useState(isPortrait);
@@ -211,7 +215,7 @@ export function ChartLargeView({ open, onClose, title, plot, readout, naturalWid
   }, [mounted, plot.slots, turned, turning, portrait]);
 
   // New data or another kind of chart: back to where it starts (bars at their natural width, the line fitted), newest at the right.
-  const dataKey = `${plot.type}|${plot.slots}|${plot.resolution}|${plot.lines.length}|${Math.round(naturalWidth)}`;
+  const dataKey = `${plot.type}|${plot.slots}|${plot.resolution}|${plot.lines.length}|${Math.round(naturalWidth)}|${resetKey}`;
   useLayoutEffect(() => {
     const el = scroller.current;
     if (!mounted || !el) return;
@@ -509,7 +513,7 @@ export function ChartLargeView({ open, onClose, title, plot, readout, naturalWid
                 aria-label={turned ? t('Back to upright') : t('Turn the chart sideways')}
                 title={turned ? t('Back to upright') : t('Turn the chart sideways')}
               >
-                <RotateCw size={16} aria-hidden="true" />
+                <RotateScreenIcon size={18} />
               </button>
             )}
             <button type="button" className={iconButton} onClick={onOpenSettings} aria-label={t('Chart settings')} title={t('Chart settings')}>
@@ -530,7 +534,7 @@ export function ChartLargeView({ open, onClose, title, plot, readout, naturalWid
 
         {!turned && <p className="shrink-0 px-1 text-center text-[11px] font-medium text-[var(--muted)]">{t('Pinch to zoom · drag to move · swipe down to close')}</p>}
 
-        {popup}
+        <ChartTurnContext.Provider value={turned}>{popup}</ChartTurnContext.Provider>
       </div>
     </div>,
     document.body,

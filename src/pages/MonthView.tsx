@@ -124,9 +124,9 @@ export function MonthView() {
   };
 
   const layouts: { id: Layout; label: string; icon: ReactNode }[] = [
-    { id: 'compact', label: 'Compact', icon: <Columns2 size={13} /> },
-    { id: 'normal', label: 'Normal', icon: <LayoutList size={13} /> },
-    { id: 'expanded', label: 'Expanded', icon: <ListTree size={13} /> },
+    { id: 'compact', label: 'Compact', icon: <Columns2 size={15} aria-hidden="true" /> },
+    { id: 'normal', label: 'Normal', icon: <LayoutList size={15} aria-hidden="true" /> },
+    { id: 'expanded', label: 'Expanded', icon: <ListTree size={15} aria-hidden="true" /> },
   ];
 
   const days = elapsedDays(selectedMonth);
@@ -474,14 +474,15 @@ export function MonthView() {
                 type="button"
                 onClick={() => chooseLayout(item.id)}
                 aria-pressed={layout === item.id}
-                className={`pressable inline-flex min-h-7 items-center justify-center gap-1 rounded-full px-2.5 text-[11px] font-extrabold ${
+                aria-label={t(item.label)}
+                title={t(item.label)}
+                className={`pressable inline-flex min-h-8 min-w-10 items-center justify-center rounded-full px-3 text-[11px] font-extrabold ${
                   layout === item.id
                     ? 'bg-[var(--text)] text-[var(--on-text)]'
                     : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
                 }`}
               >
                 {item.icon}
-                <span>{t(item.label)}</span>
               </button>
             ))}
           </div>

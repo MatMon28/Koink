@@ -47,6 +47,12 @@ The same plan runs on timers, so a reminder arrives **only while Koink is open**
 
 A notification is shown through the offline worker when there is one (`registration.showNotification`: Chrome on Android allows no other way), otherwise with `new Notification`. A tap is handled by the worker's `notificationclick` (it focuses the window and posts `{ type: 'koink:open', target }`), or opens `./?open=<target>` when no window is left; `takeLaunchAction()` reads that parameter.
 
+## Fixes of the newest round
+
+- **Reminders switched on before the permission was granted never got scheduled (Android).** The plan is synced as soon as a switch is flipped, but on Android 13+ the system question is still open at that moment, `syncNativeNotifications()` found the permission missing and scheduled nothing; once the user tapped *Allow*, the plan had not changed, so nothing synced again until a setting changed or the app restarted. Now `requestNotificationPermission()` calls `announcePermissionChange()`, `useReminders` keeps the permission in state (re-read when the app returns to the foreground, `onPermissionChange()`), and the permission is a dependency of the sync effect: the moment it is granted (in the app or in the system settings) the alarms are scheduled.
+- **Notification text follows the language.** `buildNotificationPlan(..., basic, tr)` takes the translator (`t`), so titles and bodies (daily, recurring, weekly, new month, the test notification) are Italian in Italian; the language is part of the plan key, so a language change reschedules with the new text. Channel names stay English: Android keeps the name a channel was first created with. The row descriptions and weekday names in Settings > Notifications are translated too (they were not).
+- Tested in Node: the plan in English (unchanged) and in Italian. **Not tested on a device** ([known-gaps.md](known-gaps.md)).
+
 ## Settings sheet
 
 `NotificationSettings.tsx` is the collapsible **Notifications** group. Switching a reminder on asks for the system permission (the tap is the gesture browsers need). It shows a banner when notifications are blocked or unavailable, an **Allow notifications** button while permission is pending, and **Send a test notification** (immediately in a browser, after two seconds on Android), which reports the outcome in a toast.

@@ -1,15 +1,15 @@
 import { t } from '../lib/i18n';
-import { actionFor, TRAY_ALPHA, widgetColumns, widgetRows, widgetShape } from '../lib/widgets';
+import { actionFor, widgetColumns, widgetRows, widgetShape } from '../lib/widgets';
 
 /*
  * A widget button follows the bottom dock of the app: a round pastel button with a small icon (the dock's
  * buttons are circles too), . The tray behind a group of buttons
- * is the dock's own surface: border, soft shadow, fully rounded for a single row, rounded card for several.
+ * is only a layout box now: it has no fill, border or shadow (the widget background is transparent).
  * A button carries no text: the name is only its tooltip and screen-reader label.
  * Sizes are in px on purpose: they are the dp of the Android widget (res/layout/widget_button.xml).
  *
- * The lone circle of the single-button widget is 48 px (it was 56). A tray is semitransparent (the surface
- * colour at TRAY_ALPHA, see widgets.ts) and its buttons share the tray's width evenly: the wider the widget
+ * The lone circle of the single-button widget is 48 px (it was 56). A tray has a fully transparent background
+ * (it used to be the surface colour at 72 %) and its buttons share the tray's width evenly: the wider the widget
  * is made, the more room there is between the buttons (the buttons themselves keep their size). A short
  * last row is centred on the same grid with half-width spacers. KoinkWidgetProvider.java does the same.
  */
@@ -51,8 +51,7 @@ export function WidgetFace({ keys, onPress, stretch = false }: { kind?: 'single'
   const perRow = widgetColumns(keys.length);
   return (
     <div
-      style={{ backgroundColor: `color-mix(in srgb, var(--surface) ${Math.round(TRAY_ALPHA * 100)}%, transparent)` }}
-      className={`kc-widget-tray flex max-w-full flex-col items-stretch gap-1.5 border border-[var(--border)] p-1.5 shadow-lg shadow-black/10 backdrop-blur-md ${
+      className={`kc-widget-tray flex max-w-full flex-col items-stretch gap-1.5 p-1.5 ${
         stretch ? 'w-full' : 'inline-flex'
       } ${shape === 'pill' ? 'rounded-full px-2.5' : 'rounded-[1.75rem] px-2.5 py-2'}`}
     >

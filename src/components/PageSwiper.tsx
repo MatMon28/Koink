@@ -90,11 +90,10 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
   const shownTab = useRef(activeTab);
   /**
    * The rail animation that is running, with what ends it at once (see the touch guard below).
-   * `commit` marks the last stretch of a committed swipe: the touch that ends it is spent on that.
+   * `commit` marks the last stretch of a committed swipe: a touch that ends it lands the page and
+   * then swipes normally (a quick second swipe goes on to the next page).
    */
   const running = useRef<{ end: () => void; commit?: boolean } | null>(null);
-  /** Id of the pointer that ended a committed swipe early: it must not start a second page swipe. */
-  const spentPointer = useRef<number | null>(null);
   const [peek, setPeek] = useState<Peek | null>(null);
   /** Pages kept mounted but hidden, ready to ride along. */
   const [warm, setWarm] = useState<ActiveTab[]>([]);
@@ -142,13 +141,11 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
   // A new touch (or key) ends whatever the rail is doing at once: the slide-in, the spring back, or
   // the last stretch of a committed swipe (the new page is then simply in place). Kakcal's rule.
   useEffect(() => {
-    const endNow = (event: Event) => {
-      const current = running.current;
-      if (!current) return;
-      // A second swipe started while the first was still travelling: the first lands now, but this
-      // touch is used up by that. It is not also a swipe (it would have changed the page twice).
-      if (current.commit && event.type === 'pointerdown') spentPointer.current = (event as PointerEvent).pointerId;
-      current.end();
+    const endNow = () => {
+      // A second swipe started while the first was still travelling: the first lands now (this runs
+      // in the capture phase, before the page's own pointerdown), and the new touch then starts a
+      // normal swipe from the page that has just arrived. One touch still changes one page at most.
+      running.current?.end();
     };
     (['pointerdown', 'touchstart', 'keydown'] as const).forEach((type) => document.addEventListener(type, endNow, { capture: true, passive: true }));
     return () => (['pointerdown', 'touchstart', 'keydown'] as const).forEach((type) => document.removeEventListener(type, endNow, true));
@@ -183,9 +180,6 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     swallowClick.current = false;
     gesture.current = null;
-    // The touch that cut the previous swipe short only lands that page: no second swipe from it.
-    if (spentPointer.current === event.pointerId) return;
-    spentPointer.current = null;
     if (event.pointerType === 'mouse' || !event.isPrimary || document.documentElement.classList.contains('kc-sheet-open') || leaving.current) return;
     if (event.clientX < EDGE_RESERVED_PX || event.clientX > window.innerWidth - EDGE_RESERVED_PX) return;
     const target = event.target as Element;
@@ -229,7 +223,6 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
   };
 
   const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (spentPointer.current === event.pointerId) spentPointer.current = null;
     const g = gesture.current;
     const el = ref.current;
     gesture.current = null;
@@ -252,10 +245,15 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     // One render: the neighbour's element is kept (same key) and becomes the current page.
     const promote = () => {
       running.current = null;
-      setActiveTab(next);
-      setPillTab(null); // the real page has caught up with the pill
-      setPeek(null);
-      setWarm((tabs) => (tabs.includes(activeTab) ? tabs : [...tabs, activeTab])); // the page just left is now a neighbour
+      // Synchronous, so the rail is back at rest in the very frame the new page is current: there
+      // is no moment in which a new touch could meet the old page, a stale rail or a stuck `leaving`.
+      flushSync(() => {
+        setActiveTab(next);
+        setPillTab(null); // the real page has caught up with the pill
+        setPeek(null);
+        setWarm((tabs) => (tabs.includes(activeTab) ? tabs : [...tabs, activeTab])); // the page just left is now a neighbour
+      });
+      leaving.current = false;
     };
     if (prefersReducedMotion() || typeof el.animate !== 'function') {
       promote();
@@ -276,19 +274,18 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
       leaving.current = false;
       arrivedBySwipe.current = false;
     };
-    // A touch during the last stretch: the new page lands now, and that touch is already for it.
+    // A touch during the last stretch: the new page lands now, and that touch then swipes from it.
     running.current = {
       commit: true,
       end: () => {
         exit.onfinish = null;
         exit.oncancel = null;
-        flushSync(promote);
+        promote();
       },
     };
   };
 
   const onPointerCancel = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (spentPointer.current === event.pointerId) spentPointer.current = null;
     const g = gesture.current;
     gesture.current = null;
     if (g && g.id === event.pointerId && g.locked) settle();

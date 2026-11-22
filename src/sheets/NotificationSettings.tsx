@@ -43,7 +43,7 @@ function Row({ icon, tone, title, desc, on, onToggle, disabled, children }: RowP
         type="button"
         role="switch"
         aria-checked={on}
-        aria-label={t(title)}
+        aria-label={title}
         disabled={disabled}
         onClick={onToggle}
         className="w-full min-h-[52px] flex items-center justify-between gap-3 px-3 py-2.5 text-left rounded-2xl hover:bg-[var(--hover)] transition-colors disabled:opacity-50"
@@ -51,8 +51,8 @@ function Row({ icon, tone, title, desc, on, onToggle, disabled, children }: RowP
         <span className="flex items-center gap-2.5 min-w-0">
           <span className={`size-8 rounded-full flex items-center justify-center shrink-0 ${tone}`}>{icon}</span>
           <span className="min-w-0">
-            <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{t(title)}</span>
-            <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{desc}</span>
+            <span className="block text-xs font-extrabold text-[var(--text)] leading-tight">{title}</span>
+            <span className="block text-[11px] font-medium text-[var(--muted)] leading-tight mt-0.5">{t(desc)}</span>
           </span>
         </span>
         <Switch on={on} />
@@ -172,7 +172,7 @@ export function NotificationSettings() {
                   key={day.id}
                   type="button"
                   aria-pressed={active}
-                  aria-label={day.long}
+                  aria-label={t(day.long)}
                   onClick={() => patch('weeklyReview', { weekday: day.id })}
                   className={`pressable min-w-0 py-1.5 rounded-lg text-[11px] font-extrabold border ${
                     active
@@ -180,7 +180,7 @@ export function NotificationSettings() {
                       : 'bg-[var(--surface)] hover:bg-[var(--hover)] text-[var(--muted)] border-[var(--border)]'
                   }`}
                 >
-                  {day.short}
+                  {t(day.short)}
                 </button>
               );
             })}

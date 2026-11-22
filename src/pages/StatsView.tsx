@@ -14,12 +14,13 @@ import { t } from '../lib/i18n';
 
 /** 1 = this month, 3 / 6 / 12 = that many months ending now, custom = a first and a last day. */
 type RangeKey = '1' | '3' | '6' | '12' | 'custom';
-const RANGES: { id: RangeKey; label: string }[] = [
-  { id: '1', label: '1 month' },
-  { id: '3', label: '3 months' },
-  { id: '6', label: '6 months' },
-  { id: '12', label: '12 months' },
-  { id: 'custom', label: 'Custom' },
+/** `label` is what the button shows (months in short form), `full` its tooltip and screen-reader name. */
+const RANGES: { id: RangeKey; label: string; full: string }[] = [
+  { id: '1', label: '1 mo', full: '1 month' },
+  { id: '3', label: '3 mo', full: '3 months' },
+  { id: '6', label: '6 mo', full: '6 months' },
+  { id: '12', label: '12 mo', full: '12 months' },
+  { id: 'custom', label: 'Custom', full: 'Custom' },
 ];
 /** The longest custom period: five years of months. */
 const MAX_CUSTOM_MONTHS = 60;
@@ -146,6 +147,8 @@ export function StatsView() {
               key={item.id}
               type="button"
               aria-pressed={range === item.id}
+              aria-label={t(item.full)}
+              title={t(item.full)}
               onClick={() => {
                 setRange(item.id);
                 setSelectedPoint(null);
@@ -180,7 +183,7 @@ export function StatsView() {
           ? `${formatDay(fromDate, false)} ${fromDate.slice(0, 4)} – ${formatDay(toDate, false)} ${toDate.slice(0, 4)} · ${daysBetween(fromDate, toDate) + 1} ${t('days')}`
           : range === '1'
             ? formatMonth(months[0])
-            : `${formatMonth(months[0], 'short')} – ${formatMonth(months[months.length - 1], 'short')} · ${period.activeCount}/${months.length} ${t('months with entries')}`}
+            : `${formatMonth(months[0], 'short')} – ${formatMonth(months[months.length - 1], 'short')}`}
       </p>
 
       <HeroPair

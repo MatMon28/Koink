@@ -6,18 +6,26 @@
 >
 > **Related:** [prepare-apps.md](prepare-apps.md), [pwa-setup.md](pwa-setup.md)
 
-`changes.patch` is `git diff --binary` between the repository at the commit **`4729b4f`** ("New branding", the head of `main` when the Basic-mode round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): Basic / Full mode, the first-launch chooser and the five default categories, with the updated documentation. It contains no `node_modules/`, `dist/`, `package.json` or lock file change, and it does not contain itself.
+`changes.patch` is `git diff --binary` between the repository at the commit **`eab27b8`** ("Basic mode", the head of `main` when this round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): second swipe, chart reset, rotate icon, swipe-down for the chart settings, notification fixes, icon-only layout switch, caption-free date / category fields, shorter statistics captions and a transparent widget background, with the updated documentation. It contains no `node_modules/`, `dist/`, `package.json` or lock file change, and it does not contain itself. It deletes four files (`android/.../drawable/widget_tray_*.xml`) and adds two (`src/components/RotateScreenIcon.tsx`, `src/lib/chartTurn.ts`).
 
 ```sh
 git apply --check changes.patch   # dry run
 git apply --index changes.patch   # apply and stage (new files included)
-# the repository has moved on since 4729b4f:
+# the repository has moved on since eab27b8:
 git apply --3way changes.patch
 ```
 
 To make the next one: commit or stash nothing, edit, `git add -A`, then `git diff --cached --binary > changes.patch` and unstage with `git reset`. Keep the docs of every changed file in the same patch (rule in [README.md](README.md#keeping-the-docs-current)).
 
-## What the Latest round changed (Basic mode)
+## What the Latest round changed (second swipe, chart reset, notifications, transparent widgets)
+
+- New: `src/components/RotateScreenIcon.tsx`, `src/lib/chartTurn.ts`.
+- Deleted: `android/app/src/main/res/drawable/widget_tray_{card,card_ring,pill,pill_ring}.xml`.
+- Edited code: `src/components/{PageSwiper,ChartPopup,ChartLargeView,ExpenseChart,WidgetButtons}.tsx`, `src/lib/{i18n.it,notifications,reminders,useReminders,widgets}.ts`, `src/pages/{MonthView,StatsView}.tsx`, `src/sheets/{TxSheet,NotificationSettings}.tsx`, `android/app/src/main/java/com/koink/app/KoinkWidgetProvider.java`, `android/app/src/main/res/layout/widget_buttons.xml`.
+- Edited docs: `README.md`, `docs/{gestures,notifications,known-gaps,verification,changes-patch}.md`, `docs/file-map/{components,lib}.md`, `docs/features/{statistics,month,entries,widgets}.md`.
+- No dependency, schema or binary change.
+
+## What the previous round changed (Basic mode)
 
 - New: `src/lib/mode.ts`, `src/components/ModeChooser.tsx`, `docs/features/basic-mode.md`.
 - Edited code: `src/App.tsx`, `src/components/{MonthNavigator,WidgetStrip}.tsx`, `src/lib/{categories,i18n.it,reminders,store,types,useReminders,useWidgets}.ts(x)`, `src/pages/{MonthView,StatsView,TransactionsView}.tsx`, `src/sheets/{CategoriesSheet,NotificationSettings,ProfileSheet,SettingsSheet,TxSheet}.tsx`.

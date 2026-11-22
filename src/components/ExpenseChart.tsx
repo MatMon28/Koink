@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChartColumn, ChevronDown, Maximize2, SlidersHorizontal, Tag } from 'lucide-react';
+import { ChartColumn, ChevronDown, Maximize2, RotateCcw, SlidersHorizontal, Tag } from 'lucide-react';
 import { ChartLargeView } from './ChartLargeView';
 import { ChartPlot, type ChartType, type PlotLine } from './ChartPlot';
 import { ChartPopup } from './ChartPopup';
@@ -49,6 +49,13 @@ const BASES: { id: CompareBase; label: string }[] = [
 /** How many categories are drawn when none is picked in a category comparison. */
 const DEFAULT_CATEGORIES = 3;
 const FIRST_COLOR = 'var(--activity-on-surface)';
+/** What the chart shows before anything is changed: Reset goes back to these. */
+const DEFAULT_TYPE: ChartType = 'bars';
+const DEFAULT_RESOLUTION: Resolution = 'week';
+const DEFAULT_COMPARE: Compare = 'none';
+const DEFAULT_BASE: CompareBase = 'prev';
+const defaultOtherFrom = () => addDays(todayStr(), -59);
+const defaultOtherTo = () => addDays(todayStr(), -30);
 
 export interface ChartCategory {
   category: { id: string; name: string; icon: typeof Tag };
@@ -113,16 +120,18 @@ function Segmented<T extends string>({ label, value, options, onChange }: { labe
 export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Props) {
   const { money } = useApp();
   const [open, setOpen] = usePersistentState('koink_stats_chart_open', true);
-  const [resolution, setResolution] = usePersistentState<Resolution>('koink_stats_chart_res', 'week');
-  const [type, setType] = usePersistentState<ChartType>('koink_stats_chart_type', 'bars');
-  const [storedCompare, setCompare] = usePersistentState<Compare>('koink_stats_chart_cmp', 'none');
-  const [base, setBase] = usePersistentState<CompareBase>('koink_stats_chart_base', 'prev');
-  const [otherFrom, setOtherFrom] = usePersistentState('koink_stats_chart_cfrom', addDays(todayStr(), -59));
-  const [otherTo, setOtherTo] = usePersistentState('koink_stats_chart_cto', addDays(todayStr(), -30));
+  const [resolution, setResolution] = usePersistentState<Resolution>('koink_stats_chart_res', DEFAULT_RESOLUTION);
+  const [type, setType] = usePersistentState<ChartType>('koink_stats_chart_type', DEFAULT_TYPE);
+  const [storedCompare, setCompare] = usePersistentState<Compare>('koink_stats_chart_cmp', DEFAULT_COMPARE);
+  const [base, setBase] = usePersistentState<CompareBase>('koink_stats_chart_base', DEFAULT_BASE);
+  const [otherFrom, setOtherFrom] = usePersistentState('koink_stats_chart_cfrom', defaultOtherFrom());
+  const [otherTo, setOtherTo] = usePersistentState('koink_stats_chart_cto', defaultOtherTo());
   const [pickedCategories, setPickedCategories] = useState<string[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /** Counts resets, so the full view's zoom and position start over too. */
+  const [resets, setResets] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
 
   const compare = normalizeCompare(storedCompare); // the first version stored `off` / `periods`
@@ -182,6 +191,29 @@ export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Pr
     setSelected(null);
   };
   const resetSelection = () => setSelected(null);
+
+  /** Is anything different from how the chart starts? (Reset is only useful then.) */
+  const changed =
+    type !== DEFAULT_TYPE ||
+    resolution !== DEFAULT_RESOLUTION ||
+    compare !== DEFAULT_COMPARE ||
+    base !== DEFAULT_BASE ||
+    otherFrom !== defaultOtherFrom() ||
+    otherTo !== defaultOtherTo() ||
+    picked.length > 0 ||
+    selected !== null;
+  /** Back to the start: bars, per week, no comparison, every category, nothing tapped. */
+  const reset = () => {
+    setType(DEFAULT_TYPE);
+    setResolution(DEFAULT_RESOLUTION);
+    setCompare(DEFAULT_COMPARE);
+    setBase(DEFAULT_BASE);
+    setOtherFrom(defaultOtherFrom());
+    setOtherTo(defaultOtherTo());
+    setPickedCategories([]);
+    setSelected(null);
+    setResets((n) => n + 1);
+  };
 
   // What the read-out above the chart shows: the totals (or the average), or the tapped slot, one row per line.
   const average = lines[0] && lines[0].points.length > 0 ? lines[0].total / lines[0].points.length : 0;
@@ -328,7 +360,7 @@ export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Pr
   );
 
   const popup = (inline: boolean) => (
-    <ChartPopup open={settingsOpen} onClose={() => setSettingsOpen(false)} title={t('Chart settings')} inline={inline}>
+    <ChartPopup open={settingsOpen} onClose={() => setSettingsOpen(false)} title={t('Chart settings')} inline={inline} onReset={reset} resetDisabled={!changed}>
       {settings}
     </ChartPopup>
   );
@@ -349,6 +381,9 @@ export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Pr
               <span className="text-xs font-bold text-[var(--muted)]">{money(headTotal)}</span>
               <ChevronDown size={16} className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
             </span>
+          </button>
+          <button type="button" onClick={reset} disabled={!changed} aria-label={t('Reset the chart')} title={t('Reset the chart')} className={`${roundButton} disabled:opacity-30 disabled:pointer-events-none`}>
+            <RotateCcw size={15} aria-hidden="true" />
           </button>
           <button type="button" onClick={() => setSettingsOpen(true)} aria-label={t('Chart settings')} title={t('Chart settings')} className={roundButton}>
             <SlidersHorizontal size={15} aria-hidden="true" />
@@ -388,6 +423,7 @@ export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Pr
         plot={plot}
         readout={readout}
         naturalWidth={naturalWidth}
+        resetKey={resets}
         onOpenSettings={() => setSettingsOpen(true)}
         popup={expanded ? popup(true) : null}
       />

@@ -6,11 +6,11 @@
 >
 > **Related:** [../data-model.md](../data-model.md), [month.md](month.md). The chart maths is in `src/lib/expenseSeries.ts`.
 
-The 1 / 3 / 6 / 12 month periods always end with the current month. For 3 / 6 / 12 months the cards are **monthly averages** (months without any entry are left out; the caption says how many months have entries). **1 month** (this month) and **Custom** show **totals**, not averages.
+The 1 / 3 / 6 / 12 month periods always end with the current month. For 3 / 6 / 12 months the cards are **monthly averages** (months without any entry are left out). **1 month** (this month) and **Custom** show **totals**, not averages.
 
 | Block | What it shows |
 | --- | --- |
-| Period | **1 month** / 3 / 6 / 12 months / **Custom**. Remembered as `koink_stats_range`. *Custom* shows two date fields (**From / To**, remembered as `koink_stats_from` / `koink_stats_to`; swapped when reversed; at most 60 months). Only the entries inside those days count, the caption shows the days, and *Per day* divides by the days of the period up to today |
+| Period | **1 mo** / **3 mo** / **6 mo** / **12 mo** / **Custom** (months are written in short form on the buttons; the full name, e.g. *3 months*, is the tooltip and screen-reader label). Below the buttons the caption shows the range (*Jan – Jun*, or the days of a custom period); it no longer says *n/n months with entries*. Remembered as `koink_stats_range`. *Custom* shows two date fields (**From / To**, remembered as `koink_stats_from` / `koink_stats_to`; swapped when reversed; at most 60 months). Only the entries inside those days count, the caption shows the days, and *Per day* divides by the days of the period up to today |
 | Income / Spent | monthly **averages** (marked "/ month"), with the average balance pill |
 | Needs / Wants / Savings | monthly averages, their share of average income, and the rule's targets |
 | Saved | total moved to savings in the period |
@@ -46,6 +46,9 @@ Notes:
   - **Landscape:** the rotate button turns the view a quarter (`rotate(90deg)`, a CSS transform: no permission, same in browser, installed app and Android). The view's width and height swap (`100dvh` x `100dvw`), padding follows the safe areas, and the whole change is one 480 ms transition; the data that was in the middle of the chart stays in the middle, frame by frame; the plot stops re-measuring while it animates and measures once at the end. If the phone itself is turned sideways the button disappears (the view already has the room) and the turn is cleared. In landscape the hint line is hidden.
   - **Close:** the X, Escape, Back, or a **swipe down** on the title bar or on the chart (read in the view's own axes, so "down" is the way the text reads, also when turned). The view follows the finger, fades, and either sinks away (past 96 px, or a flick) or springs back. It opens by rising and fading in and closes by sinking and fading out.
   - The read-out is capped at about a third of the height and scrolls; the settings popup scrolls on its own.
+- **Reset** (round arrow button in the card header, and a **Reset** button next to *Done* in the settings popup, also inside the full view): back to the start in one tap: *Bars*, *Per week*, Compare *None*, *Previous period*, the *Other dates* range as first offered, no category picked, nothing tapped; in the full view the zoom and position start over too (`resetKey` of `ChartLargeView`). It is dimmed while nothing differs (`changed` in `ExpenseChart.tsx`).
+- **Turn button icon:** the full view's rotate button now shows a phone with an arrow bending over it (`RotateScreenIcon.tsx`) instead of Lucide's `RotateCw`, which looked like reload / reset.
+- **Swipe down closes the settings popup** (see [../gestures.md](../gestures.md)): `ChartPopup` follows the finger, fades the popup and the scrim, closes past 72 px or on a flick (it keeps sinking from where the finger let go), otherwise springs back. It starts on the grip row / title, on the dimmed area, and anywhere on the popup while the popup does not scroll; when the settings are taller than the popup only the grip row drags, so scrolling is never fought. Inside the turned full view "down" is read in the view's own axes (`ChartTurnContext` in `src/lib/chartTurn.ts`, provided by `ChartLargeView`).
 - The component takes `txs`, the period (`fromDate`, `toDate`), the categories that have spending (`period.byCategory`) and the set of known category ids from `StatsView.tsx`. Comparison is not part of the period selector at the top: the page cards above the chart still describe the chosen period only.
 
 ## Basic mode

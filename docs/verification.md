@@ -111,3 +111,8 @@ Checked: `tsc -b` and ESLint clean, `vite build` succeeds; the Frankfurter endpo
 ## Basic-mode round
 
 Run: `npm ci`, `tsc -b`, `vite build` (all pass). Not run: browser or device checks of the mode chooser and the Basic screens (no browser in the environment). Scenarios to try by hand: first launch (chooser, pick Basic, pick Full); Settings > Mode both ways with the Budgets page open; Basic with the sample journal (no savings entries, no Budget card, no account names); add an expense in Basic and see the five default categories; Statistics at 1 / 3 / 6 / 12 months.
+
+## The newest round (second swipe, chart reset, notifications, transparent widgets)
+
+- Run: `tsc -p tsconfig.app.json --noEmit`, `vite build`, `eslint` on every changed file (all clean), and `buildNotificationPlan()` under `tsx` in English and Italian (the English text is unchanged; Italian reads as expected).
+- **Not run:** any browser or device. The second page swipe, the swipe down on the chart settings (portrait and turned), the permission re-sync on Android 13+ and the transparent widget are listed in [known-gaps.md](known-gaps.md) with what to try.

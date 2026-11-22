@@ -20,8 +20,9 @@
 | Tap | the launch animation | skips it | `intro.ts` |
 | Hold | `+` / `-` of an amount stepper | repeats the step | `ui.tsx` (`AmountStepper`) |
 | Scroll down / up | page | the header folds to the page pill; the bottom dock (Month page only) stays where it is | `Header.tsx`, `ActionDock.tsx` |
-| Any new touch or key | while an animation of a gesture runs | the animation ends at once ([motion.md](motion.md#ending-an-animation-early)); a swipe that was finishing lands the new page; that touch is **used up** by it and never starts a second page swipe (see below) | `PageSwiper.tsx`, `Modal.tsx`, `lib/interrupt.ts` |
+| Any new touch or key | while an animation of a gesture runs | the animation ends at once ([motion.md](motion.md#ending-an-animation-early)); a swipe that was finishing lands the new page; that touch then swipes normally from the landed page (see below) | `PageSwiper.tsx`, `Modal.tsx`, `lib/interrupt.ts` |
 | Tap the scrim, Escape | open sheet | closes it (or asks, see above) | `Modal.tsx` |
+| Swipe down | the **chart settings popup** (grip row and title, the dimmed area, and anywhere on the popup when it does not scroll) | closes it: it follows the finger and fades, closes past 72 px or on a flick, otherwise springs back; read in the popup's own axes, so also inside the full view turned sideways | `ChartPopup.tsx`, `lib/chartTurn.ts` |
 | Pinch, Ctrl / trackpad wheel, drag | the chart in the large view of *Expenses over time* | zoom around the point between the fingers; move, with a glide | `ChartLargeView.tsx` |
 | Swipe down | the title bar or the chart in the large view | closes it (follows the finger, fades; springs back if short); read in the view's own axes, so also when turned sideways | `ChartLargeView.tsx` |
 
@@ -89,4 +90,10 @@ To make something new dismissable by Back: `useBackLayer(isOpen, close)`.
 
 ## A second swipe during the first
 
-While a committed swipe is still travelling (about 170 ms), a new touch lands the new page at once, as every touch ends a running animation. That touch is then **used up**: it can no longer start a page swipe, so one finger-down can never change the page twice (it used to: the first page landed and the same touch went on to swipe the second). Taps and scrolls with that touch still work; the next touch swipes again. `PageSwiper.tsx`: `running.current.commit` marks the last stretch of a committed swipe, the document-level `pointerdown` guard stores the pointer id in `spentPointer`, `onPointerDown` skips that id. The spring back of a cancelled swipe and the slide-in after the pill are not committed swipes: a swipe started during them works as before.
+While a committed swipe is still travelling (about 170 ms), a new touch **lands the new page at once** (every touch ends a running animation) and then **swipes normally from that page**: two quick swipes in a row go two pages. One touch still never changes the page twice, because a swipe is only decided when the finger lifts.
+
+History: the round before this one made that touch "used up" (it landed the first page and then could not swipe at all), so a quick second swipe was simply ignored and the gesture still felt broken. The `spentPointer` guard is gone. What `PageSwiper.tsx` does now:
+
+- `running.current.commit` marks the last stretch of a committed swipe; the document-level capture listener (`endNow`) ends it on `pointerdown`, `touchstart` or `keydown`. It runs *before* the page's own `pointerdown`, so the new gesture starts on the page that has just arrived.
+- `promote()` (the page change at the end of a swipe) is always a `flushSync`: the new page is current, the rail is at rest, `leaving` is cleared and the pill is in step in the same frame, whether the swipe finished by itself or was cut short. There is no moment in which a touch could meet a half-changed state.
+- The spring back of a cancelled swipe and the slide-in after the pill are not committed swipes: a swipe started during them works as before (they simply end at once).

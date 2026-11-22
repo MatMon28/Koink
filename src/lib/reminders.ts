@@ -85,11 +85,17 @@ const clock = (time: string) => {
   return { hour, minute };
 };
 
-const listNames = (names: string[]) => (names.length > 3 ? `${names.slice(0, 3).join(', ')} and ${names.length - 3} more` : names.join(', '));
+/** Turns an English text (with `{name}` placeholders) into the user's language. The plan stays pure: the caller passes `t`. */
+export type Translate = (text: string, params?: Record<string, string | number>) => string;
+const same: Translate = (text, params) => (params ? text.replace(/\{(\w+)\}/g, (whole, key: string) => (key in params ? String(params[key]) : whole)) : text);
+
+const listNames = (names: string[], tr: Translate) =>
+  names.length > 3 ? tr('{names} and {n} more', { names: names.slice(0, 3).join(', '), n: names.length - 3 }) : names.join(', ');
 
 /**
  * Settings + recurring items -> every repeating alarm the app wants. Pure, so the same plan drives
- * Android's alarm manager and the browser timers. `money` formats an amount in the user's currency.
+ * Android's alarm manager and the browser timers. `money` formats an amount in the user's currency; `tr` is
+ * the translator (`t`), so the text of a notification is in the language chosen in Settings.
  */
 export function buildNotificationPlan(
   settings: NotificationSettings,
@@ -97,6 +103,7 @@ export function buildNotificationPlan(
   money: (amount: number) => string,
   /** Basic mode: no recurring items and no budgets, so no recurring reminder and a plainer new-month note. */
   basic = false,
+  tr: Translate = same,
 ): PlannedNotification[] {
   const plan: PlannedNotification[] = [];
 
@@ -112,11 +119,11 @@ export function buildNotificationPlan(
         channelId: 'koink-recurring',
         title:
           items.length > 1
-            ? `${items.length} recurring items today`
+            ? tr('{n} recurring items today', { n: items.length })
             : first.kind === 'income'
-              ? `${first.name} is expected today`
-              : `${first.name} is due today`,
-        body: items.length > 1 ? `${listNames(items.map((item) => item.name))}. Tap to log them.` : `${money(first.amount)}. Tap to log it.`,
+              ? tr('{name} is expected today', { name: first.name })
+              : tr('{name} is due today', { name: first.name }),
+        body: items.length > 1 ? tr('{names}. Tap to log them.', { names: listNames(items.map((item) => item.name), tr) }) : tr('{amount}. Tap to log it.', { amount: money(first.amount) }),
         ...clock(settings.recurring.time),
         day,
         target: 'recurring',
@@ -128,8 +135,8 @@ export function buildNotificationPlan(
     plan.push({
       id: NOTIFICATION_IDS.logDay,
       channelId: 'koink-daily',
-      title: 'Anything to log today?',
-      body: 'Add today\u2019s spending while you still remember it.',
+      title: tr('Anything to log today?'),
+      body: tr('Add today\u2019s spending while you still remember it.'),
       ...clock(settings.logDay.time),
       target: 'expense',
     });
@@ -139,8 +146,8 @@ export function buildNotificationPlan(
     plan.push({
       id: NOTIFICATION_IDS.weeklyReview,
       channelId: 'koink-reviews',
-      title: 'Your week in Koink',
-      body: 'See what came in, what went out and where it went.',
+      title: tr('Your week in Koink'),
+      body: tr('See what came in, what went out and where it went.'),
       ...clock(settings.weeklyReview.time),
       weekday: settings.weeklyReview.weekday,
       target: 'stats',
@@ -151,8 +158,8 @@ export function buildNotificationPlan(
     plan.push({
       id: NOTIFICATION_IDS.monthStart,
       channelId: 'koink-reviews',
-      title: 'A new month starts',
-      body: basic ? 'Log your income and expenses from the first day.' : 'Check your budgets and log what repeats.',
+      title: tr('A new month starts'),
+      body: basic ? tr('Log your income and expenses from the first day.') : tr('Check your budgets and log what repeats.'),
       ...clock(settings.monthStart.time),
       day: 1,
       target: basic ? 'stats' : 'budgets',

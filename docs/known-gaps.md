@@ -12,8 +12,10 @@
 2. **Backup sharing on Android** (`saveTextFile()` in `src/lib/platform.ts`): written against the plugin types, never executed. If the share sheet does not accept the cache file, check the `FileProvider` paths in `android/app/src/main/res/xml/file_paths.xml`.
 3. **Safe areas on Android.** The layout relies on `env(safe-area-inset-*)` with `SystemBars.insetsHandling: "native"`. Check the header and the dock on an old WebView (< 140) and a current one.
 4. **Real devices.** All touch testing was emulated in desktop Chromium. iOS Safari was not tried at all.
+4a. **The newest round's gestures** (a quick second page swipe, swipe down on the chart settings, also in the turned full view) and the transparent widget were written and type-checked, not run in a browser or on a device. Try: two quick swipes in a row; swipe the chart settings down in portrait and turned; add a multi-button widget on a coloured wallpaper.
 
 3a. **Reminders on Android** (`syncNativeNotifications()` in `src/lib/notifications.ts`, the manifest permissions, `ic_stat_koink.png`): written against the plugin's types, never run. Check the permission prompt, a reminder with the app closed, after a reboot, and the tap.
+3a2. **Reminders right after allowing.** The re-sync after the permission is granted (`onPermissionChange`, `useReminders`) is written but was not run on Android 13+ (see [notifications.md](notifications.md)): switch a reminder on in a fresh install, tap *Allow*, then check the alarm is pending.
 3b. **Real browser notifications.** Tests stubbed the permission and the display call ([verification.md](verification.md)). Try *Send a test notification* in a real browser.
 
 3c. **The launch-colour Java** (`MainActivity`, `LaunchBackground`, `KoinkDevicePlugin`) was written without a compiler at hand. It follows the reference app's code line for line where it can, but treat a compile error there as possible, and check on a phone that changing the theme changes the launch screen on the next cold start (Android 13+).
@@ -65,7 +67,7 @@
 ## Language and the new widgets (latest round)
 
 - The Italian texts were written without a native review. Reminder notifications, the sample journal and the Android widget picker names stay English.
-- The new widget look (round buttons, circle / pill / card trays, theme colours) was written without an Android SDK, like the rest of `android/`: the RemoteViews layouts, `setViewPadding` / `setColorFilter` calls and the tray drawables are untested on a device. The in-app version was built and type-checked only; no browser was available to look at it.
+- The new widget look (round buttons, circle / pill / card trays, theme colours) was written without an Android SDK, like the rest of `android/`: the RemoteViews layouts and `setViewPadding` / `setColorFilter` calls are untested on a device (the tray drawables were removed when the widget background became transparent; check on a launcher that the widget really shows no background). The in-app version was built and type-checked only; no browser was available to look at it.
 
 ## Added with weekly recurring items, the expense chart and the filter panel
 

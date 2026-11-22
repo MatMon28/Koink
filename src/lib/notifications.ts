@@ -1,3 +1,4 @@
+import { t } from './i18n';
 import { isNativeApp } from './platform';
 import { NOTIFICATION_CHANNELS, NOTIFICATION_IDS, nextOccurrence, type PlannedNotification } from './reminders';
 
@@ -37,17 +38,49 @@ export async function getNotificationPermission(): Promise<NotificationPermissio
 
 /** Asks the user. Call it from a tap: browsers require a user gesture. */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
+  let result: NotificationPermission;
   try {
     if (isNativeApp()) {
       const { display } = await (await nativePlugin()).requestPermissions();
-      return display === 'granted' ? 'granted' : display === 'denied' ? 'denied' : 'prompt';
+      result = display === 'granted' ? 'granted' : display === 'denied' ? 'denied' : 'prompt';
+    } else if (typeof Notification === 'undefined') {
+      return 'unsupported';
+    } else {
+      if (Notification.permission === 'default') await Notification.requestPermission();
+      result = await getNotificationPermission();
     }
-    if (typeof Notification === 'undefined') return 'unsupported';
-    if (Notification.permission === 'default') await Notification.requestPermission();
   } catch {
     return 'unsupported';
   }
-  return getNotificationPermission();
+  // The reminders were planned while the question was still open (and, on Android, nothing could be
+  // scheduled without the permission): tell `useReminders`, so it schedules them now.
+  announcePermissionChange();
+  return result;
+}
+
+/* ---------- Permission changes ---------- */
+
+const PERMISSION_EVENT = 'koink:notification-permission';
+
+/** Says that the notification permission may have changed (after the question was answered). */
+export function announcePermissionChange(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(PERMISSION_EVENT));
+}
+
+/**
+ * Calls `listener` when the permission may have changed: after the question was answered in the app, and
+ * when the app comes back to the foreground (it can be changed in the system settings meanwhile).
+ */
+export function onPermissionChange(listener: () => void): () => void {
+  const onVisible = () => {
+    if (document.visibilityState === 'visible') listener();
+  };
+  window.addEventListener(PERMISSION_EVENT, listener);
+  document.addEventListener('visibilitychange', onVisible);
+  return () => {
+    window.removeEventListener(PERMISSION_EVENT, listener);
+    document.removeEventListener('visibilitychange', onVisible);
+  };
 }
 
 /* ---------- Android: repeating system alarms ---------- */
@@ -202,7 +235,7 @@ export function listenForNotificationTaps(onOpen: (target: unknown) => void): ()
 export async function sendTestNotification(): Promise<boolean> {
   if ((await requestNotificationPermission()) !== 'granted') return false;
   const title = 'Koink';
-  const body = 'Reminders are working.';
+  const body = t('Reminders are working.');
   if (!isNativeApp()) return showWebNotification({ title, body, tag: 'koink-test' });
   const plugin = await nativePlugin();
   const channel = NOTIFICATION_CHANNELS[0];

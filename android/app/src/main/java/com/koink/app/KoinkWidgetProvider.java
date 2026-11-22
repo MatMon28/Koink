@@ -22,18 +22,14 @@ import org.json.JSONObject;
  * per expense category ({@link Categories}). They draw whatever the web app last handed over through
  * {@code KoinkDevice.setWidgets} (src/lib/widgetBridge.ts): label, colours, an icon PNG and a link for each
  * button, plus the app's theme colours. The widget's shape follows the number of buttons (circle, pill, card).
- * A tray is semitransparent and as wide as the widget; its buttons share that width, so they spread out as
- * the widget is made wider. The lone circle of the single widget is 48dp. A tap opens the app with that link ({@code koink://widget?a=<action>}), which the web app turns
+ * The widget background is fully transparent (no tray fill, no border): only the round buttons are drawn, in a
+ * row as wide as the widget; the buttons share that width, so they spread out as the widget is made wider. The lone circle of the single widget is 48dp. A tap opens the app with that link ({@code koink://widget?a=<action>}), which the web app turns
  * into the matching sheet (src/lib/useWidgets.ts). Layouts use only RemoteViews-safe classes.
  */
 public abstract class KoinkWidgetProvider extends AppWidgetProvider {
 
     private static final String PREFS = "koink_widgets";
     private static final String KEY_JSON = "json";
-    /** Opacity of the tray fill and of its border (0-255). Mirrors TRAY_ALPHA (0.72) in src/lib/widgets.ts. */
-    private static final int TRAY_ALPHA = 184;
-    private static final int RING_ALPHA = 150;
-
     /** Which array of the stored JSON this widget shows: "single", "multi" or "categories". */
     protected abstract String kind();
 
@@ -66,10 +62,9 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         root.setViewVisibility(R.id.empty, android.view.View.GONE);
         root.setViewVisibility(R.id.tray, android.view.View.VISIBLE);
 
-        // The app's own colours (Light, Soft dark, Dark), handed over with the buttons.
+        // The app's own text colour (Light, Soft dark, Dark), handed over with the buttons. The surface and
+        // border colours are no longer used: the widget has no background.
         JSONObject theme = theme(context);
-        int surface = color(theme == null ? null : theme.optString("surface"), Color.parseColor("#FBF8F2"));
-        int border = color(theme == null ? null : theme.optString("border"), Color.parseColor("#E2D9C8"));
         int text = color(theme == null ? null : theme.optString("text"), Color.parseColor("#24201C"));
 
         // The widget's shape follows its buttons (mirrors widgetShape / widgetColumns in src/lib/widgets.ts):
@@ -78,24 +73,11 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         int count = buttons.length();
         int perRow = count <= 4 ? Math.max(1, count) : (count <= 6 ? 3 : 4);
 
-        if (count == 1) {
-            root.setViewVisibility(R.id.tray_border, android.view.View.GONE);
-            root.setViewVisibility(R.id.tray_fill, android.view.View.GONE);
-            root.setViewPadding(R.id.rows, 0, 0, 0, 0);
-        } else {
-            boolean pill = count <= 4;
-            root.setViewVisibility(R.id.tray_border, android.view.View.VISIBLE);
-            root.setViewVisibility(R.id.tray_fill, android.view.View.VISIBLE);
-            root.setImageViewResource(R.id.tray_border, pill ? R.drawable.widget_tray_pill_ring : R.drawable.widget_tray_card_ring);
-            root.setImageViewResource(R.id.tray_fill, pill ? R.drawable.widget_tray_pill : R.drawable.widget_tray_card);
-            root.setInt(R.id.tray_border, "setColorFilter", border);
-            root.setInt(R.id.tray_fill, "setColorFilter", surface);
-            // Semitransparent: the colour filter stays opaque (SRC_ATOP keeps the drawable's alpha), the alpha is set on the image.
-            root.setInt(R.id.tray_border, "setImageAlpha", RING_ALPHA);
-            root.setInt(R.id.tray_fill, "setImageAlpha", TRAY_ALPHA);
-            float d = context.getResources().getDisplayMetrics().density;
-            root.setViewPadding(R.id.rows, (int) (8 * d), (int) (6 * d), (int) (8 * d), (int) (6 * d));
-        }
+        // No tray fill and no border: the background is fully transparent. A lone circle needs no padding,
+        // several buttons keep a little room around them.
+        float d = context.getResources().getDisplayMetrics().density;
+        if (count == 1) root.setViewPadding(R.id.rows, 0, 0, 0, 0);
+        else root.setViewPadding(R.id.rows, (int) (8 * d), (int) (6 * d), (int) (8 * d), (int) (6 * d));
 
         RemoteViews row = null;
         for (int i = 0; i < count; i++) {

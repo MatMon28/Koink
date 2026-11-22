@@ -328,7 +328,6 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
       <Banner tone={kind} icon={meta.icon} label={t(banner.label)} value={banner.value} sub={banner.sub ? t(banner.sub) : undefined} />
 
       <div>
-        <SectionLabel htmlFor="tx-date">{t('Date')}</SectionLabel>
         <div className="flex flex-wrap items-center gap-1.5">
           {dateChip(today, 'Today')}
           {dateChip(yesterday, 'Yesterday')}
@@ -375,7 +374,6 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
       </div>
 
       <div>
-        <SectionLabel>{sectionName}</SectionLabel>
         <ChoiceGrid
           choices={choices}
           value={categoryId}

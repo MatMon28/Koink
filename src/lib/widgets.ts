@@ -109,8 +109,7 @@ export function widgetRows<T>(items: T[]): T[][] {
   return rows;
 }
 
-/** How opaque a tray is (the surface colour, 0-1): the home screen shows through the rest. Android: `TRAY_ALPHA` in KoinkWidgetProvider.java. */
-export const TRAY_ALPHA = 0.72;
+/* The tray behind several buttons has no background of its own: the widget background is fully transparent, on the home screen and in the app. */
 
 export const MULTI_MAX = 6;
 export const CATEGORY_MAX = 8;

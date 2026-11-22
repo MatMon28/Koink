@@ -16,7 +16,7 @@ Top to bottom:
 | Income / Spent | `HeroPair` -> `HeroCard` | the two totals, bars scaled against each other, and the balance pill (`income - spent`) on whichever side is larger |
 | Needs / Wants / Savings | `ShareCard` x3 (**no "Needs · Wants · Savings" caption above them any more**; each card names itself) (x4 with a card for your own expense types, *Other types* or the type's name, in a month that has such spending: [categories.md](categories.md#types-besides-needs-and-wants)) | amount, its share of income and the target from the budget rule (`10% / 30%`); a warning triangle when needs or wants pass their target, a check when savings reach theirs. Without income, shares are of everything that went out and no target is shown |
 | Left / Per day / Budget | `NoteCard` x3 | `income - spent - saved`; spending divided by the days elapsed; share of the budgeted amount already used (the **generic monthly budget** from the Profile against everything spent when set, else the category budgets: [budgets.md](budgets.md#generic-monthly-budget)) |
-| Layout switch | inline | Compact / Normal / Expanded |
+| Layout switch | inline | Compact / Normal / Expanded, shown as **icons only** (no text; the name is the tooltip and screen-reader label) |
 | Category cards | `FoldCard` (`variant="slot"`) x8 | one per expense category |
 | Widgets | `WidgetStrip` | only when *Show them on the Month page* is on ([widgets.md](widgets.md)); between the month row and the hero cards |
 | Tracker cards | `FoldCard` (`variant="tracker"`) x3, x4 with gift cards | Income, Savings, Recurring, and **Gift cards** once a card exists or its button is on ([gift-cards.md](gift-cards.md)) |
