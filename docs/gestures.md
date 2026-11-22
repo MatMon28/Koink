@@ -10,7 +10,7 @@
 
 | Gesture | Where | Result | Code |
 | --- | --- | --- | --- |
-| Swipe left / right | anywhere on a page | the page and its neighbour move together under the finger; release to change page (order of the header pill); the pill changes the moment the swipe is committed, not when the page has landed (`pillTab.ts`) | `PageSwiper.tsx`, `lib/pillTab.ts` |
+| Swipe left / right | anywhere on a page | the page and its neighbour move together under the finger; release to change page (order of the header pill); the pill follows the pages the whole way, in every phase, and changes colour gradually; a new swipe is never ignored: it catches the rail wherever it is (see below) | `PageSwiper.tsx`, `Tabs.tsx`, `lib/pillTab.ts` |
 | Swipe left / right | the month row | next / previous month (what the arrows do) | `MonthNavigator.tsx` |
 | Drag down | a sheet's handle or title bar | closes the sheet; a sheet with unsaved input springs back at once and asks first | `Modal.tsx`, `TxSheet.tsx` |
 | Tap | the logo in the header | one of five press animations plays on the pig and its coin (and Month / scroll to top) | `Header.tsx`, `index.css` |
@@ -20,7 +20,7 @@
 | Tap | the launch animation | skips it | `intro.ts` |
 | Hold | `+` / `-` of an amount stepper | repeats the step | `ui.tsx` (`AmountStepper`) |
 | Scroll down / up | page | the header folds to the page pill; the bottom dock (Month page only) stays where it is | `Header.tsx`, `ActionDock.tsx` |
-| Any new touch or key | while an animation of a gesture runs | the animation ends at once ([motion.md](motion.md#ending-an-animation-early)); a swipe that was finishing lands the new page and the touch swipes from it; a slide-in or spring-back is *caught* where it is and follows the finger at once (see below) | `PageSwiper.tsx`, `Modal.tsx`, `lib/interrupt.ts` |
+| Any new touch or key | while an animation of a gesture runs | the animation ends at once ([motion.md](motion.md#ending-an-animation-early)); every animation of the rail is *caught* where it is and follows the finger at once, a finishing swipe lands its page first (see below) | `PageSwiper.tsx`, `Modal.tsx`, `lib/interrupt.ts` |
 | Tap the scrim, Escape | open sheet | closes it (or asks, see above) | `Modal.tsx` |
 | Swipe down | the **chart settings popup** (grip row and title, the dimmed area, and anywhere on the popup when it does not scroll) | closes it: it follows the finger and fades, closes past 72 px or on a flick, otherwise springs back; read in the popup's own axes, so also inside the full view turned sideways | `ChartPopup.tsx`, `lib/chartTurn.ts` |
 | Pinch, Ctrl / trackpad wheel, drag | the chart in the large view of *Expenses over time* | zoom around the point between the fingers; move, with a glide | `ChartLargeView.tsx` |
@@ -45,15 +45,32 @@ A drag that turned into a swipe never also taps what was under the finger. At th
 
 ### Catching the rail (a new gesture during an animation)
 
-No touch is ignored. Whatever the rail is doing when a finger lands on it:
+No touch is ever ignored, and nothing waits for an animation to end. Whatever the rail is doing when a finger lands on it:
 
 | The rail is... | The new touch... |
 | --- | --- |
 | springing back after a cancelled swipe, or sliding in after the pill / Back | catches it where it is (`grab()`), locks the swipe at once and carries on from that offset, in either direction; released without moving it rests |
-| finishing a committed swipe | lands the new page now (`promote()`), then swipes normally from it, so a quick second swipe goes on to the next page |
-| anywhere else on screen (header, dock, another control) | ends the animation at once |
+| finishing a committed swipe | **lands the target page now and keeps the rail exactly where it visibly is** (`land(..., rebased)`): the rail's offset was `at` from the old page, which lies one place behind, so it is `at + step * travel` from the new page; the page just left becomes the neighbour on the other side and keeps showing what it showed. The finger then swipes from that page |
+| anywhere else on screen (header, dock, another control) | ends the animation at once (a finishing swipe lands its page) |
 
-A key press always ends it. One touch still changes at most one page.
+A key press always ends it. What counts as "on the rail": the rail itself **and the column around it** (the 24 px gap between two pages, the margins). The page that rides beside the current one is no longer `inert` (it is `aria-hidden`, and it only exists during a swipe), because a finger that lands on it must reach the rail; the column has `touch-action: pan-y` like the rail, or the browser would claim a sideways drag from the gap and cancel the touch. Taps and clicks on controls outside the rail (`a`, `button`) in that column are left alone.
+
+**How a release is decided.** From the finger's own travel `dx` since it landed, measured from the page that is current at that moment (after a catch, the page that has just landed), not from the rail's offset:
+
+- `dx < 0` (finger left) means the page on the right, `dx > 0` the page on the left;
+- it changes page when `|dx|` reaches the commit distance, or on a flick (speed above `FLICK_SPEED` in the same direction past `FLICK_MIN_PX`); otherwise the rail springs back to the current page;
+- a touch that hardly moved (`CATCH_TAP_PX`) after a catch simply rests on the current page.
+
+What follows from it:
+
+| Sequence | Result |
+| --- | --- |
+| a quick swipe, then another the same way while the first is travelling (any delay, from the very same instant) | two pages from the start; three swipes, three pages; at the last page the rail only stretches |
+| a swipe, then one the other way while the first is travelling | the first is interrupted; the second sends the rail back to the page it started from |
+| a short swipe that springs back, then a swipe during the spring-back | one page, from the page that was current |
+| a swipe that is too short to commit, during a committed swipe | the committed page is reached (the swipe it finishes), nothing more |
+
+At the first and last page the rail is damped only where it goes beyond rest, so a rail caught off-centre never jumps when the finger crosses rest (`pos = lead`, or `lead * RUBBER / FOLLOW` when no page waits on that side).
 
 ### Sensitivity
 
@@ -101,12 +118,22 @@ Details that matter when changing it:
 
 To make something new dismissable by Back: `useBackLayer(isOpen, close)`.
 
-## A second swipe during the first
+## The pill follows the rail
 
-While a committed swipe is still travelling (about 170 ms), a new touch **lands the new page at once** (every touch ends a running animation) and then **swipes normally from that page**: two quick swipes in a row go two pages. One touch still never changes the page twice, because a swipe is only decided when the finger lifts.
+`PageSwiper` publishes the rail's position for the header pill in page-order units (`lib/pillTab.ts`: `setPillPos`, `getPillPos`, `subscribePillPos`): `0` = first page, `1.5` = half way between the second and the third. It is `index of the current page - rail offset / (page width + gap)`, read from the rail itself every animation frame (`drive()`), so it is right whatever moves the rail: the finger, the exit of a committed swipe (a Web Animation), the spring back. It is clamped to the first and last page, and it is **continuous across a page change** (the offset is re-expressed at the same moment as the page), which is why chaining and turning round do not make the pill jump. While nothing moves the rail it is `null` and the pill sits on the active page; a page picked with a tap (pill, Back) glides there in 260 ms (`GLIDE_MS` in `Tabs.tsx`).
 
-History: the round before this one made that touch "used up" (it landed the first page and then could not swipe at all), so a quick second swipe was simply ignored and the gesture still felt broken. The `spentPointer` guard is gone. What `PageSwiper.tsx` does now:
+`Tabs.tsx` draws that one number, straight into the DOM (no React render per frame):
 
-- `running.current.commit` marks the last stretch of a committed swipe; the document-level capture listener (`endNow`) ends it on `pointerdown`, `touchstart` or `keydown`. It runs *before* the page's own `pointerdown`, so the new gesture starts on the page that has just arrived.
-- `promote()` (the page change at the end of a swipe) is always a `flushSync`: the new page is current, the rail is at rest, `leaving` is cleared and the pill is in step in the same frame, whether the swipe finished by itself or was cut short. There is no moment in which a touch could meet a half-changed state.
-- The spring back of a cancelled swipe and the slide-in after the pill are not committed swipes: a swipe started during them works as before (they simply end at once).
+- every tab has a weight `w = max(0, 1 - |position - index|)` (`--w`): its label opens by `w` (width up to the measured label width, opacity), its padding goes from the 32 px circle to the active pill, and its text goes from the idle colour to its own ink by `w` (`color-mix`);
+- one indicator sits behind the buttons, with one layer per page in that page's pastel (`kc-nav-tab-active` + the page's class, so the style presets colour it too). Its left and right edges are interpolated between the two buttons the position lies between. The layer of the page below the position is opaque, the one above fades in by the fraction: the colour mixes gradually and exactly with the pages;
+- `.kc-nav-*` in `index.css` (the *Page pill* block). Nothing there may transition: the position is already animated, and a transition would lag behind the pages. The press shrink of the buttons stays.
+
+`usePillTab()` is unchanged: it is still the page a *committed* swipe is going to (known when the finger lets go), and `App.tsx` uses it to bring the bottom dock in or out at that moment.
+
+## History: a second swipe during the first
+
+1. Two rounds ago a touch during a committed swipe was *used up* by it (it landed the first page and could not swipe), so a quick second swipe was ignored.
+2. The next round made it land the page and swipe from rest. That fixed the ignored touch but a quick swipe was still lost when the finger landed on the neighbouring page (it was `inert`, so the touch was treated as outside the rail and ended the animation), the second swipe could only go one page from the *landed* page after the first had visibly finished, and a swipe the other way could not turn the rail round.
+3. Now: the touch catches the rail wherever it is, on the rail or in its column, lands the target and re-expresses the offset (`land(..., rebased)` in `PageSwiper.tsx`), the release is decided by the finger (above), and the pill reads the same offset. No state blocks a touch: `leaving` is only true between the release and the landing, and a touch always lands first.
+
+The spring back of a cancelled swipe and the slide-in after the pill are caught the same way (`grab()` returns the offset, the page stays current).

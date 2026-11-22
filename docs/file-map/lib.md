@@ -47,7 +47,7 @@
 | `useWidgets.ts` | `useRunWidgetAction`, `useWidgetSync` | Runs a widget action; keeps the native widgets in step and opens the screen behind a tapped one | [../features/widgets.md](../features/widgets.md) |
 | `pwa.ts` | `registerOfflineWorker`, `initInstallPrompt`, `promptInstall`, `useInstallState`, `InstallState`, `takeLaunchAction` | Offline-worker registration, install-prompt state, launch requests (`?add=`, `?open=`). See [../pwa.md](../pwa.md) |
 | `dock.ts` | `getDockTarget`, `getDockCenterTarget`, `DockTarget` | Finds the dock button a closing sheet should fly into, or the middle of the whole bar (Profile, Settings) |
-| `pillTab.ts` | `setPillTab`, `usePillTab` | The page the header pill already shows while a committed swipe is still travelling |
+| `pillTab.ts` | `setPillTab`, `usePillTab`, `setPillPos`, `getPillPos`, `subscribePillPos` | What the page rail tells the app while pages change: the page a committed swipe is going to (the dock uses it), and a continuous position in page order (`1.5` = half way between the second and third page) published every frame, which `Tabs` draws. A plain subscription, not a hook: the pill is written to the DOM at 60 fps |
 | `usePersistentState.ts` | `usePersistentState` | `useState` mirrored to a `localStorage` key (view preferences) |
 
 ## Dependencies between them

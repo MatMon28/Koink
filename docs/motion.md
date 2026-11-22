@@ -27,7 +27,7 @@ A damped spring is sampled into a CSS `linear()` easing, so CSS transitions, key
 | Page swipe | the current page and its neighbour move together under the finger; a committed swipe finishes in 90-170 ms, a cancelled one springs back with the soft curve ([gestures.md](gestures.md)) |
 | Page reached by the pill or Back | slides in 28 px from the side it lies on, soft curve |
 | Dock (Month page only) | enters from the side the page came from (`--kc-swipe-dir`, 130 ms, bounce) and leaves towards the side the page went (`.anim-dock-out`, 110 ms), as in Kakcal; starts when a swipe is committed or the pill is pressed; it never hides on scroll. `ActionDock.tsx` (`show`, phases in / out / gone) |
-| Page pill | follows a committed swipe at once (`lib/pillTab.ts`); before, it changed when the page had finished travelling |
+| Page pill | follows the rail **frame by frame** in every phase (finger, committed travel, spring back): position, label, width and colour change gradually, never at a given point; glides 260 ms when a page is picked with a tap (`lib/pillTab.ts`, `Tabs.tsx`, [gestures.md](gestures.md#the-pill-follows-the-rail)) |
 | Month change | the Month page's content slides in from the side of the newer month |
 | A changed total (`.anim-value`) | settles in from 7 px below |
 | Collapsible cards and settings groups | height animated with a CSS grid (`.accordion-grid`), 300 ms |
@@ -60,7 +60,7 @@ A new touch ends a running gesture animation at once (Kakcal: "a new press cance
 | Sheet exit | `activeExits` in `Modal.tsx` | the sheet gone |
 | Page rail: slide-in after pill / Back | `running` in `PageSwiper.tsx` | **caught** where it is by a finger on the rail (no jump), otherwise at rest |
 | Page rail: spring back of a cancelled swipe | `running` | **caught** where it is by a finger on the rail, otherwise at rest and the neighbour removed |
-| Page rail: last stretch of a committed swipe | `running` (`flushSync(promote)`) | the new page already current; the touch goes to it |
+| Page rail: committed swipe travelling | `running` (`land()` in `PageSwiper.tsx`, a `flushSync`) | **caught** by a finger on the rail or its column: the target page lands and the rail keeps its visible offset, re-expressed from the new page, so the finger carries on (a second swipe the same way goes on to the next page, the other way turns the rail round); a touch elsewhere just lands the page |
 | Month slide, the dock's pulse | `endOnTouch()` in `src/lib/interrupt.ts` | the content in place |
 | Dock leaving | `ActionDock.tsx` | the bar removed |
 | Dock arriving | `ActionDock.tsx` (cancels its CSS animations) | the bar in place |

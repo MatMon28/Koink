@@ -6,18 +6,25 @@
 >
 > **Related:** [prepare-apps.md](prepare-apps.md), [pwa-setup.md](pwa-setup.md)
 
-`changes.patch` is `git diff --binary` between the repository at the commit **`cb7512a`** ("UI/UX fixes", the head of `main` when this round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): the UI / UX coherence audit. It adds one file, `guide to UI UX fixes.md`, and updates the documentation that points to it. **It changes no source file**: the fixes are the work that guide describes, and each of its eight steps can come back as its own patch. It contains no `node_modules/`, `dist/`, `package.json` or lock file change, it does not contain itself, and it deletes nothing.
+`changes.patch` is `git diff --binary` between the repository at the commit **`c5d3af3`** ("Better UI/UX", the head of `main` when this round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): the swipe rework and the pill that follows the pages. It changes four source files and the documentation; it has no `node_modules/`, `dist/`, `package.json` or lock file change, it does not contain itself, and it deletes nothing.
 
 ```sh
 git apply --check changes.patch   # dry run
 git apply --index changes.patch   # apply and stage (new files included)
-# the repository has moved on since cb7512a:
+# the repository has moved on since c5d3af3:
 git apply --3way changes.patch
 ```
 
 To make the next one: commit or stash nothing, edit, `git add -A`, then `git diff --cached --binary > changes.patch` and unstage with `git reset`. Keep the docs of every changed file in the same patch (rule in [README.md](README.md#keeping-the-docs-current)).
 
-## What the Latest round changed (UI / UX fixes and interruptible animations)
+## What the Latest round changed (swipes that never wait, a pill that follows the pages)
+
+- Edited code: `src/components/PageSwiper.tsx` (catch / land / rebase, release decided by the finger, riders on both sides, pill driver, touch-action on the column), `src/components/Tabs.tsx` (one sliding indicator, cross-faded layers, weights), `src/lib/pillTab.ts` (`setPillPos`, `getPillPos`, `subscribePillPos` next to `setPillTab` / `usePillTab`, which `App.tsx` still uses for the dock), `src/index.css` (the *Page pill* block at the end, between `Page pill: BEGIN` and `END`).
+- Edited docs: `README.md`, `docs/{gestures,motion,known-gaps,changes-patch}.md`, `docs/file-map/{components,lib}.md`.
+- No new file, dependency, schema or binary change. `App.tsx` needs no edit.
+- Verification: `git apply --check changes.patch`, `tsc`, `vite build`, and the swipe suite in headless Chromium (see [known-gaps.md](known-gaps.md) item 0b for what that does not cover).
+
+## What the previous round changed (UI / UX fixes and interruptible animations)
 
 This patch is `git diff --binary` against **`e90c431`** ("Removed tracking", the head of `main` when the round started). It changes code, so apply it on that commit (or with `--3way`).
 

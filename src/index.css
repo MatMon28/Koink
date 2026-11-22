@@ -498,3 +498,63 @@ html[data-ultra='true'] .um-stack > :not(:last-child) { margin-block-end: 0.625r
   background: color-mix(in srgb, var(--surface) 70%, transparent);
   border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
+
+/* ---- Page pill: BEGIN (Tabs.tsx). One sliding indicator, positioned and coloured by the pill position ---- */
+/* Every tab has a weight --w (0..1) written by Tabs.tsx at 60 fps: 1 = the pill is on it. The label opens by
+   it, the text colour goes from the idle colour to the tab's own ink by it, and the indicator (one pastel
+   layer per page, cross-faded by Tabs.tsx) slides behind the buttons. Nothing here may transition: the
+   position is already animated, and a transition would make it lag behind the pages. */
+.kc-nav-btn {
+  --w: 0;
+  --tab-idle: var(--muted);
+  --tab-ink: var(--tab-ink-classic, var(--text));
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  height: 2rem;
+  min-width: 2rem;
+  /* 8 px + 6 px per unit of weight = px-3.5 when it is the page, and a 32 px circle when it is not. */
+  padding-inline: calc(0.5rem + var(--w) * 0.375rem);
+  background: transparent;
+  color: color-mix(in srgb, var(--tab-ink) calc(var(--w) * 100%), var(--tab-idle));
+}
+@media (min-width: 640px) {
+  .kc-nav-btn { padding-inline: calc(0.5rem + var(--w) * 0.5rem); }
+}
+.kc-nav-btn[data-ultra] { width: 2rem; padding-inline: 0; }
+.kc-nav-btn:hover {
+  background: color-mix(in srgb, var(--inset) calc((1 - var(--w)) * 100%), transparent);
+}
+.kc-nav-label {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  /* --label-w is the label's own width, measured by Tabs.tsx. */
+  max-width: calc(var(--w) * var(--label-w, 0px));
+  margin-inline-start: calc(var(--w) * 0.375rem);
+  opacity: var(--w);
+}
+.kc-nav-indicator {
+  position: absolute;
+  top: 0.25rem;
+  left: 0;
+  height: 2rem;
+  width: 2rem;
+  z-index: 0;
+  pointer-events: none;
+}
+.kc-nav-layer { position: absolute; inset: 0; opacity: 0; }
+/* The press shrink stays; the colour and the size follow the pages, not a timer. */
+.kc-nav-btn.pressable { transition: transform 300ms var(--ease-bounce); }
+.kc-nav-btn.pressable:active:not(:disabled) { transition: transform 110ms cubic-bezier(0.3, 0, 0.6, 1); }
+/* Style presets: their own idle / active ink and button shape (the pastel itself is on the indicator layers). */
+html[data-style]:not([data-style="classic"]) .kc-nav-btn {
+  --tab-idle: var(--nav-inactive-color, var(--muted));
+  --tab-ink: var(--nav-active-color, var(--text));
+  border-radius: var(--nav-pill-radius, 999px);
+  clip-path: var(--clip-xs, none);
+}
+/* ---- Page pill: END ---- */

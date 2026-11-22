@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { whenIdle } from '../lib/idle';
-import { setPillTab } from '../lib/pillTab';
+import { setPillPos, setPillTab } from '../lib/pillTab';
 import { SPRING } from '../lib/spring';
 import { useApp } from '../lib/store';
 import { neighbourTab, tabOrder } from '../lib/tabs';
@@ -63,6 +63,7 @@ interface Gesture {
   /** Recent positions, for the release speed. */
   samples: Sample[];
   locked: boolean;
+  /** The finger's travel since it landed (what decides the release; the rail's own offset does not). */
   dx: number;
   /** Where the rail was when the finger caught it mid-animation (0 for a rail at rest). */
   base: number;
@@ -74,9 +75,7 @@ interface Gesture {
 interface RailRun {
   /** Ends it at once: the animation's own end state is in place afterwards. */
   end: () => void;
-  /** The last stretch of a committed swipe: a touch lands the new page, then swipes from it. */
-  commit?: boolean;
-  /** Stops it where it is and returns the rail's offset, so a finger can pick it up with no jump. */
+  /** Stops it where it is and returns the rail's offset (from the page that is current afterwards), so a finger can pick it up with no jump. */
   grab?: () => number;
 }
 
@@ -86,11 +85,14 @@ function railOffset(el: HTMLElement): number {
   return Number.isFinite(matrix.m41) ? matrix.m41 : 0;
 }
 
+/** The distance between two neighbouring pages on the rail. */
+const railTravel = (el: HTMLElement) => el.offsetWidth + RAIL_GAP_PX;
+
 interface Peek {
   tab: ActiveTab;
   /** 1 = it waits on the right, -1 = on the left. */
   side: 1 | -1;
-  /** Scroll offset when the drag began: the neighbour shows its top, however far this page was scrolled. */
+  /** Offset from the top of the rail: the neighbour shows its top, however far this page was scrolled (negative: it keeps showing what it showed). */
   top: number;
 }
 
@@ -99,6 +101,12 @@ interface Peek {
  * neighbour together under the finger; past the commit distance, or on a flick, the neighbour
  * takes over (same order as the pill in the header), otherwise both spring back. Vertical movement
  * stays ordinary scrolling.
+ *
+ * Nothing ever makes a touch wait: a finger that lands while the rail is moving catches it where it
+ * is (a committed swipe lands its page first, and the rail's offset is re-expressed from that page,
+ * so the finger carries on from exactly where the page is). Quick swipes in the same direction go on
+ * page after page; a swipe the other way turns the rail round. While the rail moves, in every phase,
+ * it publishes its position for the header pill (`lib/pillTab.ts`).
  *
  * On touch devices the neighbouring pages are mounted, hidden, in an idle moment, so a swipe never
  * starts with a pause; the page that arrives is that same element, not a second copy. A page
@@ -112,15 +120,28 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
   const arrivedBySwipe = useRef(false);
   const swallowClick = useRef(false);
   const shownTab = useRef(activeTab);
-  /**
-   * The rail animation that is running, with what ends it at once (see the touch guard below).
-   * `commit` marks the last stretch of a committed swipe: a touch that ends it lands the page and
-   * then swipes normally (a quick second swipe goes on to the next page).
-   */
+  /** The rail animation that is running, with what ends or takes it over (see the touch guard below). */
   const running = useRef<RailRun | null>(null);
-  const [peek, setPeek] = useState<Peek | null>(null);
+  const ridersRef = useRef<Peek[]>([]);
+  const [riders, setRiders] = useState<Peek[]>([]);
   /** Pages kept mounted but hidden, ready to ride along. */
   const [warm, setWarm] = useState<ActiveTab[]>([]);
+  /** Publishes the rail's position for the pill every frame while it is being dragged or is travelling. */
+  const driver = useRef({ on: false, raf: 0 });
+
+  /**
+   * The pages that ride the rail beside the current one: normally one (the side being revealed), two
+   * for a moment when a swipe goes on the way a caught rail was not heading. Kept in a ref too: a
+   * handler may run between a state change and its render.
+   */
+  const setRiding = (next: Peek[]) => {
+    ridersRef.current = next;
+    setRiders(next);
+  };
+  /** Puts `peek` on the rail; the page on the other side stays only with `keepOther`. */
+  const ride = (peek: Peek, keepOther = false) => setRiding([...(keepOther ? ridersRef.current.filter((p) => p.side !== peek.side) : []), peek]);
+  /** True when `tab` already rides on `side` and nothing else does. */
+  const ridesAlone = (tab: ActiveTab, side: 1 | -1) => ridersRef.current.length === 1 && ridersRef.current[0].tab === tab && ridersRef.current[0].side === side;
 
   // Touch and pen only (a mouse cannot swipe), and never in the way of the page that just opened.
   useEffect(() => {
@@ -129,6 +150,61 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
       setWarm([neighbourTab(activeTab, -1), neighbourTab(activeTab, 1)].filter((tab): tab is ActiveTab => tab !== null));
     }, 1200);
   }, [activeTab]);
+
+  // The column around the rail (the gap between two pages, its margins) takes a finger too while the
+  // rail moves (see `endNow` below), so the browser must treat it like the rail: vertical panning only.
+  // Without it the browser claims a sideways drag that starts there and cancels the touch.
+  useLayoutEffect(() => {
+    const column = ref.current?.parentElement;
+    if (!column) return;
+    const before = column.style.touchAction;
+    column.style.touchAction = 'pan-y';
+    return () => {
+      column.style.touchAction = before;
+    };
+  }, []);
+
+  /** The rail's position in page-order units: 1.5 = half way between the second and the third page. */
+  const pillPosition = (): number | null => {
+    const el = ref.current;
+    if (!el) return null;
+    const order = tabOrder();
+    const index = order.indexOf(shownTab.current);
+    if (index < 0) return null;
+    return Math.min(order.length - 1, Math.max(0, index - railOffset(el) / railTravel(el)));
+  };
+  const publishPill = () => {
+    const pos = pillPosition();
+    if (pos !== null) setPillPos(pos);
+  };
+  const driveLoop = () => {
+    const d = driver.current;
+    d.raf = 0;
+    if (!d.on) return;
+    publishPill();
+    d.raf = requestAnimationFrame(driveLoop);
+  };
+  /** Starts / stops publishing; stopping hands the pill back to the active page. */
+  const drive = (on: boolean) => {
+    const d = driver.current;
+    if (on) {
+      if (!d.on) {
+        d.on = true;
+        publishPill();
+      }
+      if (!d.raf) d.raf = requestAnimationFrame(driveLoop);
+    } else {
+      d.on = false;
+      if (d.raf) cancelAnimationFrame(d.raf);
+      d.raf = 0;
+      setPillPos(null);
+    }
+  };
+  /** The rail has come to rest: unless a finger is still dragging it, the pill goes back to following the active page. */
+  const driveIfIdle = () => {
+    if (!gesture.current?.locked) drive(false);
+  };
+  useEffect(() => () => drive(false), []);
 
   useLayoutEffect(() => {
     if (shownTab.current === activeTab) return;
@@ -146,6 +222,13 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     if (arrivedBySwipe.current) {
       arrivedBySwipe.current = false; // it travelled in under the finger: nothing left to animate
       return;
+    }
+    // Reached another way (the pill, Back): whatever the rail was doing is over, and the pill is no longer driven by it.
+    running.current = null;
+    el.style.willChange = '';
+    if (!gesture.current?.locked) {
+      setRiding([]);
+      drive(false);
     }
     if (prefersReducedMotion() || typeof el.animate !== 'function') return;
     const enter = el.animate(
@@ -177,11 +260,20 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     const endNow = (event: Event) => {
       const run = running.current;
       if (!run) return;
-      // A finger that lands on the rail itself catches a slide-in or a spring-back where it is (the
-      // page's own pointerdown below does that, with no jump). Everything else, and every key,
-      // ends the animation at once. A committed swipe is never caught: its new page lands now (this
-      // runs in the capture phase, before the page's own pointerdown) and the touch swipes from it.
-      if (run.grab && event.type !== 'keydown' && ref.current?.contains(event.target as Node)) return;
+      // A finger that lands on the rail itself catches the animation where it is (the page's own
+      // pointerdown below does that, with no jump): a slide-in, a spring-back or a committed swipe
+      // (which lands its page first). Everything else, and every key, ends the animation at once.
+      const rail = ref.current;
+      const target = event.target as Node;
+      if (run.grab && event.type !== 'keydown' && rail) {
+        if (rail.contains(target)) return;
+        // The column around the rail (the gap between two pages, the margins) belongs to it too: a finger
+        // there takes the rail the same way, but only through here (the rail's own handler never sees it).
+        if (rail.parentElement?.contains(target) && !(target as Element).closest?.('a, button')) {
+          if (event.type === 'pointerdown') beginRef.current(event as PointerEvent);
+          return;
+        }
+      }
       run.end();
     };
     (['pointerdown', 'touchstart', 'keydown'] as const).forEach((type) => document.addEventListener(type, endNow, { capture: true, passive: true }));
@@ -196,7 +288,8 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     el.style.transform = '';
     const rest = () => {
       el.style.willChange = '';
-      setPeek(null); // the neighbour leaves once it is out of sight again
+      setRiding([]); // the neighbour leaves once it is out of sight again
+      driveIfIdle(); // the pill is on the active page again
     };
     if (prefersReducedMotion() || typeof el.animate !== 'function') {
       rest();
@@ -227,28 +320,67 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     };
   };
 
-  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+  /**
+   * Makes `target` the current page, in one render, and puts the rail at rest. With `rebased` (a
+   * finger caught the rail mid-travel) the rail is not put at rest but kept where it visibly is, now
+   * measured from the new page: the page just left becomes the neighbour on the other side, still
+   * showing what it showed, and the pill (which reads the offset) does not move at all.
+   */
+  const land = (el: HTMLElement, target: ActiveTab, from: ActiveTab, rebased: number | null) => {
+    running.current = null;
+    el.style.willChange = '';
+    const scrolled = Math.max(0, window.scrollY);
+    const side: 1 | -1 = tabOrder().indexOf(from) > tabOrder().indexOf(target) ? 1 : -1;
+    // Synchronous, so the rail is back at rest in the very frame the new page is current: there
+    // is no moment in which a new touch could meet the old page, a stale rail or a stuck `leaving`.
+    flushSync(() => {
+      setActiveTab(target); // also scrolls to the top
+      setPillTab(null); // the real page has caught up with the committed one
+      setRiding(rebased === null ? [] : [{ tab: from, side, top: -scrolled }]);
+      setWarm((tabs) => (tabs.includes(from) ? tabs : [...tabs, from])); // the page just left is now a neighbour
+    });
+    leaving.current = false;
+    if (rebased === null) {
+      driveIfIdle();
+    } else {
+      el.style.willChange = 'transform';
+      el.style.transform = `translate3d(${rebased.toFixed(1)}px, 0, 0)`;
+    }
+  };
+
+  /**
+   * A finger lands. Called by the rail's own `onPointerDown` and, for a touch in the rail's column
+   * that misses the rail itself (the gap or margin beside the pages), by the document listener below.
+   */
+  const begin = (event: PointerEvent) => {
     swallowClick.current = false;
     gesture.current = null;
+    const el = ref.current;
     const target = event.target as Element;
     const eligible =
+      !!el &&
       event.pointerType !== 'mouse' &&
       event.isPrimary &&
       !document.documentElement.classList.contains('kc-sheet-open') &&
       event.clientX >= EDGE_RESERVED_PX &&
       event.clientX <= window.innerWidth - EDGE_RESERVED_PX &&
       !target.closest(OWN_GESTURE) &&
-      !hasHorizontalScroller(target, event.currentTarget);
-    // A new touch never waits for an animation: it ends it, or (a slide-in or spring-back that this
-    // touch can swipe) catches the page exactly where it is and carries on from there.
+      !(el.contains(target) && hasHorizontalScroller(target, el));
+    // A new touch never waits for an animation: it ends it, or (when this touch can swipe) catches
+    // the rail exactly where it is and carries on from there. A committed swipe lands its page
+    // inside grab(), so everything below sees the page that has just arrived.
     const run = running.current;
     let base = 0;
     if (run) {
       if (eligible && run.grab) base = run.grab();
       else run.end();
     }
-    if (!eligible || leaving.current) return;
+    if (!eligible || !el || leaving.current) return;
     const caught = Math.abs(base) > 1;
+    if (run && !caught) {
+      el.style.transform = ''; // a rail that was all but at rest is at rest
+      el.style.willChange = '';
+    }
     gesture.current = {
       id: event.pointerId,
       startX: event.clientX,
@@ -262,12 +394,20 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     if (caught) {
       // The finger has the page: no dead zone before it follows, and the touch is not a tap.
       swallowClick.current = true;
-      event.currentTarget.setPointerCapture?.(event.pointerId);
+      el.setPointerCapture?.(event.pointerId);
+      el.style.willChange = 'transform';
       const side = base < 0 ? 1 : -1;
-      const neighbour = neighbourTab(activeTab, side);
-      if (neighbour && (peek?.tab !== neighbour || peek.side !== side)) setPeek({ tab: neighbour, side, top: Math.max(0, window.scrollY) });
+      const neighbour = neighbourTab(shownTab.current, side);
+      if (neighbour && !ridesAlone(neighbour, side)) ride({ tab: neighbour, side, top: Math.max(0, window.scrollY) });
+      drive(true);
+    } else if (run) {
+      driveIfIdle();
     }
   };
+
+  const beginRef = useRef(begin);
+  beginRef.current = begin;
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => begin(event.nativeEvent);
 
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const g = gesture.current;
@@ -294,11 +434,13 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     // The side follows where the rail is (a page that was caught off-centre may be dragged back across rest).
     const lead = g.base + dx * FOLLOW;
     const side = (lead === 0 ? dx : lead) < 0 ? 1 : -1;
-    const neighbour = neighbourTab(activeTab, side);
+    const neighbour = neighbourTab(shownTab.current, side);
     // The page on the side being revealed joins the rail (and changes if the finger turns round).
-    if (neighbour && (peek?.tab !== neighbour || peek.side !== side)) setPeek({ tab: neighbour, side, top: Math.max(0, window.scrollY) });
-    g.pos = neighbour ? lead : g.base + dx * RUBBER;
+    if (neighbour && !ridesAlone(neighbour, side)) ride({ tab: neighbour, side, top: Math.max(0, window.scrollY) });
+    // At the first and last page the rail only stretches (continuously: it is the part beyond rest that is damped).
+    g.pos = neighbour ? lead : lead * (RUBBER / FOLLOW);
     el.style.transform = `translate3d(${g.pos.toFixed(1)}px, 0, 0)`;
+    drive(true); // the pill follows the rail from the first pixel
   };
 
   const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -307,14 +449,18 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     gesture.current = null;
     if (!g || !el || g.id !== event.pointerId || !g.locked) return;
 
-    const step = g.pos < 0 ? 1 : -1;
-    const next = neighbourTab(activeTab, step);
-    const distance = Math.abs(g.pos) / FOLLOW;
+    // The release is decided by the finger itself, from the page that is current now: which way it
+    // went, how far, how fast. (Not by where the rail is: a rail that was caught off-centre is
+    // still ahead of the page the swipe goes on from.) Finger to the left = the page on the right.
+    const from = shownTab.current;
+    const step: 1 | -1 = g.dx < 0 ? 1 : -1;
+    const next = g.dx === 0 ? null : neighbourTab(from, step);
+    const distance = Math.abs(g.dx);
     const commitAt = Math.min(COMMIT_MAX_PX, Math.max(COMMIT_MIN_PX, window.innerWidth * COMMIT_SHARE));
     const speed = releaseSpeed(g.samples, event.timeStamp);
-    const flick = Math.abs(speed) > FLICK_SPEED && Math.sign(speed) === Math.sign(g.pos) && distance > FLICK_MIN_PX;
+    const flick = Math.abs(speed) > FLICK_SPEED && Math.sign(speed) === Math.sign(g.dx) && distance > FLICK_MIN_PX;
     // A page that was only caught (the finger hardly moved) rests where it belongs.
-    const justCaught = g.base !== 0 && Math.abs(g.dx) < CATCH_TAP_PX;
+    const justCaught = g.base !== 0 && distance < CATCH_TAP_PX;
     if (!next || justCaught || (distance < commitAt && !flick)) {
       settle();
       return;
@@ -323,50 +469,62 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
     arrivedBySwipe.current = true;
     // The side the new page lies on: the dock (which only belongs to the Month page) enters or leaves that way.
     document.documentElement.style.setProperty('--kc-swipe-dir', String(step));
-    // One render: the neighbour's element is kept (same key) and becomes the current page.
-    const promote = () => {
-      running.current = null;
-      el.style.willChange = '';
-      // Synchronous, so the rail is back at rest in the very frame the new page is current: there
-      // is no moment in which a new touch could meet the old page, a stale rail or a stuck `leaving`.
-      flushSync(() => {
-        setActiveTab(next);
-        setPillTab(null); // the real page has caught up with the pill
-        setPeek(null);
-        setWarm((tabs) => (tabs.includes(activeTab) ? tabs : [...tabs, activeTab])); // the page just left is now a neighbour
-      });
-      leaving.current = false;
-    };
     if (prefersReducedMotion() || typeof el.animate !== 'function') {
-      promote();
+      land(el, next, from, null);
       return;
     }
     // The rail finishes its travel: the neighbour ends exactly where the current page was.
     leaving.current = true;
-    setPillTab(next); // the pill changes the moment the swipe is committed, not after the page has travelled
-    const travel = el.offsetWidth + RAIL_GAP_PX;
+    // The page the swipe goes to must ride, even when the rail was caught beyond the page on the other side
+    // (that one stays too, it is still in view for the first part of the travel).
+    if (!ridersRef.current.some((p) => p.tab === next && p.side === step)) ride({ tab: next, side: step, top: Math.max(0, window.scrollY) }, true);
+    setPillTab(next); // the dock follows the moment the swipe is committed, not after the page has travelled
+    drive(true); // and the pill is already on its way: it reads the rail, whatever animates it
+    const travel = railTravel(el);
+    const goal = -step * travel;
     // The exit carries on at the speed the finger let go with: a hard flick is quick, a slow drag is not hurried.
-    const remaining = Math.max(0, travel - Math.abs(g.pos));
+    const remaining = Math.abs(goal - g.pos);
     const duration = Math.min(EXIT_MAX_MS, Math.max(COMMIT_MIN_MS, remaining / Math.max(Math.abs(speed), EXIT_MIN_SPEED)));
     const exit = el.animate(
-      [{ transform: `translate3d(${g.pos.toFixed(1)}px, 0, 0)` }, { transform: `translate3d(${-step * travel}px, 0, 0)` }],
+      [{ transform: `translate3d(${g.pos.toFixed(1)}px, 0, 0)` }, { transform: `translate3d(${goal}px, 0, 0)` }],
       { duration, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'forwards' },
     );
-    exit.onfinish = promote;
+    const detach = () => {
+      exit.onfinish = null;
+      exit.oncancel = null;
+    };
+    const mine: RailRun = {
+      // A touch somewhere else: the page lands now.
+      end: () => {
+        detach();
+        exit.cancel();
+        land(el, next, from, null);
+      },
+      // A touch on the rail: the page lands now too, and the finger takes the rail from where it visibly is.
+      // The rail's offset is re-expressed from the new page: it was `at` from the old one, which lies
+      // `step` places behind, so it is `at + step * travel` from the new one.
+      grab: () => {
+        const at = railOffset(el);
+        detach();
+        exit.cancel();
+        const rebased = at + step * railTravel(el);
+        land(el, next, from, rebased);
+        return rebased;
+      },
+    };
+    running.current = mine;
+    exit.onfinish = () => {
+      detach();
+      land(el, next, from, null);
+    };
     exit.oncancel = () => {
+      // Something else (the pill, Back) changed the page under the swipe.
+      if (running.current === mine) running.current = null;
       setPillTab(null);
       leaving.current = false;
       arrivedBySwipe.current = false;
-    };
-    // A touch during the last stretch: the new page lands now, and that touch then swipes from it.
-    running.current = {
-      commit: true,
-      end: () => {
-        el.style.willChange = '';
-        exit.onfinish = null;
-        exit.oncancel = null;
-        promote();
-      },
+      setRiding([]);
+      driveIfIdle();
     };
   };
 
@@ -385,7 +543,7 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
 
   // The current page first, then whatever waits beside it: one keyed list, so a page keeps its
   // element (and its state) when it moves between "hidden", "riding along" and "current".
-  const others = tabOrder().filter((tab) => tab !== activeTab && (warm.includes(tab) || peek?.tab === tab));
+  const others = tabOrder().filter((tab) => tab !== activeTab && (warm.includes(tab) || riders.some((p) => p.tab === tab)));
 
   return (
     <div
@@ -406,13 +564,13 @@ export function PageSwiper({ renderPage }: { renderPage: (tab: ActiveTab) => Rea
             </div>
           );
         }
-        const riding = peek?.tab === tab ? peek : null;
+        const riding = riders.find((p) => p.tab === tab) ?? null;
         return (
           <div
             key={tab}
             data-page={tab}
             aria-hidden="true"
-            inert
+            inert={riding ? undefined : true}
             className={riding ? 'absolute w-full' : 'hidden'}
             style={riding ? { top: riding.top, left: riding.side > 0 ? `calc(100% + ${RAIL_GAP_PX}px)` : `calc(-100% - ${RAIL_GAP_PX}px)` } : undefined}
           >
