@@ -114,7 +114,7 @@ export function ModeChooser() {
 
   if (!open) return null;
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="mode-chooser-title" className="fixed inset-0 z-[200] overflow-y-auto bg-[var(--bg)] text-[var(--text)] font-sans">
+    <div role="dialog" aria-modal="true" aria-labelledby="mode-chooser-title" data-scroll-fade="y" className="fixed inset-0 z-[200] overflow-y-auto bg-[var(--bg)] text-[var(--text)] font-sans">
       <div className="mx-auto flex min-h-full w-full max-w-xl flex-col justify-center gap-5 px-4 py-8 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
         <div className="space-y-1.5 text-center">
           <h2 id="mode-chooser-title" ref={heading} tabIndex={-1} className="text-2xl font-extrabold tracking-tight outline-none">

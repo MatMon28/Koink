@@ -3,6 +3,7 @@ import { CalendarDays, CalendarRange, ChartPie, ChevronDown, ChevronRight, HandC
 import { PigIcon } from '../lib/pig';
 import { HeroPair, NoteCard, ShareCard } from '../components/cards';
 import { ExpenseChart } from '../components/ExpenseChart';
+import { PersonalInflation } from '../components/PersonalInflation';
 import { Bar, textInput } from '../components/ui';
 import { monthsBack, ruleShares, totalsByMonth } from '../lib/calc';
 import { allExpenseCategories } from '../lib/categories';
@@ -213,6 +214,9 @@ export function StatsView() {
 
       {/* Expense chart: bars or line, optional comparison of periods / categories, full view */}
       {!basic && <ExpenseChart txs={txs} fromDate={fromDate} toDate={toDate} categories={period.byCategory} knownIds={knownIds} />}
+
+      {/* Personal inflation: prices and spending against a year ago, for everything or one category */}
+      {!basic && <PersonalInflation />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {/* Balance trend */}

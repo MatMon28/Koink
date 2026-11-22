@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Check, ChevronDown, Plus, Trash2, type LucideIcon } from 'lucide-react';
+import { Check, MoreHorizontal, Plus, Trash2, type LucideIcon } from 'lucide-react';
 import { SectionLabel, seg, textInput } from '../components/ui';
 import { allBuckets } from '../lib/categories';
 import { useApp } from '../lib/store';
@@ -16,10 +16,10 @@ export interface Choice {
 /**
  * Icon tiles to pick a category, an income source or a goal. The chosen one is a solid block.
  *
- * `collapsible`: only ONE row is shown (the first `columns` choices: the callers list them most
- * recent first) and a slim button underneath opens the rest, in the same order, plus the `extra`
- * tile. A choice made in the opened list stays visible once it is folded again: it takes the last
- * place of the row. A list that fits in one row has no button.
+ * `collapsible`: only ONE row is shown: the first `columns - 1` choices (the callers list them most
+ * recent first) and, as the last tile of the row, a "..." button that opens the rest, in the same
+ * order, plus the `extra` tile. A choice made in the opened list stays visible once it is folded
+ * again: it takes the last choice place of the row. A list that fits in one row has no button.
  */
 export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra, collapsible = false }: {
   choices: Choice[];
@@ -79,36 +79,47 @@ export function ChoiceGrid({ choices, value, onChange, label, columns = 4, extra
     );
   }
 
-  // The first row. Folded, the chosen tile is kept in view even when it lies further down the list.
-  let row = choices.slice(0, columns);
+  // The first row: `columns - 1` choices and the "..." tile. Folded, the chosen tile is kept in view even
+  // when it lies further down the list (it takes the last choice place).
+  const places = columns - 1;
+  let row = choices.slice(0, places);
   if (!expanded) {
     const chosen = choices.find((choice) => choice.id === value);
-    if (chosen && !row.includes(chosen)) row = [...row.slice(0, columns - 1), chosen];
+    if (chosen && !row.includes(chosen)) row = [...row.slice(0, places - 1), chosen];
   }
   const rest = choices.filter((choice) => !row.includes(choice));
 
+  const moreLabel = expanded ? t('Show fewer') : `${t('Show all')} · ${rest.length}`;
+  const moreTile = (
+    <button
+      key="more"
+      type="button"
+      onClick={() => setExpanded((open) => !open)}
+      aria-expanded={expanded}
+      aria-label={moreLabel}
+      title={moreLabel}
+      className={`pressable min-w-0 flex flex-col items-center justify-center gap-1 rounded-2xl border border-dashed px-1 py-2.5 ${
+        expanded
+          ? 'border-[var(--text)] text-[var(--text)] bg-[var(--inset)]'
+          : 'border-[var(--border)] text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'
+      }`}
+    >
+      <MoreHorizontal size={17} strokeWidth={2.4} aria-hidden="true" />
+      <span className="max-w-full truncate text-[11px] font-extrabold leading-tight">{expanded ? t('Less') : `+${rest.length}`}</span>
+    </button>
+  );
+
   return (
-    <div>
-      <div role="radiogroup" aria-label={t(label)}>
-        <div className={`grid ${cols} gap-1.5`}>{row.map(tile)}</div>
-        <div className="accordion-grid" data-open={expanded}>
-          <div className="accordion-inner">
-            <div className={`grid ${cols} gap-1.5 pt-1.5`} inert={!expanded}>
-              {rest.map(tile)}
-              {extraTile}
-            </div>
+    <div role="radiogroup" aria-label={t(label)}>
+      <div className={`grid ${cols} gap-1.5`}>{row.map(tile)}{moreTile}</div>
+      <div className="accordion-grid" data-open={expanded}>
+        <div className="accordion-inner">
+          <div className={`grid ${cols} gap-1.5 pt-1.5`} inert={!expanded}>
+            {rest.map(tile)}
+            {extraTile}
           </div>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={() => setExpanded((open) => !open)}
-        aria-expanded={expanded}
-        className="pressable pressable-soft mt-1.5 w-full inline-flex items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-extrabold text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]"
-      >
-        {expanded ? t('Show fewer') : `${t('Show all')} · ${choices.length}`}
-        <ChevronDown size={13} aria-hidden="true" className={`transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
-      </button>
     </div>
   );
 }
@@ -192,7 +203,7 @@ export function SaveRow({ tone, label, disabled, onSave, onDelete, deleteLabel }
 /** Every currency as a code tile: pick the one an entry was paid in, or the journal's own. */
 export function CurrencyGrid({ value, onChange, label = 'Currency' }: { value: string; onChange: (code: string) => void; label?: string }) {
   return (
-    <div role="radiogroup" aria-label={t(label)} className="grid grid-cols-4 min-[400px]:grid-cols-5 gap-1.5 max-h-72 overflow-y-auto overscroll-contain pr-0.5">
+    <div role="radiogroup" data-scroll-fade="y" aria-label={t(label)} className="grid grid-cols-4 min-[400px]:grid-cols-5 gap-1.5 max-h-72 overflow-y-auto overscroll-contain pr-0.5">
       {CURRENCIES.map((currency) => {
         const active = currency.code === value;
         return (

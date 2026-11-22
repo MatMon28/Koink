@@ -4,7 +4,7 @@ import { PigIcon } from '../lib/pig';
 import { Modal } from '../components/Modal';
 import { AmountDisplay, NumPad, SaveBeforeCloseDialog, SectionLabel, textInput, useAmountBuffer } from '../components/ui';
 import { accountBalance, goalSaved } from '../lib/calc';
-import { categoryMeta, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
+import { allExpenseCategories, categoryMeta, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
 import { addDays, defaultDateFor, formatDay, formatMonth, monthOf, todayStr } from '../lib/dates';
 import { giftCardBalance, giftCardCover, giftCardExpired } from '../lib/giftcards';
 import { currencyDecimals, currencySymbol, formatRate, percent, round2 } from '../lib/format';
@@ -13,6 +13,7 @@ import { useApp, useSheet } from '../lib/store';
 import type { Bucket, Kind, Sheet } from '../lib/types';
 import { Banner, BucketPicker, ChoiceGrid, CurrencyGrid, IconPicker, SaveRow, type Choice } from './shared';
 import { t } from '../lib/i18n';
+import { TitleField } from './TitleField';
 
 const TITLES: Record<Kind, { add: string; edit: string; save: string }> = {
   expense: { add: 'Add expense', edit: 'Edit expense', save: 'Add expense' },
@@ -100,7 +101,10 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
     const rank = recencyRank(data.txs, kind);
     const byRecent = (list: Choice[]) => list.map((choice, index) => ({ choice, index })).sort((a, b) => (rank.get(a.choice.id) ?? Infinity) - (rank.get(b.choice.id) ?? Infinity) || a.index - b.index).map((x) => x.choice);
     if (kind === 'expense') {
-      const list: Choice[] = byRecent(visibleExpenseCategories().filter((c) => !fresh.some((f) => f.id === c.id)));
+      const notFresh = (c: { id: string }) => !fresh.some((f) => f.id === c.id);
+      const list: Choice[] = byRecent(visibleExpenseCategories().filter(notFresh));
+      // Hidden categories can still be picked here: they come after the visible ones (the most recently used first).
+      list.push(...byRecent(allExpenseCategories().filter((c) => isCategoryHidden(c.id) && notFresh(c))));
       // An entry in a category that was hidden since keeps showing it, so editing never loses it.
       if (original && !list.some((c) => c.id === original.categoryId) && isCategoryHidden(original.categoryId)) {
         const hidden = categoryMeta('expense', original.categoryId, data.goals);
@@ -113,12 +117,18 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
   }, [kind, data.txs, data.goals, original, fresh]);
 
   // A new entry starts on the category used last for this kind of entry.
-  const [categoryId, setCategoryId] = useState(() => {
+  // Did the user (or the button that opened the sheet) pick the category? Only then do the title suggestions narrow to it.
+  const [categoryChosen, setCategoryChosen] = useState(Boolean(original || sheet.categoryId));
+  const [categoryId, setCategoryIdState] = useState(() => {
     if (original) return original.categoryId;
     if (sheet.categoryId) return sheet.categoryId;
     const last = data.txs.find((tx) => tx.kind === kind && !tx.recurringId && choices.some((c) => c.id === tx.categoryId));
     return last?.categoryId ?? choices[0]?.id ?? '';
   });
+  const setCategoryId = (id: string) => {
+    setCategoryIdState(id);
+    setCategoryChosen(true);
+  };
 
   // The amount as it was paid, in `currency`; `rate` turns one unit of it into the journal's currency.
   const [currency, setCurrency] = useState(original?.foreign?.currency ?? mainCurrency);
@@ -173,16 +183,18 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
     };
   }, [data.txs, data.goals, data.profile.budgets, basic, original?.id, kind, categoryId, converted, month, meta.name, money]);
 
-  // The titles used most recently for this category: one tap fills the title.
+  // Recent titles for the Title field's list: the ones used in the chosen category once the user picked one,
+  // otherwise those of every category (most recent first; the field shows a few of them and filters as you type).
   const recent = useMemo(() => {
     const seen = new Map<string, number>();
     for (const tx of data.txs) {
-      if (tx.kind !== kind || tx.categoryId !== categoryId || tx.recurringId || !tx.note.trim()) continue;
+      if (tx.kind !== kind || tx.recurringId || !tx.note.trim()) continue;
+      if (categoryChosen && tx.categoryId !== categoryId) continue;
       if (!seen.has(tx.note)) seen.set(tx.note, tx.amount);
-      if (seen.size >= 4) break;
+      if (seen.size >= 30) break;
     }
     return [...seen.entries()];
-  }, [data.txs, kind, categoryId]);
+  }, [data.txs, kind, categoryId, categoryChosen]);
 
   // Gift cards: those with something left on them (the one this entry already used stays listed). What the
   // entry itself used is added back first, so editing never double counts it.
@@ -342,6 +354,17 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
         </div>
       </div>
 
+      <div>
+        <SectionLabel htmlFor="tx-title">{t('Title')}</SectionLabel>
+        <TitleField
+          value={title}
+          onChange={setTitle}
+          placeholder={t('A few words, e.g. {name}', { name: meta.name })}
+          suggestions={recent}
+          format={(v) => money(v, { cents: true })}
+        />
+      </div>
+
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--inset)] p-1.5">
         <button
           type="button"
@@ -458,36 +481,6 @@ function TxForm({ sheet, guardRef }: { sheet: Extract<Sheet, { type: 'tx' }>; gu
           )}
         </div>
       )}
-
-      <div>
-        <SectionLabel htmlFor="tx-title">{t('Title')}</SectionLabel>
-        <input
-          id="tx-title"
-          type="text"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder={t('A few words, e.g. {name}', { name: meta.name })}
-          maxLength={60}
-          autoComplete="off"
-          enterKeyHint="next"
-          className={`${textInput} text-sm`}
-        />
-        {recent.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {recent.map(([text, lastAmount]) => (
-              <button
-                key={text}
-                type="button"
-                onClick={() => setTitle(text)}
-                className="pressable max-w-full truncate px-2.5 py-1.5 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-[11px] font-bold text-[var(--muted)] hover:text-[var(--text)] tabular-nums"
-                title={t('{text}, last time {v}', { text, v: money(lastAmount, { cents: true }) })}
-              >
-                {t(text)} <span className="opacity-70">{money(lastAmount, { cents: true })}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
 
       <div>
         <SectionLabel htmlFor="tx-details">{t('Note')} <span className="normal-case tracking-normal font-bold opacity-70">{t('· optional, as long as you like')}</span></SectionLabel>

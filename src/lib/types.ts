@@ -187,6 +187,8 @@ export interface Settings {
   currency: CurrencyCode;
   /** Built-in or custom expense categories the user hid from the pickers (their entries stay). */
   hiddenCategories: string[];
+  /** Ids of the expenses left out of Statistics > Personal inflation (one-offs: a holiday, a repair). */
+  inflationExcluded: string[];
   /** Units of each currency for 1 US dollar. Missing codes fall back to the built-in table. */
   rates: Record<string, number>;
   /** Day (YYYY-MM-DD) the rates were last fetched, or '' while the built-in table is used. */

@@ -6,7 +6,7 @@
 >
 > **Related:** [prepare-apps.md](prepare-apps.md), [pwa-setup.md](pwa-setup.md)
 
-`changes.patch` is `git diff --binary` between the repository at the commit **`eab27b8`** ("Basic mode", the head of `main` when this round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): second swipe, chart reset, rotate icon, swipe-down for the chart settings, notification fixes, icon-only layout switch, caption-free date / category fields, shorter statistics captions and a transparent widget background, with the updated documentation. It contains no `node_modules/`, `dist/`, `package.json` or lock file change, and it does not contain itself. It deletes four files (`android/.../drawable/widget_tray_*.xml`) and adds two (`src/components/RotateScreenIcon.tsx`, `src/lib/chartTurn.ts`).
+`changes.patch` is `git diff --binary` between the repository at the commit **`fdd0ade`** ("A few fixes", the head of `main` when this round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): hidden categories in the entry sheet, the "..." category tile, the Title field below the date with its recent-titles list, Reset moved into the chart settings popup, a semitransparent widget tray with bigger icons, a button picked for each single-button widget, personal inflation in Statistics and the border fade on scrolling fields, with the updated documentation. It contains no `node_modules/`, `dist/`, `package.json` or lock file change, and it does not contain itself. It adds six files and deletes none.
 
 ```sh
 git apply --check changes.patch   # dry run
@@ -17,7 +17,14 @@ git apply --3way changes.patch
 
 To make the next one: commit or stash nothing, edit, `git add -A`, then `git diff --cached --binary > changes.patch` and unstage with `git reset`. Keep the docs of every changed file in the same patch (rule in [README.md](README.md#keeping-the-docs-current)).
 
-## What the Latest round changed (second swipe, chart reset, notifications, transparent widgets)
+## What the Latest round changed (hidden categories, "..." tile, titles, personal inflation, scroll fade, widgets)
+
+- New: `src/sheets/TitleField.tsx`, `src/components/PersonalInflation.tsx`, `src/lib/inflation.ts`, `src/lib/scrollFade.ts`, `android/app/src/main/java/com/koink/app/KoinkWidgetConfigActivity.java`, `android/app/src/main/res/drawable/widget_tray_bg.xml`.
+- Edited code: `src/main.tsx`, `src/index.css`, `src/components/{ActionDock,ChartLargeView,ChartPopup,ExpenseChart,InstallGuide,Modal,ModeChooser,WidgetButtons}.tsx`, `src/lib/{i18n.it,store,types,widgetBridge,widgets}.ts(x)`, `src/pages/StatsView.tsx`, `src/sheets/{TxSheet,WidgetsSettings,shared}.tsx`, `android/app/src/main/{AndroidManifest.xml,java/com/koink/app/KoinkWidgetProvider.java}`, `android/app/src/main/res/{layout/widget_button,layout/widget_button_single,layout/widget_buttons,values/strings,xml/widget_single_info}.xml`.
+- Edited docs: `README.md`, `docs/{data-model,design-system,known-gaps,verification,changes-patch}.md`, `docs/file-map/{android-native,components,lib,sheets}.md`, `docs/features/{categories,entries,statistics,widgets}.md`.
+- No dependency or binary change. The new setting `Settings.inflationExcluded` is optional in stored journals (older ones load with none).
+
+## What the previous round changed (second swipe, chart reset, notifications, transparent widgets)
 
 - New: `src/components/RotateScreenIcon.tsx`, `src/lib/chartTurn.ts`.
 - Deleted: `android/app/src/main/res/drawable/widget_tray_{card,card_ring,pill,pill_ring}.xml`.

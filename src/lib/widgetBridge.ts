@@ -1,7 +1,8 @@
 import { createElement } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { t } from './i18n';
-import { actionFor, categoryWidgetKeys, widgetLink, type WidgetAction } from './widgets';
+import { visibleExpenseCategories } from './categories';
+import { actionFor, catKey, categoryWidgetKeys, FIXED_ACTIONS, widgetLink, type WidgetAction } from './widgets';
 import type { WidgetSettings } from './types';
 
 /**
@@ -12,6 +13,8 @@ import type { WidgetSettings } from './types';
  */
 
 export interface NativeButton {
+  /** The action key (`expense`, `cat:food`...): the single-button widget stores the one its user picked. */
+  key: string;
   label: string;
   bg: string;
   fg: string;
@@ -29,7 +32,10 @@ export interface NativeTheme {
 
 export interface NativeWidgets {
   theme: NativeTheme;
+  /** The default button of the single widget (used until its own button is picked, and by older widgets). */
   single: NativeButton[];
+  /** Every button a single-button widget can be given: the config screen shown when placing it lists these. */
+  catalog: NativeButton[];
   multi: NativeButton[];
   categories: NativeButton[];
 }
@@ -87,15 +93,16 @@ const readTheme = (): NativeTheme => ({
 });
 
 async function toNative(action: WidgetAction): Promise<NativeButton> {
-  return { label: t(action.label), bg: action.bg, fg: action.fg, icon: await iconPng(action.icon, action.fg, action.key), uri: widgetLink(action.key) };
+  return { key: action.key, label: t(action.label), bg: action.bg, fg: action.fg, icon: await iconPng(action.icon, action.fg, action.key), uri: widgetLink(action.key) };
 }
 
-/** Everything the three native widgets draw, as the JSON string `KoinkDevice.setWidgets` stores. */
+/** Everything the three native widgets (and the single widget's pick-a-button screen) draw, as the JSON string `KoinkDevice.setWidgets` stores. */
 export async function buildNativeWidgets(settings: WidgetSettings): Promise<string> {
   const make = (keys: string[]) => Promise.all(keys.map((key) => toNative(actionFor(key))));
   const payload: NativeWidgets = {
     theme: readTheme(),
     single: await make([settings.single]),
+    catalog: await make([...FIXED_ACTIONS.map((a) => a.key), ...visibleExpenseCategories().map((c) => catKey(c.id))]),
     multi: await make(settings.multi),
     categories: await make(categoryWidgetKeys(settings)),
   };

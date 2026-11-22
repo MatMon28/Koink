@@ -7,7 +7,10 @@
     <string name="widget_single_name">Koink: Button</string>
     <string name="widget_multi_name">Koink: Buttons</string>
     <string name="widget_categories_name">Koink: Expense types</string>
-    <string name="widget_single_description">One shortcut button. Choose what it does in Koink, Settings, Widgets.</string>
+    <string name="widget_single_description">One shortcut button. You choose what it does (an action or an expense category) when you place it.</string>
+    <string name="widget_pick_title">Choose this button</string>
+    <string name="widget_pick_empty">Open Koink once, then add the widget again, so its buttons can be listed.</string>
+    <string name="widget_pick_open">Open Koink</string>
     <string name="widget_multi_description">The shortcut buttons you choose in Koink, Settings, Widgets.</string>
     <string name="widget_categories_description">One button per expense type: a tap opens Add expense with that type chosen.</string>
     <string name="widget_empty">Open Koink once to set this widget up</string>

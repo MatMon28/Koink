@@ -424,7 +424,7 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
             <X size={18} />
           </button>
         </div>
-        <div data-sheet-scroll className="p-4 sm:p-5 overflow-y-auto overscroll-contain min-h-0 flex-1 text-[var(--text)]">{children}</div>
+        <div data-sheet-scroll data-scroll-fade="y" className="p-4 sm:p-5 overflow-y-auto overscroll-contain min-h-0 flex-1 text-[var(--text)]">{children}</div>
       </div>
     </div>,
     document.body,

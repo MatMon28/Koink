@@ -457,3 +457,24 @@ html[data-ultra='true'] .um-stack > :not(:last-child) { margin-block-end: 0.625r
   .kc-logo-btn[data-press] .kk-body { animation: kk-w-nod 400ms ease-out !important; transform-origin: 50% 100%; }
 }
 @keyframes kk-w-nod { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+/* ---------- Border fade on scrollable fields (src/lib/scrollFade.ts) ----------
+   A field marked data-scroll-fade="y" | "x" fades out at the edge that still has content beyond it. The
+   script sets data-fading and --fade-start / --fade-end; the mask only exists while an edge needs it. */
+[data-scroll-fade] { --fade-size: 22px; --fade-start: 0px; --fade-end: 0px; }
+/* A sheet's save row sticks to the bottom: keep the fade inside its padding so the button is never dimmed. */
+[data-sheet-scroll][data-scroll-fade] { --fade-size: 14px; }
+[data-scroll-fade="y"][data-fading] {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+}
+[data-scroll-fade="x"][data-fading] {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
+}
+
+/* The tray behind several widget buttons in the app: the dock's surface at 70 %, not fully transparent. */
+.kc-widget-tray {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}

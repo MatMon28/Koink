@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChartColumn, ChevronDown, Maximize2, RotateCcw, SlidersHorizontal, Tag } from 'lucide-react';
+import { ChartColumn, ChevronDown, Maximize2, SlidersHorizontal, Tag } from 'lucide-react';
 import { ChartLargeView } from './ChartLargeView';
 import { ChartPlot, type ChartType, type PlotLine } from './ChartPlot';
 import { ChartPopup } from './ChartPopup';
@@ -382,9 +382,6 @@ export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Pr
               <ChevronDown size={16} className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
             </span>
           </button>
-          <button type="button" onClick={reset} disabled={!changed} aria-label={t('Reset the chart')} title={t('Reset the chart')} className={`${roundButton} disabled:opacity-30 disabled:pointer-events-none`}>
-            <RotateCcw size={15} aria-hidden="true" />
-          </button>
           <button type="button" onClick={() => setSettingsOpen(true)} aria-label={t('Chart settings')} title={t('Chart settings')} className={roundButton}>
             <SlidersHorizontal size={15} aria-hidden="true" />
           </button>
@@ -399,7 +396,7 @@ export function ExpenseChart({ txs, fromDate, toDate, categories, knownIds }: Pr
               {!empty && (
                 <>
                   {/* A line is compressed to fit the whole period; bars keep their natural width and scroll. */}
-                  <div ref={scroller} data-no-swipe className="no-scrollbar overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x touch-pan-y">
+                  <div ref={scroller} data-no-swipe data-scroll-fade="x" className="no-scrollbar overflow-x-auto overflow-y-hidden overscroll-x-contain touch-pan-x touch-pan-y">
                     <div style={{ minWidth: type === 'bars' ? naturalWidth : undefined }}>
                       <ChartPlot {...plot} heightClass="h-32" />
                     </div>

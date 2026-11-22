@@ -28,7 +28,7 @@
 | Where | What |
 | --- | --- |
 | Settings > Expense categories (expandable field), Budgets > *Manage expense categories* (sheet) | `CategoriesBody`: one group per type; each row has hide / show, your own also edit and delete; *New category* form (name, 33 icons, *Counts as*: Need, Want or one of your types, or a new one); *New type*. The last visible category cannot be hidden |
-| Entry sheet | picker shows visible categories only; **New** tile creates one on the spot and selects it |
+| Entry sheet | the picker lists the visible categories first and **the hidden ones after them**, so a hidden category can still be chosen for an expense (nothing else changes: it stays hidden on the Month page); **New** tile creates one on the spot and selects it |
 | Month, Budgets | a hidden category shows only while it has entries (Month) or spending / a budget (Budgets) |
 | Delete (your own) | asks first. Entries stay and are gathered under **Other** (Month card, Statistics row, wants); its budget is dropped; recurring items using it move to Bills |
 | Hide | never touches entries, budgets or statistics |

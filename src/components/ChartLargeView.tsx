@@ -522,11 +522,11 @@ export function ChartLargeView({ open, onClose, title, plot, readout, naturalWid
           </div>
         </div>
 
-        <div data-no-close className="max-h-[32%] shrink-0 touch-pan-y overflow-y-auto overscroll-contain">
+        <div data-no-close data-scroll-fade="y" className="max-h-[32%] shrink-0 touch-pan-y overflow-y-auto overscroll-contain">
           {readout}
         </div>
 
-        <div ref={scroller} data-chart-pan className="no-scrollbar min-h-0 flex-1 touch-none overflow-x-auto overflow-y-hidden overscroll-contain">
+        <div ref={scroller} data-chart-pan data-scroll-fade="x" className="no-scrollbar min-h-0 flex-1 touch-none overflow-x-auto overflow-y-hidden overscroll-contain">
           <div className="h-full" style={{ width: `${zoom * 100}%` }}>
             <ChartPlot {...plot} rotated={turned} freeze={turning} />
           </div>

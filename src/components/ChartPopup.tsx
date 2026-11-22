@@ -203,6 +203,7 @@ export function ChartPopup({ open, onClose, title, inline = false, onReset, rese
       <div
         ref={panel}
         data-popup-panel
+        data-scroll-fade="y"
         role="dialog"
         aria-modal="true"
         aria-label={title}

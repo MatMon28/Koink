@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The tray behind several widget buttons. White on purpose: the widget tints it (ImageView.setColorFilter) with the
+  app's surface colour at about 70 % opacity. The radius is large, so a one-row tray becomes a pill and a taller one
+  a rounded card (a corner radius never exceeds half the height).
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#FFFFFFFF" />
+    <corners android:radius="28dp" />
+</shape>

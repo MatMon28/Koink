@@ -46,7 +46,7 @@ function Block({ title, hint, children, preview }: { title: string; hint: string
         <SectionLabel>{t(title)}</SectionLabel>
         <p className="-mt-1 text-[11px] font-medium text-[var(--muted)]">{t(hint)}</p>
       </div>
-      <div className="rounded-2xl bg-[var(--inset)] border border-[var(--border)] p-3 flex justify-center overflow-x-auto no-scrollbar">{preview}</div>
+      <div data-scroll-fade="x" className="rounded-2xl bg-[var(--inset)] border border-[var(--border)] p-3 flex justify-center overflow-x-auto no-scrollbar">{preview}</div>
       {children}
     </section>
   );
@@ -69,13 +69,13 @@ function WidgetsForm() {
     <div className="space-y-3.5">
       <p className="text-xs font-medium text-[var(--muted)]">
         {native
-          ? t('Press and hold the home screen, choose Widgets, then Koink: Button, Buttons or Expense types. What you set here is what they show.')
+          ? t('Press and hold the home screen, choose Widgets, then Koink: Button, Buttons or Expense types. A Button widget asks which button it should be when you place it; Buttons and Expense types show what you set here.')
           : t('On Android, the Koink app can put these on the home screen. Here you can still switch them on for the Month page.')}
       </p>
 
       <Block
         title={t('Single button')}
-        hint={t('One button. You decide what it does.')}
+        hint={native ? t('The default. Each Button widget you place on the home screen gets its own button, picked when you add it.') : t('One button. You decide what it does.')}
         preview={<WidgetFace keys={[widgets.single]} />}
       >
         <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('Button of the single widget')}>

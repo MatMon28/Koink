@@ -4,11 +4,13 @@
 >
 > **Read when:** you change `src/lib/widgets.ts`, `src/lib/widgetBridge.ts`, `src/lib/useWidgets.ts`, `src/sheets/WidgetsSettings.tsx`, `src/components/WidgetButtons.tsx`, `src/components/WidgetStrip.tsx` or `android/.../KoinkWidgetProvider.java`.
 >
+> **Newest round:** semitransparent tray, bigger icons, and a **button picked per single-button widget when it is placed** (Android) - see *Look and shape* and *The three widgets*.
+>
 > **Related:** [settings.md](settings.md), [gift-cards.md](gift-cards.md), [../android.md](../android.md), [../data-model.md](../data-model.md). The structure follows the widgets of [Kakcal](https://github.com/MatMon28/Kakcalculator) (`docs/widgets.md` there): native `AppWidgetProvider` + `RemoteViews`, nothing but RemoteViews-safe classes in the layouts.
 
 ## Look and shape
 
-- **Coherent with the app:** a button is a round pastel button with a small icon (17 px in the app, 18 dp on Android; the lone button's icon is 20) and **no text**: the name is only the tooltip / screen-reader label (`title` + `aria-label` in the app, `setContentDescription` on Android). Same family as the bottom dock. The tray behind several buttons is the dock's surface: border, soft shadow, `--surface` colour.
+- **Coherent with the app:** a button is a round pastel button with a small icon (20 px in the app, 22 dp on Android; the lone button's icon is 24) and **no text**: the name is only the tooltip / screen-reader label (`title` + `aria-label` in the app, `setContentDescription` on Android). Same family as the bottom dock. The tray behind several buttons is a semitransparent surface (see below).
 - **The shape follows the number of buttons** (`widgetShape`, `widgetColumns`, `widgetRows` in `src/lib/widgets.ts`; mirrored in `KoinkWidgetProvider.build`):
 
 | Buttons | Shape | Rows |
@@ -19,19 +21,26 @@
 | 7 to 8 (up to 12 for the category list) | a rounded card | rows of 4 |
 
   A short last row is centred, never padded.
-- **Single button:** the lone circle is **48** px / dp (it was 56), its icon 20.
-- **Multi and category widgets:** the background is **fully transparent**: no tray fill, no border ring, no shadow, no blur, so only the round buttons show on the home screen (it used to be the theme surface at 72 %; `TRAY_ALPHA`, the `widget_tray_*.xml` drawables and the `tray_fill` / `tray_border` views are gone). The invisible tray is still **as wide as the widget**. The buttons keep their size (circle 40) but share the tray's width evenly: **the wider the widget is made, the more space between the buttons** (in the app: `stretch` on `WidgetFace`, used by the Month-page strip; on Android: `layout_weight` tiles in `widget_row.xml`). A short last row is centred on the same grid with half-width spacers (`widget_spacer.xml`, `addSpacers` in `KoinkWidgetProvider.java`).
-- **Theme:** the bridge hands the native side the app's current `--surface`, `--border` and `--text` (`readTheme()` in `widgetBridge.ts`, converted to `#rrggbb`), so the text colour follows Light, Soft dark and Dark (the surface and border colours are still handed over but no longer drawn). It is re-sent when the theme, style, mono colour or language changes. The button names are sent already translated (they are only the accessibility description, nothing is drawn).
+- **Icons** are a little bigger than before: **22** dp in a round button (was 18), **24** dp in the lone circle (was 20); in the app 20 px (was 17) and 24 px (was 20). The circles themselves keep their size (40 and 48).
+- **Single button:** the lone circle is **48** px / dp, with no tray.
+- **Multi and category widgets:** the tray behind the buttons is a **semitransparent surface**, not fully transparent any more: the app's `--surface` colour at about **70 %** (`TRAY_ALPHA` = 178 in `KoinkWidgetProvider.java`, tinting the white `widget_tray_bg.xml` with `setColorFilter`; in the app `.kc-widget-tray` in `index.css` with a faint border). The shape is a rounded rectangle whose large radius makes a one-row tray a pill and a taller one a card. The tray is **as wide as the widget** and the buttons (circle 40) share its width evenly: **the wider the widget is made, the more space between the buttons** (in the app: `stretch` on `WidgetFace`, used by the Month-page strip; on Android: `layout_weight` tiles in `widget_row.xml`). A short last row is centred on the same grid with half-width spacers (`widget_spacer.xml`, `addSpacers` in `KoinkWidgetProvider.java`).
+- **Theme:** the bridge hands the native side the app's current `--surface`, `--border` and `--text` (`readTheme()` in `widgetBridge.ts`, converted to `#rrggbb`), so the tray colour follows Light, Soft dark and Dark. It is re-sent when the theme, style, mono colour or language changes. The button names are sent already translated (they are only the accessibility description, nothing is drawn).
 
 ## The three widgets
 
 | Widget | Launcher name | Default size | What the user decides |
 | --- | --- | --- | --- |
-| **Single button** | Koink: Button | 1 x 1 | which one action the button does |
+| **Single button** | Koink: Button | 1 x 1 | which one action or expense category **this widget** is: asked when the widget is placed (and again when it is reconfigured) |
 | **Multiple buttons** | Koink: Buttons | 4 x 1 (two rows from five buttons, see *Look and shape*) | which buttons (up to 6), in tap order |
 | **Expense types** | Koink: Expense types | 4 x 2 | which expense categories (up to 8); none chosen = the first 8 visible categories. A tap opens *Add expense* with that category already chosen |
 
 A button is an **action key** (`src/lib/widgets.ts`): `expense`, `income`, `saving`, `recurring`, `quick`, `giftcard`, `budgets`, `stats`, or `cat:<expense category id>`. Built-in and own categories both work; deleting a category removes it from the widgets (the single button falls back to *Expense*).
+
+### One button per single widget (Android)
+
+Each *Koink: Button* widget has **its own button**: when it is added to the home screen, `KoinkWidgetConfigActivity` opens a list of every action and every visible expense category (name, round coloured icon exactly as the widget will draw it); the tap on one stores it for that widget id (`SharedPreferences` `koink_widget_picks`, key `w<id>`, removed in `onDeleted`) and draws it. So one widget can open *Add expense* in Food, another *Add income*, another the Statistics page. Backing out cancels the placement. The list comes from `catalog` in the JSON the app hands over (`buildNativeWidgets`; each button now also carries its action `key`), so the app has to have been opened once; otherwise the screen asks to open Koink and add the widget again. A widget whose pick no longer exists (a deleted or hidden category) shows the default below. On Android 9+ the widget can be reconfigured (`widgetFeatures="reconfigurable"`, long-press > settings).
+
+The **default** is `settings.widgets.single` (Settings > Widgets > Single button): it is the Month-page strip's button, the in-app preview, and what an old single widget (placed before this round) or one with a missing pick shows.
 
 ## Where it is configured
 

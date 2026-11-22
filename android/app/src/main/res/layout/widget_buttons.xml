@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Shared by the three Koink widgets. RemoteViews may only use framework widget classes.
-  The tray has NO background of its own (it used to be a semitransparent surface fill with a border ring): the
-  widget background is fully transparent, only the round buttons show. The tray is as wide as the widget and as
-  tall as its rows, centred vertically: the buttons spread out when the widget is made wider (KoinkWidgetProvider).
+  The tray is as wide as the widget and as tall as its rows, centred vertically, and has a semitransparent
+  background (tray_bg, tinted with the app's surface colour at about 70 %; hidden for a lone button). The
+  buttons spread out when the widget is made wider (KoinkWidgetProvider).
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root"
@@ -16,6 +16,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/tray_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/widget_tray_bg" />
 
         <LinearLayout
             android:id="@+id/rows"

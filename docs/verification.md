@@ -116,3 +116,8 @@ Run: `npm ci`, `tsc -b`, `vite build` (all pass). Not run: browser or device che
 
 - Run: `tsc -p tsconfig.app.json --noEmit`, `vite build`, `eslint` on every changed file (all clean), and `buildNotificationPlan()` under `tsx` in English and Italian (the English text is unchanged; Italian reads as expected).
 - **Not run:** any browser or device. The second page swipe, the swipe down on the chart settings (portrait and turned), the permission re-sync on Android 13+ and the transparent widget are listed in [known-gaps.md](known-gaps.md) with what to try.
+
+## The newest round (hidden categories, "..." tile, recent titles, personal inflation, scroll fade, widgets)
+
+- Run: `tsc -b`, `vite build`, and `src/lib/inflation.ts` bundled with esbuild and run in Node on a small journal (spending +185 % with a 500 holiday, -7.7 % with it left out, a +10 % milk price, category scope, 3-month trend with `null` where the earlier window is empty). `eslint` could not run in the sandbox (its config package was not installed).
+- **Not run:** any browser or device, and the Java ([known-gaps.md](known-gaps.md)).

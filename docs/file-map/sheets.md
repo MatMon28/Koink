@@ -22,7 +22,7 @@
 | `SettingsSheet.tsx` | `SettingsSheet` | `settings` | Language, appearance (Ultra minimal, hide-split), currency (locked once there are amounts), dock buttons, widgets, notifications, install card, data tools (status, backup, restore preview, Excel export), project download, delete all | [../features/settings.md](../features/settings.md) Closes into the middle of the button bar (`dockCenter`). |
 | `NotificationSettings.tsx` | `NotificationSettings` | (inside Settings) | The Notifications group: a switch row per reminder with its time (and weekday), permission banner, test button | [../notifications.md](../notifications.md) |
 | `RestoreDialog.tsx` | `RestoreDialog` | (dialog inside Settings) | The restore preview: *Now / Backup file* table (entries, dates, currency, accounts, goals, budgets, recurring), the *This will replace your current journal* warning, the currency-differs and skipped-entries notes, *Save a copy of the current journal first*, *Replace journal* | [../features/backup.md](../features/backup.md) |
-| `shared.tsx` | `ChoiceGrid`, `Choice`, `Banner`, `BannerTone`, `SaveRow` | | Icon-tile picker (a radio group; `collapsible` = one row of the first choices and a *Show all · N* button for the rest); pastel summary banner at the top of a sheet; the closing row with the wide save button and optional delete, **sticky** at the bottom of the sheet (`.kc-sticky-footer`) | |
+| `shared.tsx` | `ChoiceGrid`, `Choice`, `Banner`, `BannerTone`, `SaveRow` | | Icon-tile picker (a radio group; `collapsible` = one row of the first choices (columns - 1) and a fourth **"..."** tile that opens the rest); pastel summary banner at the top of a sheet; the closing row with the wide save button and optional delete, **sticky** at the bottom of the sheet (`.kc-sticky-footer`) | |
 
 ## The pattern every sheet follows
 
@@ -44,3 +44,4 @@ export function GoalSheet() {
 - A sheet may pass its own `onClose` to `Modal` and refuse to close (the entry sheet does, to ask about unsaved input). `Modal` and Back both cope with a refusal.
 
 To add a sheet: extend the `Sheet` union in `src/lib/types.ts`, write the component as above, mount it in `Shell` (`src/App.tsx`), open it with `openSheet({ type: 'yours' })`.
+| `TitleField.tsx` | `TitleField`, `TITLE_SUGGESTIONS` | | The entry sheet's Title input with the short list of recent titles that opens under it on focus (filters as you type; the category's titles once one is picked) | [../features/entries.md](../features/entries.md) |

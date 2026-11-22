@@ -67,6 +67,7 @@ export function ActionDock({ label, actions, show = true }: { label: string; act
         role="group"
         aria-label={t(label)}
         data-dock
+        data-scroll-fade="x"
         data-dock-phase={phase}
         onAnimationEnd={(event) => {
           if (phase === 'out' && event.target === event.currentTarget) setPhase('gone');

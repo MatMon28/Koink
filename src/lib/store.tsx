@@ -31,6 +31,7 @@ const defaultSettings = (): Settings => ({
   ultraMinimal: false,
   currency: 'EUR',
   hiddenCategories: [...DEFAULT_HIDDEN_CATEGORIES],
+  inflationExcluded: [],
   rates: {},
   ratesDate: '',
   quickAdd: { income: true, expense: true, recurring: true, quick: true, saving: true, giftcard: false },
@@ -178,6 +179,8 @@ function sanitize(raw: unknown): AppData | null {
     ultraMinimal: s.ultraMinimal === true,
     currency: isCurrency(s.currency) ? s.currency : base.currency,
     hiddenCategories: Array.isArray(s.hiddenCategories) ? s.hiddenCategories.filter(isStr) : [],
+    // Journals and backups from before personal inflation exclude nothing.
+    inflationExcluded: Array.isArray(s.inflationExcluded) ? s.inflationExcluded.filter(isStr) : [],
     rates: cleanRates(s.rates),
     ratesDate: isStr(s.ratesDate) ? s.ratesDate : '',
     quickAdd: { ...base.quickAdd, ...(s.quickAdd && typeof s.quickAdd === 'object' ? s.quickAdd : {}) },
@@ -606,7 +609,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const eraseAll = useCallback(() => {
     setData((prev) => ({
       txs: [], goals: [], recurring: [], accounts: [], giftCards: [], categories: [], categoryTypes: [], profile: emptyProfile(),
-      settings: { ...prev.settings, hiddenCategories: [...DEFAULT_HIDDEN_CATEGORIES], sampleData: false },
+      settings: { ...prev.settings, hiddenCategories: [...DEFAULT_HIDDEN_CATEGORIES], inflationExcluded: [], sampleData: false },
     }));
     setSelectedMonth(currentMonth());
   }, []);

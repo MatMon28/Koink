@@ -454,7 +454,7 @@ const InstallGuideDialog: React.FC<{ target: InstallTarget; language: GuideLangu
           </div>
         </header>
 
-        <div data-dialog-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
+        <div data-dialog-scroll data-scroll-fade="y" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
           {installed ? (
             <Note tone="good" icon={CheckCircle2} title={copy.installedTitle}>{copy.installedBody}</Note>
           ) : canPrompt ? (

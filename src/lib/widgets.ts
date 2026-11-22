@@ -109,7 +109,7 @@ export function widgetRows<T>(items: T[]): T[][] {
   return rows;
 }
 
-/* The tray behind several buttons has no background of its own: the widget background is fully transparent, on the home screen and in the app. */
+/* The tray behind several buttons is a semitransparent surface (`.kc-widget-tray` in the app, `widget_tray_bg` on Android); a lone button has none. */
 
 export const MULTI_MAX = 6;
 export const CATEGORY_MAX = 8;

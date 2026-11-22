@@ -32,6 +32,17 @@
 
         </activity>
 
+        <!-- Shown when a single-button widget is placed (and when it is reconfigured): which button it is -->
+        <activity
+            android:name=".KoinkWidgetConfigActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.DeviceDefault.Light.Dialog">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <!-- Home-screen widgets: KoinkWidgetProvider.java, drawn from what the web app hands over (KoinkDevice.setWidgets) -->
         <receiver
             android:name=".KoinkWidgetProvider$Single"

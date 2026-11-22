@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The single-button widget: one lone circle of 48dp (it was 56dp), no tray and no name (like one dock button). -->
+<!-- The single-button widget: one lone circle of 48dp, icon 24dp, no tray and no name (like one dock button). -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/tile"
     android:layout_width="48dp"
@@ -15,8 +15,8 @@
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:layout_gravity="center"
         android:contentDescription="@null"
         android:scaleType="fitCenter" />

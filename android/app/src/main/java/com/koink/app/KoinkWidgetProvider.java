@@ -22,31 +22,37 @@ import org.json.JSONObject;
  * per expense category ({@link Categories}). They draw whatever the web app last handed over through
  * {@code KoinkDevice.setWidgets} (src/lib/widgetBridge.ts): label, colours, an icon PNG and a link for each
  * button, plus the app's theme colours. The widget's shape follows the number of buttons (circle, pill, card).
- * The widget background is fully transparent (no tray fill, no border): only the round buttons are drawn, in a
- * row as wide as the widget; the buttons share that width, so they spread out as the widget is made wider. The lone circle of the single widget is 48dp. A tap opens the app with that link ({@code koink://widget?a=<action>}), which the web app turns
+ * Behind several buttons there is a semitransparent tray (the app's surface colour at about 70 %, {@code widget_tray_bg});
+ * a lone button has none. The buttons share the widget's width, so they spread out as the widget is made wider. The lone
+ * circle of the single widget is 48dp (icon 24dp), the other circles 40dp (icon 22dp). Every single-button widget has
+ * its own button, picked when it is placed ({@link KoinkWidgetConfigActivity}) and stored per widget id. A tap opens the app with that link ({@code koink://widget?a=<action>}), which the web app turns
  * into the matching sheet (src/lib/useWidgets.ts). Layouts use only RemoteViews-safe classes.
  */
 public abstract class KoinkWidgetProvider extends AppWidgetProvider {
 
     private static final String PREFS = "koink_widgets";
     private static final String KEY_JSON = "json";
+    /** Opacity of the tray behind several buttons, 0 to 255 (about 70 %). */
+    private static final int TRAY_ALPHA = 178;
+    /** The button each single-button widget was given when it was placed: {@code w<widgetId>} = action key. */
+    static final String PICKS = "koink_widget_picks";
     /** Which array of the stored JSON this widget shows: "single", "multi" or "categories". */
     protected abstract String kind();
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
-        for (int id : ids) manager.updateAppWidget(id, build(context));
+        for (int id : ids) manager.updateAppWidget(id, build(context, id));
     }
 
     @Override
     public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager, int id, android.os.Bundle options) {
-        manager.updateAppWidget(id, build(context));
+        manager.updateAppWidget(id, build(context, id));
     }
 
-    private RemoteViews build(Context context) {
+    private RemoteViews build(Context context, int widgetId) {
         RemoteViews root = new RemoteViews(context.getPackageName(), R.layout.widget_buttons);
         root.removeAllViews(R.id.rows);
-        JSONArray buttons = buttons(context);
+        JSONArray buttons = buttons(context, widgetId);
 
         if (buttons == null || buttons.length() == 0) {
             // Nothing handed over yet (the app has not been opened since the widget was added).
@@ -62,10 +68,8 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         root.setViewVisibility(R.id.empty, android.view.View.GONE);
         root.setViewVisibility(R.id.tray, android.view.View.VISIBLE);
 
-        // The app's own text colour (Light, Soft dark, Dark), handed over with the buttons. The surface and
-        // border colours are no longer used: the widget has no background.
+        // The app's own surface colour (Light, Soft dark, Dark), handed over with the buttons: it tints the tray.
         JSONObject theme = theme(context);
-        int text = color(theme == null ? null : theme.optString("text"), Color.parseColor("#24201C"));
 
         // The widget's shape follows its buttons (mirrors widgetShape / widgetColumns in src/lib/widgets.ts):
         // one button = a lone circle, two to four = a pill with one row, five or more = a rounded card of
@@ -73,11 +77,18 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         int count = buttons.length();
         int perRow = count <= 4 ? Math.max(1, count) : (count <= 6 ? 3 : 4);
 
-        // No tray fill and no border: the background is fully transparent. A lone circle needs no padding,
-        // several buttons keep a little room around them.
+        // Several buttons sit on a semitransparent tray: the app's surface colour at about 70 % (the shape is a
+        // rounded rectangle whose radius turns a one-row tray into a pill). A lone circle has no tray and no padding.
         float d = context.getResources().getDisplayMetrics().density;
-        if (count == 1) root.setViewPadding(R.id.rows, 0, 0, 0, 0);
-        else root.setViewPadding(R.id.rows, (int) (8 * d), (int) (6 * d), (int) (8 * d), (int) (6 * d));
+        if (count == 1) {
+            root.setViewVisibility(R.id.tray_bg, android.view.View.GONE);
+            root.setViewPadding(R.id.rows, 0, 0, 0, 0);
+        } else {
+            int surface = color(theme == null ? null : theme.optString("surface"), Color.parseColor("#FBF8F2"));
+            root.setViewVisibility(R.id.tray_bg, android.view.View.VISIBLE);
+            root.setInt(R.id.tray_bg, "setColorFilter", (surface & 0x00FFFFFF) | (TRAY_ALPHA << 24));
+            root.setViewPadding(R.id.rows, (int) (10 * d), (int) (8 * d), (int) (10 * d), (int) (8 * d));
+        }
 
         RemoteViews row = null;
         for (int i = 0; i < count; i++) {
@@ -91,7 +102,7 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
                 int inRow = Math.min(perRow, count - (i / perRow) * perRow);
                 boolean first = i % perRow == 0;
                 if (first && count > 1 && inRow < perRow) addSpacers(context, row, perRow - inRow);
-                row.addView(R.id.row, tile(context, button, count == 1, text));
+                row.addView(R.id.row, tile(context, button, count == 1));
                 if (count > 1 && inRow < perRow && i % perRow == inRow - 1) addSpacers(context, row, perRow - inRow);
             }
         }
@@ -103,7 +114,7 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         for (int k = 0; k < count; k++) row.addView(R.id.row, new RemoteViews(context.getPackageName(), R.layout.widget_spacer));
     }
 
-    private RemoteViews tile(Context context, JSONObject button, boolean lone, int textColor) {
+    private RemoteViews tile(Context context, JSONObject button, boolean lone) {
         RemoteViews tile = new RemoteViews(context.getPackageName(), lone ? R.layout.widget_button_single : R.layout.widget_button);
         int bg = color(button.optString("bg"), Color.parseColor("#FBF8F2"));
         tile.setInt(R.id.tile_bg, "setColorFilter", bg);
@@ -151,11 +162,23 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         }
     }
 
-    private JSONArray buttons(Context context) {
+    /** The buttons this widget draws. */
+    protected JSONArray buttons(Context context, int widgetId) {
         String json = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_JSON, null);
         if (json == null) return null;
         try {
             return new JSONObject(json).optJSONArray(kind());
+        } catch (org.json.JSONException e) {
+            return null;
+        }
+    }
+
+    /** Every button a single-button widget can be given (the app's catalog), or null before the first hand-over. */
+    static JSONArray catalog(Context context) {
+        String json = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_JSON, null);
+        if (json == null) return null;
+        try {
+            return new JSONObject(json).optJSONArray("catalog");
         } catch (org.json.JSONException e) {
             return null;
         }
@@ -176,9 +199,43 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         if (ids != null && ids.length > 0) provider.onUpdate(context, manager, ids);
     }
 
-    /** One button: the user picks what it does. */
+    /**
+     * One button. Each widget has its own: the user picks it when placing the widget (KoinkWidgetConfigActivity),
+     * so one can open Add expense in Food and another Add income. A widget without a pick (or whose pick no
+     * longer exists, a deleted category) shows the default of Settings > Widgets.
+     */
     public static class Single extends KoinkWidgetProvider {
         @Override protected String kind() { return "single"; }
+
+        @Override
+        protected JSONArray buttons(Context context, int widgetId) {
+            String pick = context.getSharedPreferences(PICKS, Context.MODE_PRIVATE).getString("w" + widgetId, null);
+            JSONArray catalog = catalog(context);
+            if (pick != null && catalog != null) {
+                for (int i = 0; i < catalog.length(); i++) {
+                    JSONObject button = catalog.optJSONObject(i);
+                    if (button != null && pick.equals(button.optString("key"))) {
+                        JSONArray one = new JSONArray();
+                        one.put(button);
+                        return one;
+                    }
+                }
+            }
+            return super.buttons(context, widgetId);
+        }
+
+        @Override
+        public void onDeleted(Context context, int[] ids) {
+            SharedPreferences.Editor edit = context.getSharedPreferences(PICKS, Context.MODE_PRIVATE).edit();
+            for (int id : ids) edit.remove("w" + id);
+            edit.apply();
+        }
+
+        /** Remembers the button picked for one widget and draws it. */
+        static void pick(Context context, int widgetId, String key) {
+            context.getSharedPreferences(PICKS, Context.MODE_PRIVATE).edit().putString("w" + widgetId, key).apply();
+            new Single().onUpdate(context, AppWidgetManager.getInstance(context), new int[] { widgetId });
+        }
     }
 
     /** The buttons the user picks (up to six, three per row from five). */

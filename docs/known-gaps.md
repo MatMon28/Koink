@@ -110,3 +110,10 @@
 - Basic has no screen for a starting balance: the Profile balance is the starting balances of any accounts made in Full plus income minus expenses.
 - The guided tour text still describes Full; the tour always runs in Full.
 - Excel export and backups contain the whole journal in both modes.
+
+## Latest round (hidden categories, "..." tile, recent titles, personal inflation, scroll fade, widgets)
+
+- **Nothing was run in a browser or on a device.** Look first at: the "..." tile and its fold animation in the entry sheet; the recent-titles list opening on focus on a phone (the list is in the page flow, so it pushes the form down rather than floating); the border fade on the sheet body next to the sticky save row (14 px, meant to stay inside its padding), and the clipped shadow of the bottom bar and the chart settings popup while their fade is on.
+- **The Java was not compiled** (no Android SDK here): `KoinkWidgetConfigActivity.java` (programmatic list, dialog theme), the per-widget pick in `KoinkWidgetProvider.Single`, `widget_tray_bg.xml` and the `tray_bg` tint. Try: place two *Koink: Button* widgets and give them different buttons; delete one and add another; reconfigure; resize a Buttons widget and look at the tray.
+- **Personal inflation is an estimate from what is logged.** *Your prices* only sees items whose title is the same in both windows (an untitled entry is not an item); *Your spending* also moves with how much you buy. Entries in a foreign currency count at the amount converted when they were logged. A one-month window is not offered (too noisy).
+- A single-button widget placed before this round has no pick: it keeps showing the Settings default until reconfigured. Hidden categories are not offered in the widget picker (only visible ones).

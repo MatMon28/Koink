@@ -4,12 +4,13 @@ import { actionFor, widgetColumns, widgetRows, widgetShape } from '../lib/widget
 /*
  * A widget button follows the bottom dock of the app: a round pastel button with a small icon (the dock's
  * buttons are circles too), . The tray behind a group of buttons
- * is only a layout box now: it has no fill, border or shadow (the widget background is transparent).
+ * is a semitransparent surface (a lone button has none).
  * A button carries no text: the name is only its tooltip and screen-reader label.
  * Sizes are in px on purpose: they are the dp of the Android widget (res/layout/widget_button.xml).
  *
- * The lone circle of the single-button widget is 48 px (it was 56). A tray has a fully transparent background
- * (it used to be the surface colour at 72 %) and its buttons share the tray's width evenly: the wider the widget
+ * The lone circle of the single-button widget is 48 px; its icon is 24 (md buttons: circle 40, icon 20; they were 20 and 17).
+ * A tray has a semitransparent background (`.kc-widget-tray` in index.css: the surface colour at 70 %, a faint
+ * border; fully transparent in the round before) and its buttons share the tray's width evenly: the wider the widget
  * is made, the more room there is between the buttons (the buttons themselves keep their size). A short
  * last row is centred on the same grid with half-width spacers. KoinkWidgetProvider.java does the same.
  */
@@ -24,7 +25,7 @@ export function WidgetTile({ actionKey, onPress, size = 'md' }: { actionKey: str
       style={{ backgroundColor: action.bg, color: action.fg }}
       className={`${size === 'lg' ? 'size-12' : 'size-10'} shrink-0 rounded-full flex items-center justify-center border border-black/5`}
     >
-      <Icon size={size === 'lg' ? 20 : 17} strokeWidth={2.2} aria-hidden="true" />
+      <Icon size={size === 'lg' ? 24 : 20} strokeWidth={2.2} aria-hidden="true" />
     </span>
   );
   // A tray tile is a slot of at least 48 px that grows with the tray (`grow`): its circle stays in the middle.
