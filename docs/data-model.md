@@ -27,7 +27,7 @@
 
 ## Added: gift cards and widgets
 
-- `GiftCard { id, name, initial, expires?, note? }` in `AppData.giftCards`; `Tx.giftCard?: { id, amount }` (expenses only). Balance = `initial` - sum of `giftCard.amount` of the entries that point at the card (`src/lib/giftcards.ts`). See [features/gift-cards.md](features/gift-cards.md).
+- `GiftCard { id, name, initial, expires?, note?, countAsIncome?, incomeDate?, countAsSpending? }` in `AppData.giftCards` (the last three: whether the value counts as income and on which day, and whether what is paid with the card counts as spending, default yes; see [features/gift-cards.md](features/gift-cards.md)); `Tx.giftCard?: { id, amount }` (expenses only). Balance = `initial` - sum of `giftCard.amount` of the entries that point at the card (`src/lib/giftcards.ts`). See [features/gift-cards.md](features/gift-cards.md).
 - `Settings.widgets: { single: string; multi: string[]; categories: string[]; showInApp: boolean }` with action keys (`expense`, `income`, `saving`, `recurring`, `quick`, `giftcard`, `budgets`, `stats`, `cat:<id>`). Cleaned by `normalizeWidgets` (`src/lib/widgets.ts`) on load and import. See [features/widgets.md](features/widgets.md).
 - `QuickAddKey` gains `giftcard`; `OpenTarget` gains `giftcard`; `Sheet` gains `giftCard` and `widgets`, and `tx` accepts `giftCardId`.
 - Older journals and backups load without these fields: no cards, default widget buttons, gift card button off.

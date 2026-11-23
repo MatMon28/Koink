@@ -1,5 +1,6 @@
 import { addDays, addMonths, daysBetween, daysInMonth, formatMonth, MONTH_SHORT, monthOf, weekStart } from './dates';
 import { round2 } from './format';
+import { countedAmount } from './giftcards';
 import { t } from './i18n';
 import type { Tx } from './types';
 
@@ -34,7 +35,7 @@ export function expenseSeries(txs: Tx[], from: string, to: string, resolution: R
     if (tx.kind !== 'expense' || tx.date < from || tx.date > to || !include(tx)) continue;
     const key = bucketStart(tx.date, resolution);
     const hit = sums.get(key) ?? { total: 0, count: 0 };
-    hit.total += tx.amount;
+    hit.total += countedAmount(tx);
     hit.count += 1;
     sums.set(key, hit);
   }

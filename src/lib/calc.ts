@@ -1,7 +1,7 @@
 import { bucketOf } from './categories';
 import { addDays, addMonths, daysInMonth, monthOf } from './dates';
 import { round2 } from './format';
-import { accountShare } from './giftcards';
+import { accountShare, countedAmount } from './giftcards';
 import type { Account, Goal, Profile, Recurring, Tx } from './types';
 
 export interface MonthTotals {
@@ -38,12 +38,14 @@ export function totalsOf(month: string, items: Tx[]): MonthTotals {
     if (tx.kind === 'income') income += tx.amount;
     else if (tx.kind === 'saving') saved += tx.amount;
     else {
+      // What a gift card paid does not count when that card is set not to count as spending.
+      const amount = countedAmount(tx);
       const bucket = bucketOf(tx.categoryId);
-      if (bucket === 'needs') needs += tx.amount;
-      else if (bucket === 'wants') wants += tx.amount;
-      else other += tx.amount;
+      if (bucket === 'needs') needs += amount;
+      else if (bucket === 'wants') wants += amount;
+      else other += amount;
       const entry = (byCategory[tx.categoryId] ??= { total: 0, count: 0 });
-      entry.total += tx.amount;
+      entry.total += amount;
       entry.count += 1;
     }
   }
@@ -114,7 +116,8 @@ export function budgetSummary(profile: Profile, totals: MonthTotals) {
     categorySpent += totals.byCategory[id]?.total ?? 0;
   }
   const generic = profile.monthlyBudget > 0;
-  const budget = generic ? profile.monthlyBudget : categoryBudget;
+  // The monthly budget is never below the sum of the category budgets (the store keeps it so; this guards old journals).
+  const budget = generic ? Math.max(profile.monthlyBudget, categoryBudget) : categoryBudget;
   const spent = generic ? totals.spent : categorySpent;
   const unbudgetedCategories: UnbudgetedCategory[] = Object.entries(totals.byCategory)
     .filter(([id, entry]) => !(profile.budgets[id] > 0) && entry.total > 0)

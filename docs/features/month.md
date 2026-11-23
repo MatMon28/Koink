@@ -16,14 +16,14 @@ Top to bottom:
 | Income / Spent | `HeroPair` -> `HeroCard` | the two totals, bars scaled against each other, and the balance pill (`income - spent`) on whichever side is larger |
 | Needs / Wants / Savings | `ShareCard` x3 (**no "Needs · Wants · Savings" caption above them any more**; each card names itself) (x4 with a card for your own expense types, *Other types* or the type's name, in a month that has such spending: [categories.md](categories.md#types-besides-needs-and-wants)) | amount, its share of income and the target from the budget rule (`10% / 30%`); a warning triangle when needs or wants pass their target, a check when savings reach theirs. Without income, shares are of everything that went out and no target is shown |
 | Left / Per day / Budget | `NoteCard` x3 | `income - spent - saved`; spending divided by the days elapsed; share of the budgeted amount already used (the **generic monthly budget** from the Profile against everything spent when set, else the category budgets: [budgets.md](budgets.md#generic-monthly-budget)) |
-| Layout switch | inline | Compact / Normal / Expanded, shown as **icons only** (no text; the name is the tooltip and screen-reader label) |
+| Layout switch | inline, **at the right edge** | Compact / Normal / Expanded, shown as small **icons only** (no text; the name is the tooltip and screen-reader label): a 24 px high pill with 14 px icons. Not in Basic mode |
 | Category cards | `FoldCard` (`variant="slot"`) x8 | one per expense category |
 | Widgets | `WidgetStrip` | only when *Show them on the Month page* is on ([widgets.md](widgets.md)); between the month row and the hero cards |
 | Tracker cards | `FoldCard` (`variant="tracker"`) x3, x4 with gift cards | Income, Savings, Recurring, and **Gift cards** once a card exists or its button is on ([gift-cards.md](gift-cards.md)) |
 
 ## Category card
 
-Header: icon, name, `+` (opens Add expense with that category chosen), chevron. Under it the month's total and three numeric pills: number of entries, share of the month's spending, budget left (red pill when over, a dash when the category has no budget). Open, it lists:
+Header: icon, name, `+` (opens Add expense with that category chosen), chevron. Under it the month's total and three numeric pills: number of entries, share of the month's spending, budget left (red pill when over, a dash when the category has no budget). Open, it lists (an empty category only says *Nothing yet*: it has no second *+ Add* button, the **+** in the header is the way to add):
 
 - a budget row with a bar, when a budget is set (tap = budget sheet);
 - each entry (`TxRow`): note, day, amount; tap the text or the pencil to edit, the bin to delete (with Undo in the toast).

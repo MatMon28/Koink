@@ -83,6 +83,8 @@ Written together with the PWA / Android / gestures round. Checked against the tr
 
 **UI / UX coherence round (audit, no code change):** new root file `guide to UI UX fixes.md` (28 findings at commit `cb7512a`, the standard, rules for future features); this file, the root README, `design-system.md`, `known-gaps.md`, `file-map/config-scripts-public.md` and `changes-patch.md` updated. Checked: every file and line the guide names exists at `cb7512a`. Nothing was run; no source file changed.
 
+**Latest round (gift card counting + icon, glassier widgets, inflation settings, new Budgets page):** `features/gift-cards.md`, `features/budgets.md` (rewritten), `features/statistics.md`, `features/widgets.md`, `features/month.md`, `features/categories.md`, `features/basic-mode.md`, `data-model.md`, `known-gaps.md`, `changes-patch.md`, `file-map/{sheets,components,lib}.md`.
+
 **Basic-mode round (Basic / Full mode, first-launch chooser, five default categories):** new document `features/basic-mode.md`; month, transactions, statistics, settings, categories, profile, accounts, data-model, known-gaps, verification, changes-patch, the lib / components file maps and the root README updated. Checked: `tsc -b` and `vite build` pass; not run in a browser.
 
 **Kakcal-features round (launch animation, page rail, reminders, Ultra minimal, sheet behaviour):** new documents `notifications.md`, `launch-intro.md`, `motion.md`, `features/ultra-minimal.md`; `gestures.md` rewritten; architecture, data-model, design-system, pwa, android, brand, prepare-apps, the feature documents and every file map updated. Checked: paths in the docs exist, storage keys and constants quoted match the source. What was run is in [verification.md](verification.md); Android was again not compiled.

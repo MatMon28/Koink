@@ -13,7 +13,7 @@ export interface ExpenseCategory {
 
 /**
  * Needs first, then wants: the order of the cards on the Month page.
- * The five **default** categories are House, Food, Health, Fun and Others (`DEFAULT_HIDDEN_CATEGORIES`
+ * The six **default** categories are House, Food, Fun, Health, Eating out and Others (`DEFAULT_HIDDEN_CATEGORIES`
  * hides the rest in a new journal). The ids of the older ones are kept, so no entry loses its category.
  */
 export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
@@ -32,7 +32,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
  * Built-in categories that are off in a new journal (and after *Delete all data*). They are still there:
  * Settings > Expense categories shows them again, and an existing journal keeps its own choice.
  */
-export const DEFAULT_HIDDEN_CATEGORIES: string[] = ['transport', 'bills', 'eating_out', 'shopping'];
+export const DEFAULT_HIDDEN_CATEGORIES: string[] = ['transport', 'bills', 'shopping'];
 
 export interface IncomeSource {
   id: string;

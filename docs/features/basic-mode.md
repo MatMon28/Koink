@@ -48,7 +48,7 @@ Not changed on purpose: Excel export and backups always hold the whole journal (
 
 ## Default categories
 
-The five default expense categories are **House, Food, Health, Fun, Others** ([categories.md](categories.md)); the other built-in ones (Transport, Bills, Eating out, Shopping) are hidden in a new journal and can be shown again in Settings > Expense categories. This applies to both modes.
+The six default expense categories are **House, Food, Fun, Health, Eating out, Others** ([categories.md](categories.md)); the other built-in ones (Transport, Bills, Shopping) are hidden in a new journal and can be shown again in Settings > Expense categories. This applies to both modes.
 
 ## Adding something new
 

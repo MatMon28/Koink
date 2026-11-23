@@ -9,7 +9,7 @@ import { actionFor, widgetColumns, widgetRows, widgetShape } from '../lib/widget
  * Sizes are in px on purpose: they are the dp of the Android widget (res/layout/widget_button.xml).
  *
  * The lone circle of the single-button widget is 48 px; its icon is 24 (md buttons: circle 40, icon 20; they were 20 and 17).
- * A tray has a semitransparent background (`.kc-widget-tray` in index.css: the surface colour at 70 %, a faint
+ * A tray has a semitransparent background (`.kc-widget-tray` in index.css: the surface colour at 48 %, 65 % when dark, a faint
  * border; fully transparent in the round before) and its buttons share the tray's width evenly: the wider the widget
  * is made, the more room there is between the buttons (the buttons themselves keep their size). A short
  * last row is centred on the same grid with half-width spacers. KoinkWidgetProvider.java does the same.

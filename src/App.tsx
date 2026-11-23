@@ -29,7 +29,8 @@ import { AccountSheet } from './sheets/AccountSheet';
 import { CategoriesSheet } from './sheets/CategoriesSheet';
 import { GiftCardSheet } from './sheets/GiftCardSheet';
 import { GiftCardPickerSheet } from './sheets/GiftCardPickerSheet';
-import { BudgetSheet, GoalSheet, RecurringEditSheet } from './sheets/EditSheets';
+import { GoalSheet, RecurringEditSheet } from './sheets/EditSheets';
+import { BudgetSheet, MonthlyBudgetSheet } from './sheets/BudgetSheets';
 import { ProfileSheet } from './sheets/ProfileSheet';
 import { QuickSheet, RecurringSheet } from './sheets/QuickSheet';
 import { SettingsSheet } from './sheets/SettingsSheet';
@@ -60,7 +61,8 @@ function QuickAddBar({ show }: { show: boolean }) {
   if (quick.saving) {
     actions.push({
       id: 'saving',
-      icon: <PigIcon />,
+      // The pig is drawn inside its 24 px box with air around it: 27 px (the other dock icons are 22) makes it as big as they look.
+      icon: <PigIcon style={{ width: 27, height: 27 }} />,
       tone: 'bg-weight text-weight-ink',
       label: 'Move to savings',
       onClick: () => openSheet(data.goals.length ? { type: 'tx', kind: 'saving' } : { type: 'goal' }),
@@ -216,6 +218,7 @@ function Shell() {
       <RecurringEditSheet />
       <GoalSheet />
       <BudgetSheet />
+      <MonthlyBudgetSheet />
       <AccountSheet />
       <GiftCardSheet />
       <GiftCardPickerSheet />

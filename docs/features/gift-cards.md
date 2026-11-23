@@ -10,7 +10,8 @@
 
 - `GiftCard { id, name, initial, expires?, note? }`, stored in `AppData.giftCards`. A card has **no stored balance**: what is left is `initial` minus every expense paid with it.
 - An expense paid with a card carries `Tx.giftCard = { id, amount }`: how much of the entry the card covered (journal currency).
-- The expense still counts in the month's spending, its category and its budget: the gift card is *how it was paid*, not a refund.
+- By default the expense still counts in the month's spending, its category and its budget: the gift card is *how it was paid*, not a refund. Each card can change this (next section).
+- `GiftCard.countAsIncome?`, `incomeDate?`, `countAsSpending?` (all optional; an older journal has none = value not income, payments counted as spending).
 
 ## Paying with a gift card
 
@@ -19,6 +20,21 @@ In *Add expense* / *Edit expense*, **Pay with a gift card** lists the cards that
 For accounts, only the part not covered by the card moved through the account (`accountShare` in `giftcards.ts`, used by `accountBalance`).
 
 Deleting a gift card keeps the entries; they lose the link and count as paid the normal way again. Deleting an entry returns its amount to the card.
+
+## What counts as income and spending (per card)
+
+In the card's sheet, **How it counts** has two switches:
+
+| Switch | Off (default for the first) | On |
+| --- | --- | --- |
+| **Count its value as income** (`countAsIncome`, with **Counts as income on** = `incomeDate`) | The card is not money you earned: nothing is added to income. | The card's value is added to income on that day. `giftCardIncomeTxs()` makes one income entry (`id` `gcin_<cardId>`, category *Gift*, title = the card's name, **never stored**); the store puts it in `txs`, so it shows in Transactions and the Month Income tracker and counts in every income total, balance trend and the Profile balance. Tapping it opens the card; it has the gift icon and no delete button. |
+| **Count what I pay with it as spending** (`countAsSpending`, on by default) | The part of an expense the card paid (`Tx.giftCard.amount`) is left out of spending: month totals, Needs / Wants shares, category totals and budgets, *Expenses over time* and the balance trend. The entry stays in the lists with its full amount and the gift icon. | As before. |
+
+`countedAmount(tx)` in `giftcards.ts` is the one function behind the spending side; `totalsOf` (`calc.ts`), `expenseSeries`, the balance trend (`StatsView`), the Profile balance and the Transactions page figures use it. The cards reach those plain functions through `syncGiftCards()` (like `syncCategories`), called by the store. **Basic mode** syncs no cards (gift cards do not exist there), so its totals are unchanged. Account balances are not affected by either switch (an account only ever moves for the part not paid by the card). The Excel export reads the stored entries, so it does not list the income made from a card's value and its totals do apply the spending switch.
+
+## The gift icon
+
+An expense with `Tx.giftCard` shows a small gift icon next to its category in the Transactions list (`EntryRow`) and in the entries of an open Month card (`TxRow` in `cards.tsx`, in the line with the day). The income entry made from a card's value shows it too.
 
 ## Where cards are managed
 
@@ -32,7 +48,7 @@ Deleting a gift card keeps the entries; they lose the link and count as paid the
 
 ## Files
 
-`src/lib/giftcards.ts` (maths, no JSX), `src/sheets/GiftCardSheet.tsx`, `store.tsx` (`saveGiftCard`, `removeGiftCard`, sanitising of `giftCards` and `Tx.giftCard`), `TxSheet.tsx`, `MonthView.tsx`, `App.tsx` (dock button).
+`src/lib/giftcards.ts` (maths and counting, no JSX), `src/sheets/GiftCardSheet.tsx`, `store.tsx` (`saveGiftCard`, `removeGiftCard`, sanitising of `giftCards` and `Tx.giftCard`), `TxSheet.tsx`, `MonthView.tsx`, `App.tsx` (dock button).
 
 ## The button (changed)
 

@@ -493,10 +493,14 @@ html[data-ultra='true'] .um-stack > :not(:last-child) { margin-block-end: 0.625r
   mask-image: linear-gradient(to right, transparent 0, #000 var(--fade-start), #000 calc(100% - var(--fade-end)), transparent 100%);
 }
 
-/* The tray behind several widget buttons in the app: the dock's surface at 70 %, not fully transparent. */
+/* The tray behind several widget buttons in the app: as see-through as the Kakcal widgets (the surface at 48 %,
+   65 % on the dark themes), with a faint border. Keep in step with TRAY_ALPHA in KoinkWidgetProvider.java. */
 .kc-widget-tray {
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background: color-mix(in srgb, var(--surface) 48%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
+}
+[data-theme="lite-dark"] .kc-widget-tray, [data-theme="dark"] .kc-widget-tray {
+  background: color-mix(in srgb, var(--surface) 65%, transparent);
 }
 
 /* ---- Page pill: BEGIN (Tabs.tsx). One sliding indicator, positioned and coloured by the pill position ---- */

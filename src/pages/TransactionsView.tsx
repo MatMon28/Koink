@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ICON } from '../lib/icons';
-import { Receipt, Columns2, LayoutList, Repeat, Search, SlidersHorizontal, StickyNote, Trash2, X } from 'lucide-react';
+import { Receipt, Columns2, Gift, LayoutList, Repeat, Search, SlidersHorizontal, StickyNote, Trash2, X } from 'lucide-react';
 import { categoryMeta } from '../lib/categories';
 import { formatDay, formatMonth, monthOf } from '../lib/dates';
 import { formatMoney, round2 } from '../lib/format';
+import { countedAmount, giftCardOfIncome, isGiftCardIncome } from '../lib/giftcards';
 import { Button, DateField, KeyIcon, SectionLabel, pillGroup, pillItem, textInput } from '../components/ui';
 import { useApp } from '../lib/store';
 import type { Kind, Tx } from '../lib/types';
@@ -73,11 +74,19 @@ function EntryRow({ tx, narrow = false }: { tx: Tx; narrow?: boolean }) {
   const amountText = tx.kind === 'income' ? `+${amount}` : tx.kind === 'expense' ? `-${amount}` : amount;
   const amountTone = tx.kind === 'income' ? 'text-[var(--intake-on-surface)]' : tx.kind === 'saving' ? 'text-[var(--weight-on-surface)]' : 'text-[var(--text)]';
   const foreign = tx.foreign ? formatMoney(tx.foreign.amount, tx.foreign.currency, { cents: true }) : null;
+  // A gift icon marks an expense paid (partly) with a gift card. An income entry made from a card's value
+  // (see giftcards.ts) opens the card, not the entry sheet, and cannot be deleted from here.
+  const fromCard = isGiftCardIncome(tx);
+  const giftMark = tx.giftCard || fromCard ? (
+    <span className="shrink-0 inline-flex text-[var(--muted)]" title={fromCard ? t('Value of a gift card') : t('Paid with a gift card')}>
+      <Gift size={ICON.mark} strokeWidth={2.5} aria-label={fromCard ? t('Value of a gift card') : t('Paid with a gift card')} />
+    </span>
+  ) : null;
   return (
     <div className="flex items-center rounded-2xl hover:bg-[var(--inset)] transition-colors">
       <button
         type="button"
-        onClick={() => openSheet({ type: 'tx', kind: tx.kind, editId: tx.id })}
+        onClick={() => openSheet(fromCard ? { type: 'giftCard', id: giftCardOfIncome(tx) } : { type: 'tx', kind: tx.kind, editId: tx.id })}
         className={`pressable pressable-soft min-w-0 flex-1 flex rounded-2xl text-left ${narrow ? 'flex-col items-start gap-0.5 pl-2.5 pr-1 py-2' : 'items-center gap-2.5 pl-2.5 pr-1 py-2'}`}
       >
         {!narrow && (
@@ -90,6 +99,7 @@ function EntryRow({ tx, narrow = false }: { tx: Tx; narrow?: boolean }) {
           <span className="text-xs sm:text-sm font-bold text-[var(--text)] truncate flex items-center gap-1">
             {tx.recurringId && <Repeat size={ICON.mark} strokeWidth={2.5} aria-label={t('Recurring')} className="shrink-0 text-[var(--muted)]" />}
             <span className="truncate">{meta.name}</span>
+            {giftMark}
             {!tx.note && noteMark}
           </span>
           {/* 2. the title, below the category */}
@@ -112,7 +122,7 @@ function EntryRow({ tx, narrow = false }: { tx: Tx; narrow?: boolean }) {
           {foreign && <span className="um-hide block text-[10px] font-bold text-[var(--muted)]">{foreign}</span>}
         </span>
       </button>
-      <button
+      {fromCard ? <span className={narrow ? 'mr-0.5 size-8' : 'mr-1 size-9'} aria-hidden="true" /> : <button
         type="button"
         onClick={() => removeTx(tx.id)}
         className={`pressable shrink-0 rounded-full text-[var(--muted)] hover:text-danger-ink hover:bg-danger flex items-center justify-center ${narrow ? 'mr-0.5 size-8' : 'mr-1 size-9'}`}
@@ -120,7 +130,7 @@ function EntryRow({ tx, narrow = false }: { tx: Tx; narrow?: boolean }) {
         aria-label={t('Delete {title}', { title })}
       >
         <Trash2 size={narrow ? 14 : 15} />
-      </button>
+      </button>}
     </div>
   );
 }
@@ -225,7 +235,7 @@ export function TransactionsView() {
       }
       group.items.push(tx);
       if (tx.kind === 'income') group.net += tx.amount;
-      else if (tx.kind === 'expense') group.net -= tx.amount;
+      else if (tx.kind === 'expense') group.net -= countedAmount(tx);
     }
     return out;
   }, [filtered]);
@@ -235,7 +245,7 @@ export function TransactionsView() {
     let outSum = 0;
     for (const tx of filtered) {
       if (tx.kind === 'income') inSum += tx.amount;
-      else if (tx.kind === 'expense') outSum += tx.amount;
+      else if (tx.kind === 'expense') outSum += countedAmount(tx);
     }
     return { in: round2(inSum), out: round2(outSum) };
   }, [filtered]);

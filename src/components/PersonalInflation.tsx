@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ICON } from '../lib/icons';
-import { ChevronDown, TrendingUp } from 'lucide-react';
+import { ChevronDown, Search, SlidersHorizontal, TrendingUp, X } from 'lucide-react';
+import { ChartPopup } from './ChartPopup';
 import { allExpenseCategories, expenseCategory } from '../lib/categories';
 import { currentMonth, formatDay, formatMonth } from '../lib/dates';
 import { inflationCandidates, inflationTrend, personalInflation, type InflationBase, type InflationOptions, type InflationWindow } from '../lib/inflation';
@@ -38,7 +39,8 @@ export function PersonalInflation() {
   const [base, setBase] = usePersistentState<InflationBase>('koink_inflation_base', 'year');
   const [metric, setMetric] = useState<Metric>('prices');
   const [categoryId, setCategoryId] = useState('');
-  const [picking, setPicking] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [query, setQuery] = useState('');
 
   const locale = data.settings.language === 'it' ? 'it-IT' : 'en-US';
   const pct = (value: number | null) => (value == null ? '–' : `${(value * 100).toLocaleString(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' })}%`);
@@ -59,7 +61,27 @@ export function PersonalInflation() {
   );
   const result = useMemo(() => personalInflation(opts), [opts]);
   const trend = useMemo(() => inflationTrend(opts, 12), [opts]);
-  const candidates = useMemo(() => (picking ? inflationCandidates(opts).slice(0, 60) : []), [picking, opts]);
+  // The expenses of both periods, listed in the settings popup only. A search narrows them by title, category, date or amount;
+  // the ones already left out come first, so they are easy to bring back.
+  const candidates = useMemo(() => {
+    if (!settingsOpen) return [];
+    const needle = query.trim().toLowerCase();
+    const list = inflationCandidates(opts).filter((tx) => {
+      if (!needle) return true;
+      const haystack = `${tx.note} ${nameOf(tx.categoryId) ?? ''} ${tx.date} ${formatDay(tx.date, false)} ${tx.amount}`.toLowerCase();
+      return needle.split(/\s+/).every((word) => haystack.includes(word));
+    });
+    return [...list.filter((tx) => excluded.has(tx.id)), ...list.filter((tx) => !excluded.has(tx.id))];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settingsOpen, opts, query, excluded]);
+  const changed = months !== 12 || base !== 'year' || scope !== '' || excluded.size > 0;
+  const reset = () => {
+    setMonths(12);
+    setBase('year');
+    setCategoryId('');
+    setQuery('');
+    updateSettings({ inflationExcluded: [] });
+  };
 
   const headline = result[metric] ?? result.spending;
   const peak = Math.max(0.05, ...trend.map((point) => Math.abs(point[metric] ?? 0)));
@@ -91,37 +113,32 @@ export function PersonalInflation() {
 
   return (
     <div className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-4 sm:p-5">
-      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="w-full flex items-center justify-between gap-2 text-left">
-        <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
-          <TrendingUp size={ICON.md} className="text-[var(--muted)]" aria-hidden="true" />
-          {t('Personal inflation')}
-        </h3>
-        <span className="flex items-center gap-2 tabular-nums">
-          <span className={`text-xs font-extrabold ${tone(headline)}`}>{enough ? pct(headline) : '–'}</span>
-          <ChevronDown size={ICON.md} className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
-        </span>
-      </button>
+      <div className="flex items-center gap-1">
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="min-w-0 flex-1 flex items-center justify-between gap-2 text-left">
+          <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">
+            <TrendingUp size={ICON.md} className="text-[var(--muted)]" aria-hidden="true" />
+            {t('Personal inflation')}
+          </h3>
+          <span className="flex items-center gap-2 tabular-nums">
+            <span className={`text-xs font-extrabold ${tone(headline)}`}>{enough ? pct(headline) : '–'}</span>
+            <ChevronDown size={ICON.md} className={`text-[var(--muted)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+          </span>
+        </button>
+        {/* Same button as in Expenses over time: the options live in a popup */}
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          aria-label={t('Inflation settings')}
+          title={t('Inflation settings')}
+          className="pressable size-8 shrink-0 rounded-full text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)] flex items-center justify-center"
+        >
+          <SlidersHorizontal size={ICON.md} aria-hidden="true" />
+        </button>
+      </div>
 
       <div className="accordion-grid" data-open={open} inert={!open}>
         <div className="accordion-inner">
           <div className="space-y-3.5 pt-3.5">
-            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('Period')}>
-              {WINDOWS.map((n) => (
-                <button key={n} type="button" aria-pressed={months === n} onClick={() => setMonths(n)} className={chip(months === n)}>{t('{n} mo', { n })}</button>
-              ))}
-              <span className="w-px self-stretch bg-[var(--border)]" aria-hidden="true" />
-              {BASES.map((item) => (
-                <button key={item.id} type="button" aria-pressed={base === item.id} onClick={() => setBase(item.id)} className={chip(base === item.id)}>{t(item.label)}</button>
-              ))}
-            </div>
-
-            <div data-scroll-fade="x" className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1" role="group" aria-label={t('Category')}>
-              <button type="button" aria-pressed={scope === ''} onClick={() => setCategoryId('')} className={chip(scope === '')}>{t('All expenses')}</button>
-              {categories.map((c) => (
-                <button key={c.id} type="button" aria-pressed={scope === c.id} onClick={() => setCategoryId(c.id)} className={chip(scope === c.id)}>{t(c.name)}</button>
-              ))}
-            </div>
-
             {!enough ? (
               <p className="rounded-2xl bg-[var(--inset)] p-3 text-xs font-bold text-[var(--muted)]">
                 {t('Not enough history yet: there are no expenses between {from} and {to} to compare with.', { from: formatMonth(result.before.from, 'short'), to: formatMonth(result.before.to, 'short') })}
@@ -178,53 +195,84 @@ export function PersonalInflation() {
               </>
             )}
 
-            <div className="rounded-2xl border border-[var(--border)]">
-              <button type="button" onClick={() => setPicking(!picking)} aria-expanded={picking} className="pressable flex w-full items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-left">
-                <span className="text-xs font-extrabold text-[var(--text)]">{t('Leave expenses out')}</span>
-                <span className="flex items-center gap-2 text-[11px] font-extrabold text-[var(--muted)]">
-                  {excluded.size > 0 ? t('{n} left out', { n: excluded.size }) : t('None')}
-                  <ChevronDown size={ICON.sm} className={`transition-transform ${picking ? 'rotate-180' : ''}`} aria-hidden="true" />
-                </span>
-              </button>
-              <div className="accordion-grid" data-open={picking} inert={!picking}>
-                <div className="accordion-inner">
-                  <div className="space-y-2 px-3 pb-3">
-                    <p className="text-[11px] font-medium text-[var(--muted)]">{t('One-offs (a holiday, a repair) distort the figure. Tap an expense to leave it out of the calculation; the biggest of both periods are listed.')}</p>
-                    {candidates.length === 0 ? (
-                      <p className="text-[11px] font-bold text-[var(--muted)]">{t('No expenses in these periods.')}</p>
-                    ) : (
-                      <ul data-scroll-fade="y" className="max-h-64 divide-y divide-[var(--border)] overflow-y-auto overscroll-contain rounded-xl border border-[var(--border)] bg-[var(--inset)]" aria-label={t('Expenses')}>
-                        {candidates.map((tx) => {
-                          const off = excluded.has(tx.id);
-                          return (
-                            <li key={tx.id}>
-                              <button type="button" role="checkbox" aria-checked={off} onClick={() => toggle(tx.id)} className="pressable flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-[var(--hover)]">
-                                <span className={`min-w-0 ${off ? 'opacity-50' : ''}`}>
-                                  <span className={`block truncate text-xs font-extrabold text-[var(--text)] ${off ? 'line-through' : ''}`}>{tx.note || t(nameOf(tx.categoryId) ?? '')}</span>
-                                  <span className="block truncate text-[11px] font-bold text-[var(--muted)]">{t(nameOf(tx.categoryId) ?? '')} · {formatDay(tx.date, false)}</span>
-                                </span>
-                                <span className="flex shrink-0 items-center gap-2">
-                                  <span className={`text-xs font-extrabold tabular-nums text-[var(--text)] ${off ? 'line-through opacity-50' : ''}`}>{money(tx.amount, { cents: true })}</span>
-                                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${off ? 'border-[var(--text)] bg-[var(--text)] text-[var(--on-text)]' : 'border-[var(--border)] text-[var(--muted)]'}`}>{off ? t('Left out') : t('Counted')}</span>
-                                </span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                    {excluded.size > 0 && (
-                      <button type="button" onClick={() => updateSettings({ inflationExcluded: [] })} className="pressable text-[11px] font-extrabold text-[var(--muted)] hover:text-[var(--text)]">
-                        {t('Count all expenses again')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
+
+      <ChartPopup open={settingsOpen} onClose={() => setSettingsOpen(false)} title={t('Inflation settings')} onReset={reset} resetDisabled={!changed}>
+        <div className="space-y-3.5">
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t('Period')}>
+              {WINDOWS.map((n) => (
+                <button key={n} type="button" aria-pressed={months === n} onClick={() => setMonths(n)} className={chip(months === n)}>{t('{n} mo', { n })}</button>
+              ))}
+              <span className="w-px self-stretch bg-[var(--border)]" aria-hidden="true" />
+              {BASES.map((item) => (
+                <button key={item.id} type="button" aria-pressed={base === item.id} onClick={() => setBase(item.id)} className={chip(base === item.id)}>{t(item.label)}</button>
+              ))}
+            </div>
+
+            <div data-scroll-fade="x" className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1" role="group" aria-label={t('Category')}>
+              <button type="button" aria-pressed={scope === ''} onClick={() => setCategoryId('')} className={chip(scope === '')}>{t('All expenses')}</button>
+              {categories.map((c) => (
+                <button key={c.id} type="button" aria-pressed={scope === c.id} onClick={() => setCategoryId(c.id)} className={chip(scope === c.id)}>{t(c.name)}</button>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('Leave expenses out')}</span>
+                <span className="text-[11px] font-extrabold text-[var(--muted)]">{excluded.size > 0 ? t('{n} left out', { n: excluded.size }) : t('None')}</span>
+              </div>
+              <p className="text-[11px] font-medium text-[var(--muted)]">{t('One-offs (a holiday, a repair) distort the figure. Search for an expense and tap it to leave it out of the calculation.')}</p>
+              <div className="relative">
+                <Search size={ICON.md} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" aria-hidden="true" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={t('Search an expense: title, category, amount')}
+                  aria-label={t('Search an expense')}
+                  autoComplete="off"
+                  className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--inset)] pl-9 pr-9 text-xs font-bold text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--text)]"
+                />
+                {query && (
+                  <button type="button" onClick={() => setQuery('')} aria-label={t('Clear the search')} className="pressable absolute right-1.5 top-1/2 -translate-y-1/2 size-7 rounded-full text-[var(--muted)] hover:text-[var(--text)] flex items-center justify-center">
+                    <X size={ICON.md} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              {candidates.length === 0 ? (
+                <p className="text-[11px] font-bold text-[var(--muted)]">{query.trim() ? t('No expense matches your search.') : t('No expenses in these periods.')}</p>
+              ) : (
+                <ul data-scroll-fade="y" className="max-h-64 divide-y divide-[var(--border)] overflow-y-auto overscroll-contain rounded-xl border border-[var(--border)] bg-[var(--inset)]" aria-label={t('Expenses')}>
+                  {candidates.slice(0, 60).map((tx) => {
+                    const off = excluded.has(tx.id);
+                    return (
+                      <li key={tx.id}>
+                        <button type="button" role="checkbox" aria-checked={off} onClick={() => toggle(tx.id)} className="pressable flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-[var(--hover)]">
+                          <span className={`min-w-0 ${off ? 'opacity-50' : ''}`}>
+                            <span className={`block truncate text-xs font-extrabold text-[var(--text)] ${off ? 'line-through' : ''}`}>{tx.note || t(nameOf(tx.categoryId) ?? '')}</span>
+                            <span className="block truncate text-[11px] font-bold text-[var(--muted)]">{t(nameOf(tx.categoryId) ?? '')} · {formatDay(tx.date, false)}</span>
+                          </span>
+                          <span className="flex shrink-0 items-center gap-2">
+                            <span className={`text-xs font-extrabold tabular-nums text-[var(--text)] ${off ? 'line-through opacity-50' : ''}`}>{money(tx.amount, { cents: true })}</span>
+                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${off ? 'border-[var(--text)] bg-[var(--text)] text-[var(--on-text)]' : 'border-[var(--border)] text-[var(--muted)]'}`}>{off ? t('Left out') : t('Counted')}</span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {candidates.length > 60 && <p className="text-[11px] font-bold text-[var(--muted)]">{t('Showing 60 of {n}. Type more to narrow the list.', { n: candidates.length })}</p>}
+              {excluded.size > 0 && (
+                <button type="button" onClick={() => updateSettings({ inflationExcluded: [] })} className="pressable text-[11px] font-extrabold text-[var(--muted)] hover:text-[var(--text)]">
+                  {t('Count all expenses again')}
+                </button>
+              )}
+            </div>
+        </div>
+      </ChartPopup>
     </div>
   );
 }

@@ -1,12 +1,12 @@
 import { useMemo, type ReactNode } from 'react';
 import { ICON } from '../lib/icons';
-import { ChevronDown, ChevronRight, CircleHelp, Hourglass, ListChecks, Plus, ShieldCheck, Target } from 'lucide-react';
+import { ChevronDown, ChevronRight, CircleHelp, Hourglass, Plus, ShieldCheck, Target, TriangleAlert } from 'lucide-react';
 import { HeroPair, NoteCard } from '../components/cards';
 import { MonthNavigator } from '../components/MonthNavigator';
 import { RecurringRow } from '../components/RecurringRow';
 import { Bar } from '../components/ui';
 import { budgetSummary, goalSaved, monthTotals, recurringSlots } from '../lib/calc';
-import { allBuckets, allExpenseCategories, bucketLabel, expenseCategory, isCategoryHidden } from '../lib/categories';
+import { allBuckets, allExpenseCategories, bucketLabel } from '../lib/categories';
 import { currentMonth, daysInMonth, elapsedDays } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
 import { useApp } from '../lib/store';
@@ -24,19 +24,21 @@ const BUCKET_BAR: Record<string, { track: string; fill: string; dot: string }> =
 
 /**
  * A card of the Budgets page that folds shut: tap the header (or the chevron). Open or closed is
- * remembered per card (`koink_budgets_open_<id>`). The + button stays usable while folded.
+ * remembered per card (`koink_budgets_open_<id>`). Every card has the same header: the title with a line under it
+ * (`subtitle`: the budget of the type, what is saved...), at the right the fold arrow and, next to it, the + button
+ * (`onAdd`), which stays usable while the card is folded.
  */
-function SectionCard({ id, title, aside, children, onAdd, addLabel }: { id: string; title: ReactNode; aside?: ReactNode; children: ReactNode; onAdd?: () => void; addLabel?: string }) {
+function SectionCard({ id, title, subtitle, children, onAdd, addLabel }: { id: string; title: ReactNode; subtitle?: ReactNode; children: ReactNode; onAdd?: () => void; addLabel?: string }) {
   const [open, setOpen] = usePersistentState(`koink_budgets_open_${id}`, true);
   return (
     <section className="kc-themed-card bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-4 sm:p-5">
       <div className="flex items-center justify-between gap-2 min-h-8">
         <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="min-w-0 flex-1 flex items-center justify-between gap-2 text-left">
-          <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">{title}</h3>
-          <span className="flex items-center gap-2">
-            {aside}
-            <ChevronDown size={ICON.md} className={`text-[var(--muted)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+          <span className="min-w-0">
+            <h3 className="flex items-center gap-2 text-sm font-extrabold text-[var(--text)]">{title}</h3>
+            {subtitle && <span className="block text-xs font-bold tabular-nums text-[var(--muted)] mt-0.5 truncate">{subtitle}</span>}
           </span>
+          <ChevronDown size={ICON.md} className={`shrink-0 text-[var(--muted)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
         </button>
         {onAdd && (
           <button
@@ -69,62 +71,74 @@ export function BudgetsView() {
   const unbudgeted = summary.unbudgeted;
   const safePerDay = summary.budget > 0 && daysLeft > 0 ? Math.max(0, summary.left) / daysLeft : null;
 
+  // What the Savings goals card says under its title: everything moved to goals, and the targets.
+  const goalsSaved = round2(data.goals.reduce((sum, goal) => sum + goalSaved(data.txs, goal), 0));
+  const goalsTarget = round2(data.goals.reduce((sum, goal) => sum + (goal.target > 0 ? goal.target : 0), 0));
+
   const bucketCard = (bucket: Bucket) => {
-    // Hidden categories stay here only while they still carry spending or a budget.
-    const categories = allExpenseCategories().filter((c) => c.bucket === bucket && (!isCategoryHidden(c.id) || (totals.byCategory[c.id]?.total ?? 0) > 0 || (data.profile.budgets[c.id] ?? 0) > 0));
-    const spent = round2(categories.reduce((sum, c) => sum + (totals.byCategory[c.id]?.total ?? 0), 0));
+    // A card lists the categories of its type that have a budget (a hidden category too, once it has one). The + sets
+    // a budget for another one. Spending in a category without a budget is the Unbudgeted figure above.
+    const all = allExpenseCategories().filter((c) => c.bucket === bucket);
+    const categories = all.filter((c) => (data.profile.budgets[c.id] ?? 0) > 0);
     const limit = round2(categories.reduce((sum, c) => sum + (data.profile.budgets[c.id] ?? 0), 0));
     const tone = BUCKET_BAR[bucket] ?? BUCKET_BAR.other;
     // Needs and wants always have a card; one of your own types only once it holds a category.
-    if (categories.length === 0 && bucket !== 'needs' && bucket !== 'wants') return null;
+    if (all.length === 0 && bucket !== 'needs' && bucket !== 'wants') return null;
     return (
       <SectionCard
         key={bucket}
         id={`bucket_${bucket}`}
         title={<><span className={`size-2.5 rounded-full border ${tone.dot}`} aria-hidden="true" />{bucketLabel(bucket)}</>}
-        aside={<span className="text-xs font-bold tabular-nums text-[var(--muted)]">{money(spent)}{limit > 0 && ` of ${money(limit)}`}</span>}
+        subtitle={limit > 0 ? money(limit) : t('No budget yet')}
+        onAdd={() => openSheet({ type: 'budget', bucket })}
+        addLabel={t('Set a budget for {name}', { name: bucketLabel(bucket) })}
       >
-        <div className="space-y-2">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            const total = totals.byCategory[category.id]?.total ?? 0;
-            const budget = data.profile.budgets[category.id] ?? 0;
-            const over = budget > 0 && total > budget;
-            return (
-              <button
-                key={category.id}
-                type="button"
-                onClick={() => openSheet({ type: 'budget', categoryId: category.id })}
-                className="pressable pressable-soft w-full text-left p-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] space-y-2 group"
-                aria-label={t('{name}: {v}{v2}. Change budget', { name: category.name, v: money(total), v2: budget > 0 ? t(' of {v}', { v: money(budget) }) : t(', no budget') })}
-              >
-                <span className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 min-w-0">
-                    <Icon size={ICON.md} strokeWidth={2.5} className="kc-meal-icon shrink-0 text-[var(--text)]" aria-hidden="true" />
-                    <span className="text-xs sm:text-sm font-extrabold text-[var(--text)] truncate">{category.name}</span>
+        {categories.length === 0 ? (
+          <p className="um-hide kc-section-empty text-xs font-medium text-[var(--muted)] pb-1">{t('Press + to set the budget of a category.')}</p>
+        ) : (
+          <div className="space-y-2">
+            {categories.map((category) => {
+              const Icon = category.icon;
+              const total = totals.byCategory[category.id]?.total ?? 0;
+              const budget = data.profile.budgets[category.id] ?? 0;
+              const over = total > budget;
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => openSheet({ type: 'budget', categoryId: category.id })}
+                  className="pressable pressable-soft w-full text-left p-3 rounded-2xl bg-[var(--inset)] hover:bg-[var(--hover)] space-y-2 group"
+                  aria-label={t('{name}: {v}{v2}. Change budget', { name: category.name, v: money(total), v2: t(' of {v}', { v: money(budget) }) })}
+                >
+                  {/* name at the left; the budget and an arrow (tap to change it) at the right */}
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <Icon size={ICON.md} strokeWidth={2.5} className="kc-meal-icon shrink-0 text-[var(--text)]" aria-hidden="true" />
+                      <span className="text-xs sm:text-sm font-extrabold text-[var(--text)] truncate">{category.name}</span>
+                    </span>
+                    <span className="flex items-center gap-1 tabular-nums shrink-0">
+                      <span className="text-xs sm:text-sm font-extrabold text-[var(--text)]">{money(budget)}</span>
+                      <ChevronRight size={ICON.md} className="text-[var(--muted)] group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
+                    </span>
                   </span>
-                  <span className="flex items-center gap-1.5 tabular-nums shrink-0">
-                    {budget > 0 ? (
-                      <>
-                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold ${over ? 'bg-activity text-activity-ink' : 'bg-intake text-intake-ink'}`}>
-                          {over ? t('{v} over', { v: money(total - budget) }) : t('{v} left', { v: money(budget - total) })}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-[11px] font-bold text-[var(--muted)]">{t('Set a budget')}</span>
-                    )}
-                    <ChevronRight size={ICON.md} className="text-[var(--muted)] group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
+                  {/* spent / budget at the left, the percentage at the right */}
+                  <span className="flex items-center justify-between text-[11px] tabular-nums">
+                    <span className="font-extrabold text-[var(--text)]">{money(total, { cents: true })} <span className="font-bold text-[var(--muted)]">/ {money(budget)}</span></span>
+                    <span className={`font-extrabold ${over ? 'text-[var(--text-warn)]' : 'text-[var(--muted)]'}`}>{percent(total, budget)}%</span>
                   </span>
-                </span>
-                <span className="flex items-center justify-between text-[11px] tabular-nums">
-                  <span className="font-extrabold text-[var(--text)]">{money(total, { cents: true })}</span>
-                  {budget > 0 && <span className="font-bold text-[var(--muted)]">{percent(total, budget)}{t('% of')} {money(budget)}</span>}
-                </span>
-                {budget > 0 && <Bar value={total} max={budget} track={over ? 'bg-activity' : tone.track} fill={over ? 'bg-activity-accent' : tone.fill} />}
-              </button>
-            );
-          })}
-        </div>
+                  {/* a thin bar: full (and a warning) once more than the budget was spent */}
+                  <Bar value={total} max={budget} className="h-1" track={over ? 'bg-activity' : tone.track} fill={over ? 'bg-activity-accent' : tone.fill} />
+                  {over && (
+                    <span role="alert" className="flex items-center gap-1.5 text-[11px] font-extrabold text-[var(--text-warn)]">
+                      <TriangleAlert size={ICON.sm} className="shrink-0" aria-hidden="true" />
+                      {t('Over budget by {v}', { v: money(total - budget) })}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </SectionCard>
     );
   };
@@ -135,68 +149,32 @@ export function BudgetsView() {
 
       <HeroPair inIcon={Target} inLabel={t('Budget')} outLabel={t('Spent')} inAmount={summary.budget} outAmount={summary.spent} pillTitle={summary.generic ? t('Overall monthly budget minus everything spent') : t('Budgeted categories: budget minus spending in those categories (unbudgeted spending is not included)')} />
 
-      {/* What the Budget figure above covers, and the spending it leaves out */}
-      <div className="um-hide rounded-2xl bg-[var(--surface)] border border-[var(--border)] px-3.5 py-3 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--muted)]">{t('The figures above cover')}</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-[var(--inset)] border border-[var(--border)] text-[11px] font-extrabold text-[var(--text)]">
-            {summary.scope === 'overall' ? t('Overall monthly budget') : t('Budgeted categories')}
-          </span>
-        </div>
-        <p className="text-[11px] font-medium text-[var(--muted)] leading-snug">
-          {summary.scope === 'overall'
-            ? t('Everything you spent this month counts against your overall monthly budget of {v}.', { v: money(summary.budget) })
-            : t('Only spending in categories that have a budget counts here. Spending in other categories is not part of the percentage.')}
-        </p>
-        {(summary.scope === 'categories' || (summary.categoryBudget > 0 && unbudgeted > 0)) && (
-          <div className="space-y-1.5">
-            <p className="flex items-center justify-between gap-2 text-xs font-extrabold text-[var(--text)] tabular-nums">
-              <span>{t('Unbudgeted spending')}: {money(unbudgeted)}</span>
-              {summary.scope === 'overall' && <span className="text-[10px] font-bold text-[var(--muted)]">{t('already counted in Spent')}</span>}
-            </p>
-            {unbudgeted > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {summary.unbudgetedCategories.slice(0, 4).map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => openSheet({ type: 'budget', categoryId: item.id })}
-                    aria-label={t('Set a budget for {name} (spent {v})', { name: expenseCategory(item.id)?.name ?? t('Other'), v: money(item.total) })}
-                    className="pressable pressable-soft inline-flex items-center gap-1.5 rounded-full bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] pl-2.5 pr-2 py-1 text-[11px] font-extrabold text-[var(--text)]"
-                  >
-                    <span className="truncate max-w-[9rem]">{expenseCategory(item.id)?.name ?? t('Other')}</span>
-                    <span className="tabular-nums text-[var(--muted)]">{money(item.total)}</span>
-                    <span className="rounded-full bg-[var(--text)] text-[var(--on-text)] px-1.5 py-px text-[10px]">{t('Set budget')}</span>
-                  </button>
-                ))}
-                {summary.unbudgetedCategories.length > 4 && (
-                  <span className="self-center text-[10px] font-bold text-[var(--muted)]">{t('+{n} more below', { n: summary.unbudgetedCategories.length - 4 })}</span>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => openSheet({ type: 'profile' })}
-        className="um-hide pressable pressable-soft mx-auto flex max-w-full items-center gap-2 rounded-full bg-[var(--surface)] hover:bg-[var(--inset)] border border-[var(--border)] px-3.5 py-1.5 text-[11px] font-extrabold text-[var(--text)]"
-      >
-        <Target size={ICON.sm} aria-hidden="true" className="shrink-0 text-[var(--muted)]" />
-        <span className="truncate">
-          {summary.generic
-            ? t('Monthly budget {v} (from your profile)', { v: money(data.profile.monthlyBudget) })
-            : t('Set one monthly budget for everything')}
-        </span>
-        <ChevronRight size={ICON.sm} aria-hidden="true" className="shrink-0 text-[var(--muted)]" />
-      </button>
-
       <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
         <NoteCard tone="needs" icon={Hourglass} label={t('Days left')} value={String(Math.max(0, daysLeft))} title={t('Days left in this month, today included')} />
         <NoteCard tone="wants" icon={ShieldCheck} label={t('Safe / day')} value={safePerDay === null ? '–' : money(safePerDay)} title={t('Budget left divided by the days left')} />
         <NoteCard tone="savings" icon={CircleHelp} label={t('Unbudgeted')} value={moneyFit(unbudgeted, 7)} title={t('Unbudgeted spending: spending in categories without a budget')} />
       </div>
+
+      {/* The monthly budget: its own button. Not set = the sum of the category budgets; never below that sum. */}
+      <button
+        type="button"
+        onClick={() => openSheet({ type: 'monthlyBudget' })}
+        className="pressable pressable-soft w-full flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface)] hover:bg-[var(--inset)] border border-[var(--border)] px-3.5 py-3 text-left"
+      >
+        <span className="flex items-center gap-2.5 min-w-0">
+          <span className="size-8 rounded-full bg-[var(--inset)] flex items-center justify-center shrink-0"><Target size={ICON.md} aria-hidden="true" className="text-[var(--text)]" /></span>
+          <span className="min-w-0">
+            <span className="block text-xs font-extrabold text-[var(--text)]">{data.profile.monthlyBudget > 0 ? t('Monthly budget') : t('Set the monthly budget')}</span>
+            <span className="block text-[11px] font-medium text-[var(--muted)] truncate">
+              {data.profile.monthlyBudget > 0 ? t('At least the sum of the category budgets: {v}', { v: money(summary.categoryBudget) }) : t('Not set: the sum of the category budgets, {v}', { v: money(summary.categoryBudget) })}
+            </span>
+          </span>
+        </span>
+        <span className="flex items-center gap-1 tabular-nums shrink-0">
+          <span className="text-sm font-extrabold text-[var(--text)]">{money(summary.budget)}</span>
+          <ChevronRight size={ICON.md} className="text-[var(--muted)]" aria-hidden="true" />
+        </span>
+      </button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-start">
         {allBuckets().map((b) => bucketCard(b.id))}
@@ -204,6 +182,7 @@ export function BudgetsView() {
         <SectionCard
           id="goals"
           title={<><span className="size-2.5 rounded-full border bg-weight border-weight-ink/30" aria-hidden="true" />{t('Savings goals')}</>}
+          subtitle={data.goals.length === 0 ? t('No goals yet') : goalsTarget > 0 ? `${money(goalsSaved)} ${t('of')} ${money(goalsTarget)}` : money(goalsSaved)}
           onAdd={() => openSheet({ type: 'goal' })}
           addLabel={t('New savings goal')}
         >
@@ -253,6 +232,7 @@ export function BudgetsView() {
         <SectionCard
           id="recurring"
           title={<><span className="size-2.5 rounded-full border bg-needs border-needs-ink/30" aria-hidden="true" />{t('Recurring')}</>}
+          subtitle={data.recurring.length === 0 ? t('Nothing set up yet') : t('{n} items', { n: data.recurring.length })}
           onAdd={() => openSheet({ type: 'recurringEdit' })}
           addLabel={t('New recurring item')}
         >
@@ -266,17 +246,6 @@ export function BudgetsView() {
             </div>
           )}
         </SectionCard>
-      </div>
-
-      <div className="um-hide flex justify-center">
-        <button
-          type="button"
-          onClick={() => openSheet({ type: 'categories' })}
-          className="pressable inline-flex items-center gap-2 rounded-full bg-[var(--surface)] hover:bg-[var(--inset)] border border-[var(--border)] px-4 py-2 text-xs font-extrabold text-[var(--text)]"
-        >
-          <ListChecks size={ICON.md} aria-hidden="true" />
-          {t('Manage expense categories')}
-        </button>
       </div>
     </div>
   );

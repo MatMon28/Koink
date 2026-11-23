@@ -25,3 +25,39 @@ export const giftCardCover = (balance: number, amount: number): number => round2
 
 /** The part of an entry that went through its account (an expense paid with a gift card went through it only for the rest). */
 export const accountShare = (tx: Tx): number => round2(tx.kind === 'expense' ? Math.max(0, tx.amount - giftCardPaid(tx)) : tx.amount);
+
+/*
+ * Per-card choices (`GiftCard.countAsIncome`, `GiftCard.countAsSpending`). The store pushes the cards in with
+ * `syncGiftCards()` whenever they change (like `syncCategories`), so the plain functions of lib/ (`totalsOf` in
+ * calc.ts, `expenseSeries`) see them without passing them around. In Basic mode the store syncs no cards:
+ * gift cards do not exist there, so nothing changes in its totals.
+ */
+let cardsById = new Map<string, GiftCard>();
+
+export function syncGiftCards(cards: GiftCard[]): void {
+  cardsById = new Map(cards.map((card) => [card.id, card]));
+}
+
+/** What an entry adds to spending: its amount, minus the part a gift card paid when that card is set not to count as spending. */
+export function countedAmount(tx: Tx): number {
+  if (tx.kind !== 'expense' || !tx.giftCard) return tx.amount;
+  const card = cardsById.get(tx.giftCard.id);
+  if (!card || card.countAsSpending !== false) return tx.amount;
+  return round2(Math.max(0, tx.amount - tx.giftCard.amount));
+}
+
+/** Id prefix of the income entries made from gift cards (they are not stored: `giftCardIncomeTxs` builds them). */
+export const GIFT_INCOME_PREFIX = 'gcin_';
+export const isGiftCardIncome = (tx: Tx): boolean => tx.id.startsWith(GIFT_INCOME_PREFIX);
+/** The gift card behind such an entry. */
+export const giftCardOfIncome = (tx: Tx): string => tx.id.slice(GIFT_INCOME_PREFIX.length);
+
+/** One income entry per card that counts its value as income, dated `incomeDate`. Added to the ledger by the store, never saved. */
+export function giftCardIncomeTxs(cards: GiftCard[]): Tx[] {
+  const out: Tx[] = [];
+  for (const card of cards) {
+    if (!card.countAsIncome || !card.incomeDate || !(card.initial > 0)) continue;
+    out.push({ id: `${GIFT_INCOME_PREFIX}${card.id}`, kind: 'income', amount: card.initial, categoryId: 'gift', note: card.name, date: card.incomeDate, ts: 0 });
+  }
+  return out;
+}

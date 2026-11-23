@@ -244,6 +244,8 @@ interface NumPadProps {
   decimal?: boolean;
   /** Also answer the physical keyboard (digits, comma, Backspace, Enter). */
   captureKeys?: boolean;
+  /** No confirm button under the keys: the form puts its own save button lower down (Enter still confirms). */
+  hideConfirm?: boolean;
 }
 
 /**
@@ -251,7 +253,7 @@ interface NumPadProps {
  * button is plain content under the keys: it never floats above anything (only the save row of the entry
  * forms does, see `.kc-sticky-footer`).
  */
-export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, confirmClass = 'bg-[var(--text)] text-[var(--on-text)]', decimal = true, captureKeys = true }: NumPadProps) {
+export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, confirmClass = 'bg-[var(--text)] text-[var(--on-text)]', decimal = true, captureKeys = true, hideConfirm = false }: NumPadProps) {
   const latest = useRef({ onPress, onConfirm, confirmDisabled });
   const holdTimer = useRef<number | null>(null);
   const cleared = useRef(false);
@@ -323,7 +325,7 @@ export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, conf
           <Delete size={ICON.xl} aria-hidden="true" />
         </button>
       </div>
-      <div>
+      {!hideConfirm && <div>
         <button
           type="button"
           onClick={onConfirm}
@@ -333,7 +335,7 @@ export function NumPad({ onPress, onConfirm, confirmLabel, confirmDisabled, conf
           <Check size={ICON.lg} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
           <span className="truncate">{confirmLabel}</span>
         </button>
-      </div>
+      </div>}
     </div>
   );
 }

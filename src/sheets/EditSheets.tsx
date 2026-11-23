@@ -1,13 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ICON } from '../lib/icons';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { Modal } from '../components/Modal';
 import { AmountStepper, ConfirmDialog, SectionLabel, seg, textInput, DateField } from '../components/ui';
-import { goalSaved, monthsBack, monthTotals, totalsByMonth } from '../lib/calc';
-import { allExpenseCategories, expenseCategory, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
-import { addMonths, currentMonth, defaultDateFor, formatDay, formatMonth, ordinal } from '../lib/dates';
-import { percent, round2 } from '../lib/format';
+import { goalSaved } from '../lib/calc';
+import { allExpenseCategories, INCOME_SOURCES, isCategoryHidden, visibleExpenseCategories } from '../lib/categories';
+import { addMonths, defaultDateFor, formatDay, formatMonth, ordinal } from '../lib/dates';
+import { percent } from '../lib/format';
 import { useApp, useSheet } from '../lib/store';
 import type { Sheet } from '../lib/types';
 import { Banner, ChoiceGrid, SaveRow } from './shared';
@@ -289,81 +289,6 @@ function GoalForm({ sheet }: { sheet: Extract<Sheet, { type: 'goal' }> }) {
           if (original) removeGoal(original.id);
           closeSheet();
         }}
-      />
-    </div>
-  );
-}
-
-/* ---------- Category budget ---------- */
-
-export function BudgetSheet() {
-  const { isOpen, sheet, seq } = useSheet('budget');
-  const { closeSheet } = useApp();
-  const category = sheet ? expenseCategory(sheet.categoryId) : undefined;
-  return (
-    <Modal isOpen={isOpen} onClose={closeSheet} title={t('{v} budget', { v: category?.name ?? t('Category') })} subtitle={t('Per month')} maxWidth="max-w-md">
-      {sheet && <BudgetForm key={seq} sheet={sheet} />}
-    </Modal>
-  );
-}
-
-function BudgetForm({ sheet }: { sheet: Extract<Sheet, { type: 'budget' }> }) {
-  const { data, symbol, money, selectedMonth, setBudget, closeSheet } = useApp();
-  const category = expenseCategory(sheet.categoryId) ?? allExpenseCategories()[0];
-  const [amount, setAmount] = useState(data.profile.budgets[category.id] ?? 0);
-
-  const spent = useMemo(() => monthTotals(data.txs, selectedMonth).byCategory[category.id]?.total ?? 0, [data.txs, selectedMonth, category.id]);
-
-  // Average of the three full months before this one, as a starting point.
-  const average = useMemo(() => {
-    const months = monthsBack(addMonths(currentMonth(), -1), 3);
-    const totals = totalsByMonth(data.txs, months).filter((m) => m.count > 0);
-    if (totals.length === 0) return 0;
-    return round2(totals.reduce((sum, m) => sum + (m.byCategory[category.id]?.total ?? 0), 0) / totals.length);
-  }, [data.txs, category.id]);
-
-  const left = round2(amount - spent);
-
-  return (
-    <div className="space-y-4">
-      <Banner
-        tone={category.bucket === 'needs' ? 'needs' : 'wants'}
-        icon={category.icon}
-        label={t('Spent in {v}', { v: formatMonth(selectedMonth, 'long', false) })}
-        value={money(spent, { cents: true })}
-        sub={amount > 0 ? left >= 0 ? t('{v} left', { v: money(left) }) : t('{v} over', { v: money(-left) }) : t('No budget')}
-      />
-
-      <AmountStepper value={amount} onChange={setAmount} unit={symbol} step={10} ariaLabel={t('Monthly budget')} startOpen chips={[10, 50, 100]} />
-
-      <div className="flex flex-wrap gap-1.5">
-        {average > 0 && (
-          <button
-            type="button"
-            onClick={() => setAmount(Math.ceil(average / 10) * 10)}
-            className="pressable px-3 py-2 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-xs font-extrabold text-[var(--muted)] hover:text-[var(--text)] tabular-nums"
-          >
-            {t('Use recent average ·')} {money(Math.ceil(average / 10) * 10)}
-          </button>
-        )}
-        {amount > 0 && (
-          <button
-            type="button"
-            onClick={() => setAmount(0)}
-            className="pressable px-3 py-2 rounded-xl bg-[var(--inset)] hover:bg-[var(--hover)] border border-[var(--border)] text-xs font-extrabold text-[var(--muted)] hover:text-[var(--text)]"
-          >
-            {t('No budget')}
-          </button>
-        )}
-      </div>
-
-      <SaveRow
-        tone="neutral"
-        onSave={() => {
-          setBudget(category.id, amount);
-          closeSheet();
-        }}
-        label={amount > 0 ? t('Save · {v} a month', { v: money(amount) }) : t('Save without a budget')}
       />
     </div>
   );

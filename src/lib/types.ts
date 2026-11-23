@@ -86,6 +86,19 @@ export interface GiftCard {
   expires?: string;
   /** Optional longer note (code, shop address...). */
   note?: string;
+  /**
+   * Count the card's `initial` value as income, on `incomeDate` (off by default: a gift card is not money you
+   * earned). On: the value shows as an income entry on that day and in every income total. See `giftCardIncomeTxs`.
+   */
+  countAsIncome?: boolean;
+  /** The day the value counts as income (YYYY-MM-DD). Set whenever `countAsIncome` is on. */
+  incomeDate?: string;
+  /**
+   * Count what is paid with the card as spending (on by default: `false` = off). Off: the part of an expense the
+   * card covered (`Tx.giftCard.amount`) is left out of spending, category totals, budgets and charts; the entry
+   * itself stays in the lists. See `countedAmount`.
+   */
+  countAsSpending?: boolean;
 }
 
 export interface Goal {
@@ -222,7 +235,8 @@ export type Sheet =
   | { type: 'giftCard'; id?: string }
   | { type: 'giftCards' }
   | { type: 'categories' }
-  | { type: 'budget'; categoryId: string }
+  | { type: 'budget'; categoryId?: string; bucket?: Bucket }
+  | { type: 'monthlyBudget' }
   | { type: 'quick' }
   | { type: 'profile' }
   | { type: 'settings' };

@@ -43,6 +43,6 @@ In *Add / Edit expense* the category tiles are ordered by **most recent use** (t
 
 ## Default categories and Basic mode
 
-The built-in expense categories are House (`housing`), Food (`groceries`), Health, Fun and **Others** (`others`, new) as the five **defaults**, plus Transport, Bills, Eating out and Shopping. `DEFAULT_HIDDEN_CATEGORIES` (`categories.ts`) lists the last four: a new journal, and *Delete all data*, start with them hidden; Settings > Expense categories shows them again. A journal that already exists keeps its own hidden list, and ids never changed, so no entry loses its category. House and Food are the old Housing and Groceries under shorter names.
+The built-in expense categories are House (`housing`), Food (`groceries`), Fun, Health, **Eating out** (`eating_out`) and **Others** (`others`) as the six **defaults**, plus Transport, Bills and Shopping. `DEFAULT_HIDDEN_CATEGORIES` (`categories.ts`) lists the last three (Eating out used to be hidden; it is a default now): a new journal, and *Delete all data*, start with them hidden; Settings > Expense categories shows them again. A journal that already exists keeps its own hidden list, and ids never changed, so no entry loses its category. House and Food are the old Housing and Groceries under shorter names.
 
 In [Basic mode](basic-mode.md) the manager is **one flat list** (no Needs / Wants groups, no *New type*, no *Counts as*); new categories count as Wants and the types made in Full are kept.

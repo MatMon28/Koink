@@ -10,6 +10,7 @@ import { monthsBack, ruleShares, totalsByMonth } from '../lib/calc';
 import { allExpenseCategories } from '../lib/categories';
 import { addDays, addMonths, currentMonth, daysBetween, daysInMonth, elapsedDays, formatDay, formatMonth, monthOf, todayStr } from '../lib/dates';
 import { percent, round2 } from '../lib/format';
+import { countedAmount } from '../lib/giftcards';
 import { useApp } from '../lib/store';
 import { usePersistentState } from '../lib/usePersistentState';
 import { t } from '../lib/i18n';
@@ -113,7 +114,7 @@ export function StatsView() {
     for (const tx of txs) {
       if (tx.date >= startDate) continue;
       if (tx.kind === 'income') balance += tx.amount;
-      else if (tx.kind === 'expense') balance -= tx.amount;
+      else if (tx.kind === 'expense') balance -= countedAmount(tx);
     }
     return shown.map((month) => {
       balance += list.find((m) => m.month === month)?.net ?? 0;

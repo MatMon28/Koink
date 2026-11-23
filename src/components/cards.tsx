@@ -1,9 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { ICON } from '../lib/icons';
-import { Banknote, ChevronDown, CircleCheck, Pencil, House, Plus, Receipt, Repeat, Sparkles, StickyNote, Trash2, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { Banknote, ChevronDown, CircleCheck, Gift, Pencil, House, Plus, Receipt, Repeat, Sparkles, StickyNote, Trash2, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { PigIcon } from '../lib/pig';
 import { formatDay } from '../lib/dates';
 import { formatMoney } from '../lib/format';
+import { giftCardOfIncome, isGiftCardIncome } from '../lib/giftcards';
 import { useApp } from '../lib/store';
 import type { Tx } from '../lib/types';
 import { t } from '../lib/i18n';
@@ -404,10 +405,14 @@ export function EmptyRow({ text, action, onAdd }: { text: string; action: string
 /** One entry inside an open card: tap the text to edit, or use the two round buttons. */
 export function TxRow({ tx, compact = false, sub, category }: { tx: Tx; compact?: boolean; sub?: string; category?: string }) {
   const { money, openSheet, removeTx } = useApp();
-  const edit = () => openSheet({ type: 'tx', kind: tx.kind, editId: tx.id });
+  // An income entry made from a gift card's value (giftcards.ts) opens the card and cannot be deleted here.
+  const fromCard = isGiftCardIncome(tx);
+  const edit = () => openSheet(fromCard ? { type: 'giftCard', id: giftCardOfIncome(tx) } : { type: 'tx', kind: tx.kind, editId: tx.id });
   const amount = money(tx.amount, { cents: true });
   const marks = (
     <>
+      {/* A gift icon marks an expense paid (partly) with a gift card. */}
+      {(tx.giftCard || fromCard) && <Gift size={ICON.mark} strokeWidth={2.5} aria-label={fromCard ? t('Value of a gift card') : t('Paid with a gift card')} />}
       {tx.recurringId && <Repeat size={ICON.mark} strokeWidth={2.5} aria-label={t('Recurring')} />}
       {tx.details && <StickyNote size={ICON.mark} strokeWidth={2.5} aria-label={t('Has a note')} />}
     </>
@@ -453,15 +458,17 @@ export function TxRow({ tx, compact = false, sub, category }: { tx: Tx; compact?
             <Pencil size={ICON.sm} aria-hidden="true" />
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => removeTx(tx.id)}
-          className="pressable w-8 h-8 rounded-full text-[var(--muted)] hover:text-danger-ink hover:bg-danger flex items-center justify-center"
-          title={t('Delete')}
-          aria-label={t('Delete {name}', { name: tx.note || t('entry') })}
-        >
-          <Trash2 size={ICON.sm} aria-hidden="true" />
-        </button>
+        {!fromCard && (
+          <button
+            type="button"
+            onClick={() => removeTx(tx.id)}
+            className="pressable w-8 h-8 rounded-full text-[var(--muted)] hover:text-danger-ink hover:bg-danger flex items-center justify-center"
+            title={t('Delete')}
+            aria-label={t('Delete {name}', { name: tx.note || t('entry') })}
+          >
+            <Trash2 size={ICON.sm} aria-hidden="true" />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { sortTxs } from './calc';
 import { DEFAULT_HIDDEN_CATEGORIES, syncCategories } from './categories';
 import { inTourEmbed, normalizeMode, syncMode } from './mode';
 import { syncTabs } from './tabs';
+import { giftCardIncomeTxs, syncGiftCards } from './giftcards';
 import { currentMonth, daysInMonth, formatDay, pad, todayStr } from './dates';
 import { buildSampleTxs, SAMPLE_ACCOUNTS, SAMPLE_GOALS, SAMPLE_PROFILE, SAMPLE_RECURRING } from './demo';
 import { whenIdle } from './idle';
@@ -48,6 +49,7 @@ function legacySplitHidden(): boolean {
   }
 }
 
+const NO_CARDS: GiftCard[] = [];
 const emptyProfile = (): Profile => ({ name: '', rule: { needs: 50, wants: 30, savings: 20 }, budgets: {}, monthlyBudget: 0 });
 
 function sampleData(settings: Settings = defaultSettings()): AppData {
@@ -73,6 +75,16 @@ function cleanRates(raw: unknown): Record<string, number> {
   const out: Record<string, number> = {};
   if (raw && typeof raw === 'object') for (const [code, rate] of Object.entries(raw)) if (isCurrency(code) && isNum(rate) && rate > 0) out[code] = rate;
   return out;
+}
+
+/** The two counting choices of a gift card. Counting the value as income needs a valid day; without one it is off. Older journals have neither (income off, spending on). */
+function cleanGiftCardCounting(g: Partial<GiftCard>): Pick<GiftCard, 'countAsIncome' | 'incomeDate' | 'countAsSpending'> {
+  const incomeDate = isStr(g.incomeDate) && /^\d{4}-\d{2}-\d{2}$/.test(g.incomeDate) ? g.incomeDate : undefined;
+  return {
+    countAsIncome: g.countAsIncome === true && !!incomeDate ? true : undefined,
+    incomeDate: g.countAsIncome === true ? incomeDate : undefined,
+    countAsSpending: g.countAsSpending === false ? false : undefined,
+  };
 }
 
 function cleanGiftCardUse(raw: unknown): Tx['giftCard'] {
@@ -147,6 +159,7 @@ function sanitize(raw: unknown): AppData | null {
       initial: round2(Math.max(0, g.initial)),
       expires: isStr(g.expires) && /^\d{4}-\d{2}-\d{2}$/.test(g.expires) ? g.expires : undefined,
       note: isStr(g.note) && g.note.trim() ? g.note.slice(0, 500) : undefined,
+      ...cleanGiftCardCounting(g),
     }));
 
   const categoryTypes: CategoryType[] = (Array.isArray(src.categoryTypes) ? src.categoryTypes : [])
@@ -261,7 +274,7 @@ interface AppContextValue {
   saveAccount: (account: { id?: string; name: string; icon: string; opening: number }) => void;
   removeAccount: (id: string) => void;
   /** Creates or edits a gift card; returns its id. */
-  saveGiftCard: (card: { id?: string; name: string; initial: number; expires?: string; note?: string }) => string;
+  saveGiftCard: (card: { id?: string; name: string; initial: number; expires?: string; note?: string; countAsIncome?: boolean; incomeDate?: string; countAsSpending?: boolean }) => string;
   /** Deletes a gift card. Entries paid with it stay, and count as paid the normal way again. */
   removeGiftCard: (id: string) => void;
   /** Creates or edits one of the user's own expense categories; returns its id. */
@@ -336,7 +349,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useMemo(() => syncMode(basic), [basic]);
   useMemo(() => syncTabs(data.settings.hideBudgets || basic), [data.settings.hideBudgets, basic]);
   // Savings entries are not shown in Basic mode (they stay in the journal and come back in Full).
-  const txs = useMemo(() => (basic ? data.txs.filter((tx) => tx.kind !== 'saving') : data.txs), [basic, data.txs]);
+  // Gift cards: their counting choices reach the totals through giftcards.ts, and a card that counts its value as income adds
+  // an income entry to the ledger. Basic mode has no gift cards, so it syncs none (nothing changes in its totals).
+  const activeCards = basic ? NO_CARDS : data.giftCards;
+  useMemo(() => syncGiftCards(activeCards), [activeCards]);
+  const txs = useMemo(
+    () => (basic ? data.txs.filter((tx) => tx.kind !== 'saving') : [...giftCardIncomeTxs(activeCards), ...data.txs]),
+    [basic, data.txs, activeCards],
+  );
   useMemo(() => syncCategories(data.categories, data.settings.hiddenCategories, data.categoryTypes), [data.categories, data.settings.hiddenCategories, data.categoryTypes]);
 
   const { theme, themeStyle, monoHue, currency, ultraMinimal, language } = data.settings;
@@ -488,6 +508,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       initial: round2(Math.max(0, card.initial)),
       expires: card.expires && /^\d{4}-\d{2}-\d{2}$/.test(card.expires) ? card.expires : undefined,
       note: card.note?.trim().slice(0, 500) || undefined,
+      ...cleanGiftCardCounting(card),
     };
     setData((prev) => ({
       ...prev,
@@ -584,12 +605,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const budgets = { ...prev.profile.budgets };
       if (amount > 0) budgets[categoryId] = round2(amount);
       else delete budgets[categoryId];
-      return { ...prev, profile: { ...prev.profile, budgets } };
+      // The monthly budget can never be smaller than the budgets of the categories: raise it when they outgrow it.
+      const sum = round2(Object.values(budgets).reduce((total, v) => total + (v > 0 ? v : 0), 0));
+      const monthlyBudget = prev.profile.monthlyBudget > 0 ? Math.max(prev.profile.monthlyBudget, sum) : 0;
+      return { ...prev, profile: { ...prev.profile, budgets, monthlyBudget } };
     });
   }, []);
 
   const updateProfile = useCallback((patch: Partial<Profile>) => {
-    setData((prev) => ({ ...prev, profile: { ...prev.profile, ...patch } }));
+    setData((prev) => {
+      const profile = { ...prev.profile, ...patch };
+      // A monthly budget (0 = none: it is then the sum of the category budgets) is never below that sum.
+      const sum = round2(Object.values(profile.budgets).reduce((total, v) => total + (v > 0 ? v : 0), 0));
+      if (profile.monthlyBudget > 0) profile.monthlyBudget = Math.max(round2(profile.monthlyBudget), sum);
+      return { ...prev, profile };
+    });
   }, []);
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {

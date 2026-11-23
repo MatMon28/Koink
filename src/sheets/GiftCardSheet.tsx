@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ICON } from '../lib/icons';
 import { Gift, Receipt } from 'lucide-react';
 import { Modal } from '../components/Modal';
-import { AmountStepper, ConfirmDialog, DateField, SectionLabel, buttonClass, textInput } from '../components/ui';
+import { AmountStepper, ConfirmDialog, DateField, SectionLabel, ToggleRow, buttonClass, textInput } from '../components/ui';
 import { categoryMeta } from '../lib/categories';
 import { formatDay, todayStr } from '../lib/dates';
 import { giftCardBalance, giftCardEntries, giftCardExpired } from '../lib/giftcards';
@@ -33,15 +33,19 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
   const [initial, setInitial] = useState(original?.initial ?? 0);
   const [expires, setExpires] = useState(original?.expires ?? '');
   const [note, setNote] = useState(original?.note ?? '');
+  // Does the card's value count as income, and does what is paid with it count as spending?
+  const [countIncome, setCountIncome] = useState(original?.countAsIncome === true);
+  const [incomeDate, setIncomeDate] = useState(original?.incomeDate ?? todayStr());
+  const [countSpending, setCountSpending] = useState(original?.countAsSpending !== false);
   const [confirm, setConfirm] = useState(false);
 
-  const valid = name.trim().length > 0 && initial > 0;
+  const valid = name.trim().length > 0 && initial > 0 && (!countIncome || !!incomeDate);
   const shownLeft = original ? Math.max(0, initial - spent) : initial;
   const expired = giftCardExpired({ id: '', name: '', initial, expires: expires || undefined }, todayStr());
 
   const save = () => {
     if (!valid) return;
-    saveGiftCard({ id: original?.id, name, initial, expires: expires || undefined, note });
+    saveGiftCard({ id: original?.id, name, initial, expires: expires || undefined, note, countAsIncome: countIncome, incomeDate: countIncome ? incomeDate : undefined, countAsSpending: countSpending });
     closeSheet();
     showToast(t('{v} · {v2} left', { v: name.trim(), v2: money(shownLeft, { cents: true }) }));
   };
@@ -87,6 +91,29 @@ function GiftCardForm({ sheet }: { sheet: Extract<Sheet, { type: 'giftCard' }> }
         {original && spent > 0 && (
           <p className="mt-1.5 text-[11px] font-medium text-[var(--muted)]">{money(spent, { cents: true })} {t('has been spent from it so far; the balance above follows the value you set.')}</p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <SectionLabel>{t('How it counts')}</SectionLabel>
+        <ToggleRow
+          icon={<Gift size={ICON.md} aria-hidden="true" />}
+          title={t('Count its value as income')}
+          description='Off: the card is not money you earned. On: its value is added to your income.'
+          on={countIncome}
+          onToggle={() => setCountIncome(!countIncome)}
+        >
+          <div>
+            <SectionLabel htmlFor="gift-income-date">{t('Counts as income on')}</SectionLabel>
+            <DateField id="gift-income-date" value={incomeDate} onChange={(event) => setIncomeDate(event.target.value)} />
+          </div>
+        </ToggleRow>
+        <ToggleRow
+          icon={<Receipt size={ICON.md} aria-hidden="true" />}
+          title={t('Count what I pay with it as spending')}
+          description='Off: expenses paid with this card are left out of spending, budgets and charts. They stay in the list.'
+          on={countSpending}
+          onToggle={() => setCountSpending(!countSpending)}
+        />
       </div>
 
       <div>

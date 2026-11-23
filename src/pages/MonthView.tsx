@@ -6,7 +6,7 @@ import { EmptyRow, FoldCard, Headline, HeroPair, NoteCard, Pills, ShareCard, TxR
 import { MonthNavigator } from '../components/MonthNavigator';
 import { WidgetStrip } from '../components/WidgetStrip';
 import { RecurringRow } from '../components/RecurringRow';
-import { Bar, ConfirmDialog, pillGroup, pillItem } from '../components/ui';
+import { Bar, ConfirmDialog } from '../components/ui';
 import { budgetSummary, goalSaved, monthTotals, recurringSlots, ruleShares, slotEntry } from '../lib/calc';
 import { allExpenseCategories, categoryMeta, isCategoryHidden } from '../lib/categories';
 import { elapsedDays, formatDay, todayStr } from '../lib/dates';
@@ -125,9 +125,9 @@ export function MonthView() {
   };
 
   const layouts: { id: Layout; label: string; icon: ReactNode }[] = [
-    { id: 'compact', label: 'Compact', icon: <Grid2x2 size={ICON.md} aria-hidden="true" /> },
-    { id: 'normal', label: 'Normal', icon: <LayoutList size={ICON.md} aria-hidden="true" /> },
-    { id: 'expanded', label: 'Expanded', icon: <ListTree size={ICON.md} aria-hidden="true" /> },
+    { id: 'compact', label: 'Compact', icon: <Grid2x2 size={ICON.sm} aria-hidden="true" /> },
+    { id: 'normal', label: 'Normal', icon: <LayoutList size={ICON.sm} aria-hidden="true" /> },
+    { id: 'expanded', label: 'Expanded', icon: <ListTree size={ICON.sm} aria-hidden="true" /> },
   ];
 
   const days = elapsedDays(selectedMonth);
@@ -199,8 +199,9 @@ export function MonthView() {
               />
             </button>
           )}
+          {/* An empty category only says so: the + in its header is the way to add (no second Add button). */}
           {items.length === 0
-            ? <EmptyRow text={t('Nothing yet')} action={t('Add')} onAdd={add} />
+            ? <p className="py-3 text-xs font-medium text-[var(--muted)]">{t('Nothing yet')}</p>
             : items.map((tx) => <TxRow key={tx.id} tx={tx} compact={compact} />)}
         </FoldCard>
       </div>
@@ -467,8 +468,9 @@ export function MonthView() {
           )}
         </div>
 
-        <div className={`um-hide flex flex-wrap items-center justify-center gap-2 px-1 ${basic ? 'hidden' : ''}`}>
-          <div role="group" aria-label={t('Card layout')} className={pillGroup}>
+        {/* Card layout: small, at the right edge */}
+        <div className={`um-hide flex items-center justify-end px-1 ${basic ? 'hidden' : ''}`}>
+          <div role="group" aria-label={t('Card layout')} className="inline-flex w-fit items-center gap-0.5 p-0.5 bg-[var(--surface)] border border-[var(--border)] rounded-full">
             {layouts.map((item) => (
               <button
                 key={item.id}
@@ -477,7 +479,7 @@ export function MonthView() {
                 aria-pressed={layout === item.id}
                 aria-label={t(item.label)}
                 title={t(item.label)}
-                className={pillItem(layout === item.id, true)}
+                className={`pressable inline-flex h-6 w-8 items-center justify-center rounded-full ${layout === item.id ? 'bg-[var(--text)] text-[var(--on-text)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--inset)]'}`}
               >
                 {item.icon}
               </button>

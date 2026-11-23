@@ -6,6 +6,7 @@ import { AmountStepper, SectionLabel, textInput } from '../components/ui';
 import { accountBalance } from '../lib/calc';
 import { t } from '../lib/i18n';
 import { round2 } from '../lib/format';
+import { countedAmount } from '../lib/giftcards';
 import { useApp, useSheet } from '../lib/store';
 import type { BudgetRule } from '../lib/types';
 import { ProfileAccounts } from './ProfileAccounts';
@@ -39,7 +40,7 @@ function ProfileForm() {
   // Basic mode has one account and no account list: the banner shows the balance of the whole journal
   // (what was in the accounts at the start, plus every income, minus every expense).
   const balance = useMemo(
-    () => round2(data.accounts.reduce((sum, account) => sum + account.opening, 0) + txs.reduce((sum, tx) => sum + (tx.kind === 'income' ? tx.amount : tx.kind === 'expense' ? -tx.amount : 0), 0)),
+    () => round2(data.accounts.reduce((sum, account) => sum + account.opening, 0) + txs.reduce((sum, tx) => sum + (tx.kind === 'income' ? tx.amount : tx.kind === 'expense' ? -countedAmount(tx) : 0), 0)),
     [data.accounts, txs],
   );
 

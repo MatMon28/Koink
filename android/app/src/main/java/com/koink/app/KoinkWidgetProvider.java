@@ -32,8 +32,12 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
 
     private static final String PREFS = "koink_widgets";
     private static final String KEY_JSON = "json";
-    /** Opacity of the tray behind several buttons, 0 to 255 (about 70 %). */
-    private static final int TRAY_ALPHA = 178;
+    /**
+     * Opacity of the tray behind several buttons, 0 to 255. Same as the Kakcal widgets: 0x7A (48 %) on a light
+     * surface (Kakcal's {@code widget_tray.xml}), 0xA6 (65 %) on a dark one ({@code widget_tray_dark.xml}).
+     */
+    private static final int TRAY_ALPHA = 122;
+    private static final int TRAY_ALPHA_DARK = 166;
     /** The button each single-button widget was given when it was placed: {@code w<widgetId>} = action key. */
     static final String PICKS = "koink_widget_picks";
     /** Which array of the stored JSON this widget shows: "single", "multi" or "categories". */
@@ -77,7 +81,7 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         int count = buttons.length();
         int perRow = count <= 4 ? Math.max(1, count) : (count <= 6 ? 3 : 4);
 
-        // Several buttons sit on a semitransparent tray: the app's surface colour at about 70 % (the shape is a
+        // Several buttons sit on a semitransparent tray: the app's surface colour at about 48 % (65 % when dark, like Kakcal) (the shape is a
         // rounded rectangle whose radius turns a one-row tray into a pill). A lone circle has no tray and no padding.
         float d = context.getResources().getDisplayMetrics().density;
         if (count == 1) {
@@ -86,7 +90,9 @@ public abstract class KoinkWidgetProvider extends AppWidgetProvider {
         } else {
             int surface = color(theme == null ? null : theme.optString("surface"), Color.parseColor("#FBF8F2"));
             root.setViewVisibility(R.id.tray_bg, android.view.View.VISIBLE);
-            root.setInt(R.id.tray_bg, "setColorFilter", (surface & 0x00FFFFFF) | (TRAY_ALPHA << 24));
+            // A dark surface (Soft dark, Dark) gets the denser tray, a light one the airier one.
+            boolean dark = (0.299 * Color.red(surface) + 0.587 * Color.green(surface) + 0.114 * Color.blue(surface)) < 128;
+            root.setInt(R.id.tray_bg, "setColorFilter", (surface & 0x00FFFFFF) | ((dark ? TRAY_ALPHA_DARK : TRAY_ALPHA) << 24));
             root.setViewPadding(R.id.rows, (int) (10 * d), (int) (8 * d), (int) (10 * d), (int) (8 * d));
         }
 

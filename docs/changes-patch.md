@@ -6,18 +6,26 @@
 >
 > **Related:** [prepare-apps.md](prepare-apps.md), [pwa-setup.md](pwa-setup.md)
 
-`changes.patch` is `git diff --binary` between the repository at the commit **`c5d3af3`** ("Better UI/UX", the head of `main` when this round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): the swipe rework and the pill that follows the pages. It changes four source files and the documentation; it has no `node_modules/`, `dist/`, `package.json` or lock file change, it does not contain itself, and it deletes nothing.
+`changes.patch` is `git diff --binary` between the repository at the commit **`b0eb0db`** ("Better swipe gestures", the head of `main` when this round started) and the working copy after the *Latest round* (see the root [README.md](../README.md)): gift card counting and the gift icon, glassier widgets, personal inflation settings with a search, a bigger pig icon, the default categories, the Month page selector, and the rebuilt Budgets page. It adds one source file (`src/sheets/BudgetSheets.tsx`), changes code and documentation, has no `node_modules/`, `dist/`, `package.json` or lock file change, does not contain itself, and deletes nothing.
 
 ```sh
 git apply --check changes.patch   # dry run
 git apply --index changes.patch   # apply and stage (new files included)
-# the repository has moved on since c5d3af3:
+# the repository has moved on since b0eb0db:
 git apply --3way changes.patch
 ```
 
 To make the next one: commit or stash nothing, edit, `git add -A`, then `git diff --cached --binary > changes.patch` and unstage with `git reset`. Keep the docs of every changed file in the same patch (rule in [README.md](README.md#keeping-the-docs-current)).
 
-## What the Latest round changed (swipes that never wait, a pill that follows the pages)
+## What the Latest round changed (gift cards, widgets, inflation settings, Budgets page)
+
+- New: `src/sheets/BudgetSheets.tsx` (`BudgetSheet`, `MonthlyBudgetSheet`; `BudgetSheet` left `EditSheets.tsx`).
+- Edited code: `android/app/src/main/java/com/koink/app/KoinkWidgetProvider.java`, `src/App.tsx`, `src/index.css`, `src/components/{PersonalInflation,WidgetButtons,cards,ui}.tsx`, `src/lib/{calc,categories,expenseSeries,giftcards,i18n.it,store,types}.ts(x)`, `src/pages/{BudgetsView,MonthView,StatsView,TransactionsView}.tsx`, `src/sheets/{EditSheets,GiftCardSheet,ProfileSheet}.tsx`.
+- Edited docs: `README.md`, `docs/features/{gift-cards,budgets,statistics,widgets,month,categories,basic-mode}.md`, `docs/{data-model,known-gaps,changes-patch}.md`, `docs/file-map/{sheets,components,lib}.md`.
+- No dependency, schema or binary change. The new `GiftCard` fields (`countAsIncome`, `incomeDate`, `countAsSpending`) are optional in stored journals and backups (older ones load with the previous behaviour).
+- Verification: `git apply --check changes.patch`, `npx tsc -b`, `npm run build` (vite), a Node script for the gift card maths.
+
+## What the previous round changed (swipes that never wait, a pill that follows the pages)
 
 - Edited code: `src/components/PageSwiper.tsx` (catch / land / rebase, release decided by the finger, riders on both sides, pill driver, touch-action on the column), `src/components/Tabs.tsx` (one sliding indicator, cross-faded layers, weights), `src/lib/pillTab.ts` (`setPillPos`, `getPillPos`, `subscribePillPos` next to `setPillTab` / `usePillTab`, which `App.tsx` still uses for the dock), `src/index.css` (the *Page pill* block at the end, between `Page pill: BEGIN` and `END`).
 - Edited docs: `README.md`, `docs/{gestures,motion,known-gaps,changes-patch}.md`, `docs/file-map/{components,lib}.md`.
