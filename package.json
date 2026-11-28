@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "brand": "node scripts/render-brand.mjs",
     "package": "node scripts/package-project.mjs",
+    "export:context": "node scripts/export-context.mjs",
     "android:splash": "node scripts/generate-splash-themes.mjs",
     "android:prepare": "node scripts/prepare-android.mjs",
     "android:open": "cap open android"

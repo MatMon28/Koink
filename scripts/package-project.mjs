@@ -22,7 +22,7 @@ const OUT = 'public/downloads/koink-project.zip';
 const TOP = 'koink/';
 
 /** Folder and file names skipped wherever they appear. */
-const SKIP_NAMES = new Set(['node_modules', 'dist', '.git', '.gradle', '.idea', '.shots', '.agon-env', '.agon-writes', '.DS_Store', 'local.properties', 'uploads']);
+const SKIP_NAMES = new Set(['node_modules', 'dist', '.git', '.gradle', '.idea', '.shots', '.agon-env', '.agon-writes', '.DS_Store', 'local.properties', 'uploads', 'export-txt']);
 /** Paths (from the project root) skipped together with everything below them. */
 const SKIP_PATHS = [
   'public/downloads', // the archive must not contain itself
